@@ -48,6 +48,30 @@ class AppColors {
   static const Color severityLow = Color(0xFF2ED573);
   static const Color severityInfo = Color(0xFF00B4D8);
 
+  // ── Light theme palette ──────────────────────────────────────────────────
+  static const Color lightBackground     = Color(0xFFF4F7FB);
+  static const Color lightSurface        = Color(0xFFFFFFFF);
+  static const Color lightSurfaceElevated= Color(0xFFEDF1F7);
+  static const Color lightCardBackground = Color(0xFFFFFFFF);
+  static const Color lightBorder         = Color(0xFFD0DBE6);
+  static const Color lightDivider        = Color(0xFFE2EAF0);
+
+  static const Color lightTextPrimary    = Color(0xFF0D1B2A);
+  static const Color lightTextSecondary  = Color(0xFF3D5570);
+  static const Color lightTextMuted      = Color(0xFF7A93A8);
+
+  static const LinearGradient lightPrimaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFFFFFFF), Color(0xFFEDF1F7)],
+  );
+
+  static const LinearGradient lightCardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFFFFFFF), Color(0xFFF4F7FB)],
+  );
+
   // Gradient
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,

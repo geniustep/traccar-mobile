@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 class SectionHeader extends StatelessWidget {
@@ -56,13 +55,13 @@ class ElmoAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AppBar(
-      backgroundColor: AppColors.background,
       elevation: 0,
       leading: showBack
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18, color: AppColors.textPrimary),
+              icon: Icon(Icons.arrow_back_ios_new_rounded,
+                  size: 18, color: cs.onSurface),
               onPressed: () => Navigator.of(context).pop(),
             )
           : leading,
@@ -78,7 +77,7 @@ class ElmoAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
-        child: Container(height: 0.5, color: AppColors.divider),
+        child: Container(height: 0.5, color: cs.outline.withOpacity(0.3)),
       ),
     );
   }

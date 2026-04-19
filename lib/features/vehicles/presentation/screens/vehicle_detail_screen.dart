@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -29,16 +29,12 @@ class VehicleDetailScreen extends ConsumerWidget {
     final tripsAsync = ref.watch(vehicleTripsProvider(vehicleId));
     final alertsAsync = ref.watch(vehicleAlertsProvider(vehicleId));
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: vehicleAsync.when(
+    return Scaffold(      body: vehicleAsync.when(
         data: (vehicle) {
           final status = StatusBadge.fromString(vehicle.status);
           return CustomScrollView(
             slivers: [
-              SliverAppBar(
-                backgroundColor: AppColors.background,
-                pinned: true,
+              SliverAppBar(                pinned: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded,
                       size: 18),

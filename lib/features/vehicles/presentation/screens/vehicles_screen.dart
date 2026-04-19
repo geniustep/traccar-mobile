@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -20,11 +20,7 @@ class VehiclesScreen extends ConsumerWidget {
     final filter = ref.watch(vehicleFilterProvider);
     final vehiclesAsync = ref.watch(filteredVehiclesProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('Fleet Vehicles'),
+    return Scaffold(      appBar: AppBar(        title: const Text('Fleet Vehicles'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),

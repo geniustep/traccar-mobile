@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -85,9 +85,7 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
     final vehiclesAsync = ref.watch(mapVehiclesProvider);
     final selectedId = ref.watch(selectedMapVehicleProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
+    return Scaffold(      body: Stack(
         children: [
           vehiclesAsync.when(
             data: (vehicles) {

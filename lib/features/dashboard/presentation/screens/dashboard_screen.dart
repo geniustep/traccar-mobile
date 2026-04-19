@@ -27,11 +27,9 @@ class DashboardScreen extends ConsumerWidget {
     final alertsAsync = ref.watch(alertsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.accent,
-          backgroundColor: AppColors.surface,
           onRefresh: () async {
             ref.read(dashboardNotifierProvider.notifier).refresh();
             await Future.delayed(const Duration(milliseconds: 600));
@@ -298,19 +296,20 @@ class _HeaderIconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
+          color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: const Border.fromBorderSide(
-            BorderSide(color: AppColors.border, width: 0.5),
+          border: Border.fromBorderSide(
+            BorderSide(color: cs.outline.withOpacity(0.4), width: 0.6),
           ),
         ),
-        child: Icon(icon, size: 20, color: AppColors.textSecondary),
+        child: Icon(icon, size: 20, color: cs.onSurface.withOpacity(0.65)),
       ),
     );
   }
@@ -338,10 +337,13 @@ class _QuickAction extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(14),
-                border: const Border.fromBorderSide(
-                  BorderSide(color: AppColors.border, width: 0.5),
+                border: Border.fromBorderSide(
+                  BorderSide(
+                    color: Theme.of(context).colorScheme.outline.withOpacity(0.4),
+                    width: 0.6,
+                  ),
                 ),
               ),
               child: Icon(icon, color: AppColors.accent, size: 22),
@@ -369,9 +371,12 @@ class _AlertTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.4),
+          width: 0.6,
+        ),
       ),
       child: Row(
         children: [
@@ -391,17 +396,17 @@ class _AlertTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  alert.title ?? '',
+                  alert.title,
                   style: AppTextStyles.labelLarge.copyWith(fontSize: 13),
                 ),
                 Text(
-                  alert.vehicleName ?? '',
+                  alert.vehicleName,
                   style: AppTextStyles.bodySmall,
                 ),
               ],
             ),
           ),
-          if (!(alert.isRead ?? true))
+          if (!alert.isRead)
             Container(
               width: 7,
               height: 7,

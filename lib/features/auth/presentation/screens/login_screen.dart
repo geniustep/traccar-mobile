@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/widgets/elmo_button.dart';
 import '../../../../core/widgets/elmo_text_field.dart';
 import '../providers/auth_provider.dart';
@@ -44,34 +45,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final error = authState.error;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenPadding,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 60),
-              _buildLogo(),
-              const SizedBox(height: 48),
-              _buildHeader(),
-              const SizedBox(height: 40),
-              _buildForm(authState.isLoading),
-              const SizedBox(height: 12),
-              if (error != null) _buildError(error),
-              const SizedBox(height: 24),
-              ElmoButton(
-                label: 'Sign In',
-                onPressed: authState.isLoading ? null : _handleLogin,
-                isLoading: authState.isLoading,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenPadding,
               ),
-              const SizedBox(height: 40),
-              _buildFooter(),
-            ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 60),
+                  _buildLogo(),
+                  const SizedBox(height: 48),
+                  _buildHeader(),
+                  const SizedBox(height: 40),
+                  _buildForm(authState.isLoading),
+                  const SizedBox(height: 12),
+                  if (error != null) _buildError(error),
+                  const SizedBox(height: 24),
+                  ElmoButton(
+                    label: 'Sign In',
+                    onPressed: authState.isLoading ? null : _handleLogin,
+                    isLoading: authState.isLoading,
+                  ),
+                  const SizedBox(height: 40),
+                  _buildFooter(),
+                ],
+              ),
+            ),
           ),
-        ),
+
+          // زر الإعدادات في الزاوية العلوية اليمنى
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: AppSpacing.screenPadding,
+            child: _ThemeToggleButton(),
+          ),
+        ],
       ),
     );
   }
@@ -200,6 +211,165 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         'ELMO Fleet Intelligence Platform\nv1.0.0',
         style: AppTextStyles.labelSmall.copyWith(height: 1.6),
         textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+// ── Theme toggle button ──────────────────────────────────────────────────────
+
+class _ThemeToggleButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+    final cs = Theme.of(context).colorScheme;
+
+    IconData icon;
+    String tooltip;
+    switch (themeMode) {
+      case ThemeMode.light:
+        icon = Icons.light_mode_rounded;
+        tooltip = 'Light';
+      case ThemeMode.dark:
+        icon = Icons.dark_mode_rounded;
+        tooltip = 'Dark';
+      default:
+        icon = Icons.settings_suggest_rounded;
+        tooltip = 'System';
+    }
+
+    return GestureDetector(
+      onTap: () => _showThemePicker(context, ref, themeMode),
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: cs.outline.withOpacity(0.4),
+              width: 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(icon, size: 19, color: AppColors.accent),
+        ),
+      ),
+    );
+  }
+
+  void _showThemePicker(BuildContext context, WidgetRef ref, ThemeMode current) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ThemePickerSheet(current: current, ref: ref),
+    );
+  }
+}
+
+class _ThemePickerSheet extends StatelessWidget {
+  const _ThemePickerSheet({required this.current, required this.ref});
+
+  final ThemeMode current;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    final options = [
+      (ThemeMode.light, Icons.light_mode_rounded, 'Light', 'Bright & clear'),
+      (ThemeMode.dark, Icons.dark_mode_rounded, 'Dark', 'Easy on the eyes'),
+      (ThemeMode.system, Icons.settings_suggest_rounded, 'System', 'Follows device'),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.lg,
+        AppSpacing.screenPadding,
+        MediaQuery.of(context).padding.bottom + AppSpacing.lg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.outline.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Appearance',
+            style: AppTextStyles.headlineSmall.copyWith(color: cs.onSurface),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ...options.map((opt) {
+            final (mode, icon, label, sub) = opt;
+            final selected = current == mode;
+            return ListTile(
+              onTap: () {
+                ref.read(themeProvider.notifier).setTheme(mode);
+                Navigator.of(context).pop();
+              },
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppColors.accent.withOpacity(0.12)
+                      : cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: selected ? AppColors.accent : cs.onSurface.withOpacity(0.5),
+                ),
+              ),
+              title: Text(
+                label,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: cs.onSurface,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              subtitle: Text(
+                sub,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: cs.onSurface.withOpacity(0.5),
+                ),
+              ),
+              trailing: selected
+                  ? Icon(Icons.check_circle_rounded,
+                      color: AppColors.accent, size: 20)
+                  : null,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 2,
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

@@ -45,9 +45,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen>
     final unread = ref.watch(unreadAlertsCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         title: Row(
           children: [
             const Text('Alerts'),
@@ -88,8 +86,6 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen>
           controller: _tabController,
           indicatorColor: AppColors.accent,
           labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.textMuted,
-          dividerColor: AppColors.divider,
           tabs: const [
             Tab(text: 'All Alerts'),
             Tab(text: 'Smart Alerts'),
@@ -129,7 +125,6 @@ class _AlertsList extends ConsumerWidget {
         }
         return RefreshIndicator(
           color: AppColors.accent,
-          backgroundColor: AppColors.surface,
           onRefresh: () async => ref.read(alertsProvider.notifier).load(),
           child: ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.screenPadding),
@@ -217,11 +212,13 @@ class AlertCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           border: Border.all(
-            color: alert.isRead ? AppColors.border : color.withOpacity(0.3),
-            width: alert.isRead ? 0.5 : 1,
+            color: alert.isRead
+                ? Theme.of(context).colorScheme.outline.withOpacity(0.4)
+                : color.withOpacity(0.35),
+            width: alert.isRead ? 0.6 : 1.2,
           ),
         ),
         child: Row(

@@ -20,16 +20,27 @@ class ElmoCard extends StatelessWidget {
   final Color? borderColor;
   final double borderWidth;
 
+  Gradient _resolveGradient(BuildContext context) {
+    if (gradient != null) return gradient!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? AppColors.cardGradient : AppColors.lightCardGradient;
+  }
+
+  Color _resolveBorder(BuildContext context) {
+    if (borderColor != null) return borderColor!;
+    return Theme.of(context).colorScheme.outline.withOpacity(0.6);
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          gradient: gradient ?? AppColors.cardGradient,
+          gradient: _resolveGradient(context),
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           border: Border.all(
-            color: borderColor ?? AppColors.border,
+            color: _resolveBorder(context),
             width: borderWidth,
           ),
         ),
@@ -59,6 +70,8 @@ class ElmoAccentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseBg = isDark ? AppColors.cardBackground : AppColors.lightCardBackground;
     return ElmoCard(
       onTap: onTap,
       padding: padding,
@@ -68,7 +81,7 @@ class ElmoAccentCard extends StatelessWidget {
         end: Alignment.bottomRight,
         colors: [
           AppColors.accent.withOpacity(0.08),
-          AppColors.cardBackground,
+          baseBg,
         ],
       ),
       child: child,
