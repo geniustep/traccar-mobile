@@ -1,34 +1,21 @@
+import '../api/api_config.dart';
+
+/// Legacy shim — delegates to [ApiConfig] so that both old and new code
+/// share one source of truth: [ApiEnvironment] / [EnvironmentConfig].
+///
+/// All new code should use [ApiConfig] directly.
+/// This class is retained only for backward compatibility until all callers
+/// have been migrated.
+@Deprecated('Use ApiConfig directly. This class will be removed.')
 class AppConfig {
-  const AppConfig({
-    required this.baseUrl,
-    required this.socketUrl,
-    required this.googleMapsKey,
-    this.connectTimeoutMs = 15000,
-    this.receiveTimeoutMs = 30000,
-  });
+  const AppConfig._();
 
-  final String baseUrl;
-  final String socketUrl;
-  final String googleMapsKey;
-  final int connectTimeoutMs;
-  final int receiveTimeoutMs;
+  static String get baseUrl => ApiConfig.baseUrl;
+  static String get socketUrl => ApiConfig.socketUrl;
+  static String get googleMapsKey => ApiConfig.googleMapsKey;
+  static Duration get connectTimeout => ApiConfig.connectTimeout;
+  static Duration get receiveTimeout => ApiConfig.receiveTimeout;
 
-  static const AppConfig development = AppConfig(
-    baseUrl: 'https://api-dev.elmofleet.com/api',
-    socketUrl: 'wss://api-dev.elmofleet.com/ws',
-    googleMapsKey: '',
-  );
-
-  static const AppConfig production = AppConfig(
-    baseUrl: 'https://api.elmofleet.com/api',
-    socketUrl: 'wss://api.elmofleet.com/ws',
-    googleMapsKey: '',
-  );
-
-  // Switch between environments via compile-time flag:
-  // flutter run --dart-define=ENV=production
-  static AppConfig get current {
-    const env = String.fromEnvironment('ENV', defaultValue: 'development');
-    return env == 'production' ? production : development;
-  }
+  /// Kept for compatibility with [DioClient] constructor.
+  static AppConfig get current => const AppConfig._();
 }

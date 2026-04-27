@@ -10,6 +10,7 @@ class InsightModel {
     required this.icon,
     required this.createdAt,
     this.vehicleId,
+    this.deviceName,
   });
 
   final String id;
@@ -20,18 +21,20 @@ class InsightModel {
   final String icon;
   final DateTime createdAt;
   final String? vehicleId;
+  final String? deviceName;
 
   factory InsightModel.fromJson(Map<String, dynamic> json) {
     return InsightModel(
-      id: json['id'] as String,
+      id: json['id']?.toString() ?? '',
       type: json['type'] as String? ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       severity: json['severity'] as String? ?? 'info',
       icon: json['icon'] as String? ?? 'info',
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       vehicleId: json['vehicleId'] as String?,
+      deviceName: json['deviceName'] as String?,
     );
   }
 

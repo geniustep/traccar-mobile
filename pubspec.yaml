@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
 
   # State management
@@ -27,13 +29,17 @@ dependencies:
   shared_preferences: ^2.2.3
 
   # Date / number formatting
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # Maps
   google_maps_flutter: ^2.6.1
 
   # Connectivity
   connectivity_plus: ^5.0.2
+  web_socket_channel: ^3.0.3
+
+  # Custom fonts
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

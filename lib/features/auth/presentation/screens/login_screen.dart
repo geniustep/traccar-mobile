@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/locale_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/theme_provider.dart';
-import '../../../../core/widgets/elmo_button.dart';
 import '../../../../core/widgets/elmo_text_field.dart';
 import '../providers/auth_provider.dart';
 
@@ -16,105 +16,445 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  late final AnimationController _animCtrl;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    _animCtrl.forward();
+  }
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _animCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
+    FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
     final success = await ref.read(authProvider.notifier).login(
           _emailCtrl.text.trim(),
           _passwordCtrl.text,
         );
-    if (success && mounted) {
+
+    if (!mounted) return;
+
+    if (success) {
       context.go('/dashboard');
+    } else {
+      final error = ref.read(authProvider).error;
+      if (error != null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.wifi_off_rounded,
+                      color: Colors.white, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(error,
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 13)),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = ref.watch(authProvider);
-    final error = authState.error;
+    final l10n = context.l10n;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
+        fit: StackFit.expand,
         children: [
+          // ── Background ──────────────────────────────────────────────────
+          _Background(isDark: isDark),
+
+          // ── Content ─────────────────────────────────────────────────────
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screenPadding,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 60),
-                  _buildLogo(),
-                  const SizedBox(height: 48),
-                  _buildHeader(),
-                  const SizedBox(height: 40),
-                  _buildForm(authState.isLoading),
-                  const SizedBox(height: 12),
-                  if (error != null) _buildError(error),
-                  const SizedBox(height: 24),
-                  ElmoButton(
-                    label: 'Sign In',
-                    onPressed: authState.isLoading ? null : _handleLogin,
-                    isLoading: authState.isLoading,
+            child: Column(
+              children: [
+                // Top bar
+                _TopBar(isDark: isDark),
+
+                // Scrollable form
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl),
+                    child: FadeTransition(
+                      opacity: _fadeAnim,
+                      child: SlideTransition(
+                        position: _slideAnim,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 32),
+                            _LogoSection(isDark: isDark),
+                            const SizedBox(height: 44),
+                            _WelcomeHeader(isDark: isDark, l10n: l10n),
+                            const SizedBox(height: 36),
+                            _FormSection(
+                              formKey: _formKey,
+                              emailCtrl: _emailCtrl,
+                              passwordCtrl: _passwordCtrl,
+                              isLoading: authState.isLoading,
+                              onSubmit: _handleLogin,
+                              l10n: l10n,
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Error message
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: authState.error != null
+                                  ? _ErrorBanner(
+                                      key: ValueKey(authState.error),
+                                      message: authState.error!,
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Sign in button
+                            _SignInButton(
+                              isLoading: authState.isLoading,
+                              onPressed:
+                                  authState.isLoading ? null : _handleLogin,
+                              l10n: l10n,
+                            ),
+
+                            const SizedBox(height: 48),
+                            _Footer(isDark: isDark),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 40),
-                  _buildFooter(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Background ─────────────────────────────────────────────────────────────────
+
+class _Background extends StatelessWidget {
+  const _Background({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Base gradient
+        Container(
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF080C18), Color(0xFF0B1220)],
+                  )
+                : const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFFFFFFFF), Color(0xFFEDF2F8)],
+                  ),
+          ),
+        ),
+
+        // Orb 1 — top right (cyan)
+        Positioned(
+          top: -80,
+          right: -80,
+          child: Container(
+            width: 280,
+            height: 280,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.accent.withValues(
+                      alpha: isDark ? 0.12 : 0.07),
+                  Colors.transparent,
                 ],
               ),
             ),
           ),
+        ),
 
-          // زر الإعدادات في الزاوية العلوية اليمنى
+        // Orb 2 — bottom left (purple)
+        Positioned(
+          bottom: -100,
+          left: -60,
+          child: Container(
+            width: 300,
+            height: 300,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.purple.withValues(
+                      alpha: isDark ? 0.10 : 0.05),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Orb 3 — center subtle glow (dark only)
+        if (isDark)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: AppSpacing.screenPadding,
-            child: _ThemeToggleButton(),
+            top: 200,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Top Bar ────────────────────────────────────────────────────────────────────
+
+class _TopBar extends ConsumerWidget {
+  const _TopBar({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+    final locale = ref.watch(localeProvider);
+
+    IconData themeIcon;
+    switch (themeMode) {
+      case ThemeMode.light:
+        themeIcon = Icons.light_mode_rounded;
+      case ThemeMode.dark:
+        themeIcon = Icons.dark_mode_rounded;
+      default:
+        themeIcon = Icons.settings_suggest_rounded;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxl, vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          // Language chip
+          _TopBarChip(
+            isDark: isDark,
+            child: Text(
+              _flagForLocale(locale),
+              style: const TextStyle(fontSize: 16),
+            ),
+            onTap: () => _showLanguagePicker(context, ref, locale),
+          ),
+          const Spacer(),
+          // Theme toggle
+          _TopBarChip(
+            isDark: isDark,
+            child: Icon(themeIcon,
+                size: 17,
+                color: isDark ? AppColors.accent : AppColors.accentDark),
+            onTap: () => _showThemePicker(context, ref, themeMode),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLogo() {
+  String _flagForLocale(Locale locale) {
+    return appSupportedLocales
+            .firstWhere(
+              (i) => i.locale.languageCode == locale.languageCode,
+              orElse: () => appSupportedLocales.first,
+            )
+            .flag;
+  }
+
+  void _showLanguagePicker(
+      BuildContext context, WidgetRef ref, Locale current) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _LanguageSheet(current: current, ref: ref),
+    );
+  }
+
+  void _showThemePicker(
+      BuildContext context, WidgetRef ref, ThemeMode current) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ThemeSheet(current: current, ref: ref),
+    );
+  }
+}
+
+class _TopBarChip extends StatelessWidget {
+  const _TopBarChip({
+    required this.isDark,
+    required this.child,
+    required this.onTap,
+  });
+
+  final bool isDark;
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.surface.withValues(alpha: 0.8)
+              : Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark
+                ? AppColors.border.withValues(alpha: 0.5)
+                : AppColors.lightBorder,
+            width: 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+}
+
+// ── Logo Section ───────────────────────────────────────────────────────────────
+
+class _LogoSection extends StatelessWidget {
+  const _LogoSection({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
+        // Icon container with glow
         Container(
-          width: 44,
-          height: 44,
+          width: 62,
+          height: 62,
           decoration: BoxDecoration(
-            gradient: AppColors.accentGradient,
-            borderRadius: BorderRadius.circular(12),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.accent, AppColors.accentDark],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: isDark ? 0.35 : 0.25),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-          child: const Icon(Icons.route_rounded, color: Colors.white, size: 24),
+          child: const Icon(Icons.route_rounded, color: Colors.white, size: 28),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'ELMO',
-              style: AppTextStyles.headlineLarge.copyWith(
-                color: AppColors.accent,
-                letterSpacing: 1.5,
+            ShaderMask(
+              shaderCallback: (bounds) =>
+                  AppColors.accentGradient.createShader(bounds),
+              child: const Text(
+                'ELMO',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 2.5,
+                ),
               ),
             ),
             Text(
               'Fleet Intelligence',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textMuted,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 0.8,
+                color: isDark
+                    ? AppColors.textMuted
+                    : AppColors.lightTextMuted,
               ),
             ),
           ],
@@ -122,164 +462,404 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ],
     );
   }
+}
 
-  Widget _buildHeader() {
+// ── Welcome Header ─────────────────────────────────────────────────────────────
+
+class _WelcomeHeader extends StatelessWidget {
+  const _WelcomeHeader({required this.isDark, required this.l10n});
+  final bool isDark;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Welcome back', style: AppTextStyles.displayMedium),
-        const SizedBox(height: 8),
         Text(
-          'Sign in to your fleet dashboard',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+          l10n.welcomeBack,
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 1.1,
+            color: isDark ? AppColors.textPrimary : AppColors.lightTextPrimary,
           ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Container(
+              width: 3,
+              height: 18,
+              decoration: BoxDecoration(
+                gradient: AppColors.accentGradient,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              l10n.signInSubtitle,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: isDark
+                    ? AppColors.textSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
+}
 
-  Widget _buildForm(bool loading) {
+// ── Form Section ───────────────────────────────────────────────────────────────
+
+class _FormSection extends StatelessWidget {
+  const _FormSection({
+    required this.formKey,
+    required this.emailCtrl,
+    required this.passwordCtrl,
+    required this.isLoading,
+    required this.onSubmit,
+    required this.l10n,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final TextEditingController emailCtrl;
+  final TextEditingController passwordCtrl;
+  final bool isLoading;
+  final VoidCallback onSubmit;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Form(
-      key: _formKey,
+      key: formKey,
       child: Column(
         children: [
           ElmoTextField(
-            controller: _emailCtrl,
-            label: 'Email Address',
+            controller: emailCtrl,
+            label: l10n.emailLabel,
             hint: 'name@company.com',
             prefixIcon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            enabled: !loading,
+            enabled: !isLoading,
             autofillHints: const [AutofillHints.email],
             validator: (v) {
-              if (v == null || v.isEmpty) return 'Email is required';
-              if (!v.contains('@')) return 'Enter a valid email';
+              if (v == null || v.isEmpty) {
+                return isDark ? 'Email is required' : 'Email is required';
+              }
               return null;
             },
           ),
           const SizedBox(height: 16),
           ElmoTextField(
-            controller: _passwordCtrl,
-            label: 'Password',
+            controller: passwordCtrl,
+            label: l10n.passwordLabel,
             hint: '••••••••',
             prefixIcon: Icons.lock_outline_rounded,
             isPassword: true,
             textInputAction: TextInputAction.done,
-            enabled: !loading,
+            enabled: !isLoading,
             autofillHints: const [AutofillHints.password],
-            onFieldSubmitted: (_) => _handleLogin(),
+            onFieldSubmitted: (_) => onSubmit(),
             validator: (v) {
               if (v == null || v.isEmpty) return 'Password is required';
-              if (v.length < 6) return 'Password must be at least 6 characters';
               return null;
             },
           ),
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: 12),
 
-  Widget _buildError(String error) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
+          // Forgot password (right-aligned, cosmetic)
+          const Align(
+            alignment: AlignmentDirectional.centerEnd,
             child: Text(
-              error,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+              'Forgot password?',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.accent,
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Center(
-      child: Text(
-        'ELMO Fleet Intelligence Platform\nv1.0.0',
-        style: AppTextStyles.labelSmall.copyWith(height: 1.6),
-        textAlign: TextAlign.center,
       ),
     );
   }
 }
 
-// ── Theme toggle button ──────────────────────────────────────────────────────
+// ── Error Banner ───────────────────────────────────────────────────────────────
 
-class _ThemeToggleButton extends ConsumerWidget {
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({super.key, required this.message});
+  final String message;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeProvider);
-    final cs = Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final isNetwork = message.toLowerCase().contains('internet') ||
+        message.toLowerCase().contains('connection') ||
+        message.toLowerCase().contains('timeout') ||
+        message.toLowerCase().contains('server');
 
-    IconData icon;
-    String tooltip;
-    switch (themeMode) {
-      case ThemeMode.light:
-        icon = Icons.light_mode_rounded;
-        tooltip = 'Light';
-      case ThemeMode.dark:
-        icon = Icons.dark_mode_rounded;
-        tooltip = 'Dark';
-      default:
-        icon = Icons.settings_suggest_rounded;
-        tooltip = 'System';
-    }
-
-    return GestureDetector(
-      onTap: () => _showThemePicker(context, ref, themeMode),
-      child: Tooltip(
-        message: tooltip,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: cs.outline.withOpacity(0.4),
-              width: 0.8,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: 0.3),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isNetwork ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
+            color: AppColors.error,
+            size: 17,
           ),
-          child: Icon(icon, size: 19, color: AppColors.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.error,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Sign In Button ─────────────────────────────────────────────────────────────
+
+class _SignInButton extends StatelessWidget {
+  const _SignInButton({
+    required this.isLoading,
+    required this.onPressed,
+    required this.l10n,
+  });
+
+  final bool isLoading;
+  final VoidCallback? onPressed;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        height: 54,
+        decoration: BoxDecoration(
+          gradient: onPressed != null
+              ? const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [AppColors.accent, AppColors.accentDark],
+                )
+              : null,
+          color: onPressed == null
+              ? AppColors.textMuted.withValues(alpha: 0.3)
+              : null,
+          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius + 2),
+          boxShadow: onPressed != null
+              ? [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.signInButton,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded,
+                        color: Colors.white, size: 18),
+                  ],
+                ),
         ),
       ),
     );
   }
+}
 
-  void _showThemePicker(BuildContext context, WidgetRef ref, ThemeMode current) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _ThemePickerSheet(current: current, ref: ref),
+// ── Footer ─────────────────────────────────────────────────────────────────────
+
+class _Footer extends StatelessWidget {
+  const _Footer({required this.isDark});
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Divider(
+          color: isDark
+              ? AppColors.divider.withValues(alpha: 0.5)
+              : AppColors.lightDivider,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                gradient: AppColors.accentGradient,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.route_rounded,
+                  color: Colors.white, size: 11),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'ELMO Fleet Intelligence  ·  v1.0.0',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: isDark ? AppColors.textMuted : AppColors.lightTextMuted,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-class _ThemePickerSheet extends StatelessWidget {
-  const _ThemePickerSheet({required this.current, required this.ref});
+// ── Language Sheet ─────────────────────────────────────────────────────────────
 
+class _LanguageSheet extends StatelessWidget {
+  const _LanguageSheet({required this.current, required this.ref});
+  final Locale current;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.lg,
+        AppSpacing.screenPadding,
+        MediaQuery.of(context).padding.bottom + AppSpacing.lg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.outline.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            context.l10n.selectLanguage,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ...appSupportedLocales.map((info) {
+            final isSelected =
+                info.locale.languageCode == current.languageCode;
+            return ListTile(
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(info.locale);
+                Navigator.of(context).pop();
+              },
+              leading: Text(info.flag,
+                  style: const TextStyle(fontSize: 24)),
+              title: Text(
+                info.nativeName,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppColors.accent : cs.onSurface,
+                ),
+              ),
+              subtitle: Text(
+                info.englishName,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              trailing: isSelected
+                  ? Container(
+                      width: 22,
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 13),
+                    )
+                  : null,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm, vertical: 2),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Theme Sheet ────────────────────────────────────────────────────────────────
+
+class _ThemeSheet extends StatelessWidget {
+  const _ThemeSheet({required this.current, required this.ref});
   final ThemeMode current;
   final WidgetRef ref;
 
@@ -288,9 +868,27 @@ class _ThemePickerSheet extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     final options = [
-      (ThemeMode.light, Icons.light_mode_rounded, 'Light', 'Bright & clear'),
-      (ThemeMode.dark, Icons.dark_mode_rounded, 'Dark', 'Easy on the eyes'),
-      (ThemeMode.system, Icons.settings_suggest_rounded, 'System', 'Follows device'),
+      (
+        ThemeMode.light,
+        Icons.light_mode_rounded,
+        'Light',
+        'Bright & clear',
+        const Color(0xFFF59E0B)
+      ),
+      (
+        ThemeMode.dark,
+        Icons.dark_mode_rounded,
+        'Dark',
+        'Easy on the eyes',
+        AppColors.accentLight
+      ),
+      (
+        ThemeMode.system,
+        Icons.settings_suggest_rounded,
+        'System',
+        'Follows device',
+        AppColors.purple
+      ),
     ];
 
     return Padding(
@@ -309,19 +907,23 @@ class _ThemePickerSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: cs.outline.withOpacity(0.3),
+                color: cs.outline.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            'Appearance',
-            style: AppTextStyles.headlineSmall.copyWith(color: cs.onSurface),
+            context.l10n.appearance,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           ...options.map((opt) {
-            final (mode, icon, label, sub) = opt;
+            final (mode, icon, label, sub, color) = opt;
             final selected = current == mode;
             return ListTile(
               onTap: () {
@@ -333,40 +935,37 @@ class _ThemePickerSheet extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: selected
-                      ? AppColors.accent.withOpacity(0.12)
+                      ? color.withValues(alpha: 0.15)
                       : cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: selected ? AppColors.accent : cs.onSurface.withOpacity(0.5),
-                ),
+                child: Icon(icon,
+                    size: 20, color: selected ? color : cs.onSurface.withValues(alpha: 0.45)),
               ),
               title: Text(
                 label,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: cs.onSurface,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight:
+                      selected ? FontWeight.w700 : FontWeight.w400,
+                  color: selected ? cs.onSurface : cs.onSurface,
                 ),
               ),
               subtitle: Text(
                 sub,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: cs.onSurface.withOpacity(0.5),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cs.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               trailing: selected
-                  ? Icon(Icons.check_circle_rounded,
-                      color: AppColors.accent, size: 20)
+                  ? const Icon(Icons.check_circle_rounded,
+                      color: AppColors.accent, size: 22)
                   : null,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-              ),
+                  borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: 2,
-              ),
+                  horizontal: AppSpacing.sm, vertical: 2),
             );
           }),
         ],

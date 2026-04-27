@@ -7,7 +7,7 @@ import '../../../../shared/providers/core_providers.dart';
 
 final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
   return AnalyticsRepositoryImpl(
-    AnalyticsRemoteDataSource(ref.read(dioClientProvider)),
+    AnalyticsRemoteDataSource(ref.read(traccarClientProvider)),
   );
 });
 

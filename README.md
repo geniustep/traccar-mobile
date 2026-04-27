@@ -1,160 +1,198 @@
-# ELMO Fleet Intelligence — Flutter Mobile App
+# ELMO GPS — منصة إدارة الأسطول الذكية
 
-A production-ready Flutter frontend for the **ELMO Smart Fleet Intelligence Platform**.
+تطبيق Flutter احترافي لتتبع الأسطول في الوقت الفعلي، مبني على خادم [Traccar](https://www.traccar.org/) مفتوح المصدر.
 
 ---
 
-## Architecture
+## الميزات الرئيسية
 
-Clean Architecture with feature-first folder organisation:
+| الميزة | الوصف |
+|--------|--------|
+| **خريطة مباشرة** | تتبع جميع المركبات على الخريطة بتحديثات فورية عبر WebSocket |
+| **لوحة التحكم** | ملخص يومي للأسطول: المركبات النشطة، المسافة، الرحلات، التنبيهات |
+| **إدارة المركبات** | بيانات كاملة لكل مركبة مع الحالة، السرعة، والموقع |
+| **التنبيهات** | سجل كامل للأحداث مع إشعارات فورية عبر WebSocket |
+| **تقارير الرحلات** | تحليل مفصل للمسارات والرحلات |
+| **التحليلات** | إحصائيات أسبوعية للأسطول: المسافة، الكفاءة، تجاوزات السرعة |
+| **الإشعارات** | تغذية مباشرة بالأحداث (تجاوز سرعة، مغادرة منطقة، إنذارات) |
+| **متعدد البيئات** | Dev / Staging / Production عبر `--dart-define` |
+
+---
+
+## البنية التقنية
 
 ```
 lib/
-  app/              # Router, App widget, MainShell (bottom nav)
-  core/
-    config/         # AppConfig (env-based base URLs)
-    constants/      # API paths, storage keys, app constants
-    network/        # DioClient + AuthInterceptor (token refresh)
-    storage/        # SecureStorageService (flutter_secure_storage)
-    theme/          # AppColors, AppTextStyles, AppSpacing, AppTheme
-    utils/          # DateFormatter, FormatUtils
-    widgets/        # ElmoCard, ElmoButton, ElmoTextField, StatusBadge, etc.
-  features/
-    auth/           # Login screen, JWT token handling, AuthNotifier
-    dashboard/      # Fleet summary, insights, quick actions
-    vehicles/       # Fleet list, search/filter, vehicle detail
-    map/            # Live map (Google Maps), vehicle markers, auto-refresh
-    trips/          # Trip history cards, distance/duration/speed stats
-    alerts/         # All alerts, smart alerts, severity badges
-    analytics/      # Weekly KPIs, bar chart, efficiency score
-    notifications/  # Push notification centre, read/unread state
-    settings/       # Profile, preferences, sign out
-  shared/
-    mock/           # MockData — fallback data during development
-    providers/      # Core Riverpod providers (DioClient, storage, etc.)
+├── app/                    # التطبيق الجذري، التوجيه (go_router)
+├── core/
+│   ├── api/                # ApiConfig، ApiEnvironment، TraccarEndpoints
+│   ├── config/             # AppConfig (shim → ApiEnvironment)
+│   ├── error/              # AppException ونوع كامل من الأخطاء
+│   ├── models/             # TraccarDevice، TraccarPosition، TraccarEvent
+│   ├── network/            # TraccarClient (Dio + Result<T>)، DioClient (legacy)
+│   ├── response/           # Result<S,F> — نمط الإرجاع الموحد
+│   ├── socket/             # TraccarSocketService، SocketEventParser
+│   └── storage/            # SecureStorageService
+├── features/               # Clean Architecture بالميزة
+│   ├── auth/               # تسجيل الدخول، جلسة Traccar
+│   ├── dashboard/          # ملخص + رؤى
+│   ├── vehicles/           # قائمة + تفاصيل المركبات
+│   ├── map/                # خريطة مباشرة + تتبع المركبة
+│   ├── alerts/             # سجل التنبيهات
+│   ├── trips/              # تقارير الرحلات
+│   ├── analytics/          # التحليلات الأسبوعية
+│   └── notifications/      # تغذية الإشعارات
+└── shared/
+    └── providers/          # core_providers، traccar_providers
 ```
 
-Each feature follows `data / domain / presentation` layering.
+---
+
+## API vs WebSocket — متى يُستخدم كل منهما؟
+
+| النوع | متى | أمثلة |
+|-------|-----|--------|
+| **REST API** | بيانات تاريخية، تحميل أولي، عمليات CRUD | تسجيل الدخول، تقارير الرحلات، التحليلات |
+| **WebSocket** | بيانات الوقت الفعلي، التحديثات المستمرة | مواضع المركبات على الخريطة، التنبيهات الفورية، حالة الأجهزة |
+
+### تدفق البيانات
+
+```
+المستخدم يفتح الخريطة
+    ↓
+REST: GET /devices + /positions  →  تحميل كامل مع البيانات الوصفية
+    ↓
+WebSocket: positions updates      →  تحديث فوري للإحداثيات (بدون REST)
+    ↓
+mapVehiclesProvider               →  يدمج الاثنين تلقائياً في Riverpod
+```
 
 ---
 
-## Tech Stack
+## متطلبات التشغيل
 
-| Concern | Library |
-|---|---|
-| State management | flutter_riverpod |
-| Navigation | go_router |
-| HTTP client | dio |
-| Secure token storage | flutter_secure_storage |
-| Local preferences | shared_preferences |
-| Maps | google_maps_flutter |
-| Formatting | intl |
+- **Flutter** ≥ 3.22 (Dart ≥ 3.3)
+- **خادم Traccar** (v5.x / v6.x) — يمكن تشغيله محلياً أو عبر السحابة
+- **مفتاح Google Maps API** مع Maps SDK for Android / iOS مفعّل
 
 ---
 
-## Setup
+## الإعداد السريع
 
-### 1. Install dependencies
+### 1. استنسخ المشروع
 
 ```bash
+git clone https://github.com/your-org/elmogps.git
+cd elmogps
 flutter pub get
 ```
 
-### 2. Configure API base URL
+### 2. إعداد البيئات
 
-Edit `lib/core/config/app_config.dart`:
+يتم التحكم في جميع الإعدادات عبر `ApiEnvironment` (`lib/core/api/api_environment.dart`):
+
+| البيئة | baseUrl | socketUrl |
+|--------|---------|-----------|
+| `development` | `http://10.0.2.2:8082/api` | `ws://10.0.2.2:8082/api/socket` |
+| `staging` | `https://api.elmogps.com` | `wss://api.elmogps.com/socket` |
+| `production` | `https://api.elmogps.com` | `wss://api.elmogps.com/socket` |
+
+> **ملاحظة للمحاكي Android**: `10.0.2.2` يُمثل `localhost` على الكمبيوتر المضيف.  
+> للجهاز الحقيقي: استخدم عنوان IP الشبكة المحلية لكمبيوترك.
+
+### 3. تشغيل التطبيق
+
+```bash
+# بيئة التطوير (افتراضي)
+flutter run
+
+# بيئة الإنتاج
+flutter run --dart-define=ENV=production
+
+# بيئة الاختبار
+flutter run --dart-define=ENV=staging
+```
+
+### 4. مفتاح Google Maps
+
+أضف المفتاح في `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<meta-data
+    android:name="com.google.android.geo.API_KEY"
+    android:value="YOUR_GOOGLE_MAPS_API_KEY"/>
+```
+
+---
+
+## بناء نسخة الإنتاج
+
+```bash
+# Android APK
+flutter build apk --release --dart-define=ENV=production
+
+# Android App Bundle (Google Play)
+flutter build appbundle --release --dart-define=ENV=production
+```
+
+---
+
+## الاعتماديات الرئيسية
+
+| المكتبة | الإصدار | الاستخدام |
+|---------|---------|-----------|
+| `flutter_riverpod` | ^2.5.1 | إدارة الحالة |
+| `go_router` | ^13.2.0 | التنقل |
+| `dio` | ^5.4.3 | HTTP client |
+| `web_socket_channel` | ^3.0.3 | WebSocket |
+| `google_maps_flutter` | ^2.6.1 | الخرائط |
+| `flutter_secure_storage` | ^9.0.0 | تخزين آمن للجلسة |
+| `connectivity_plus` | ^5.0.2 | مراقبة الاتصال |
+| `google_fonts` | ^6.2.1 | الخطوط |
+
+---
+
+## هيكل الكود الشبكي
+
+### `TraccarClient` — العميل الرئيسي
 
 ```dart
-static const AppConfig development = AppConfig(
-  baseUrl: 'https://api-dev.elmofleet.com/api',
-  ...
+// كل الطلبات تُرجع Result<T, AppException>
+final result = await traccarClient.get<List<TraccarDevice>>(
+  TraccarEndpoints.devices,
+  fromJson: (data) => (data as List).map(TraccarDevice.fromJson).toList(),
+);
+
+result.when(
+  success: (devices) { /* استخدم البيانات */ },
+  failure: (ex)     { /* عرض الخطأ */ },
 );
 ```
 
-Or pass at build time:
+### `TraccarSocketService` — الوقت الفعلي
 
-```bash
-flutter run --dart-define=ENV=production
-```
+```dart
+// تتصل تلقائياً عند تسجيل الدخول
+// وتنقطع عند تسجيل الخروج
+// إعادة الاتصال التلقائي مع Exponential Backoff
 
-### 3. Configure Google Maps
-
-Add your Google Maps API key:
-
-- **Android**: `android/app/src/main/AndroidManifest.xml`  
-  ```xml
-  <meta-data android:name="com.google.android.geo.API_KEY"
-             android:value="YOUR_KEY_HERE"/>
-  ```
-- **iOS**: `ios/Runner/AppDelegate.swift`  
-  ```swift
-  GMSServices.provideAPIKey("YOUR_KEY_HERE")
-  ```
-
-### 4. Run
-
-```bash
-flutter run
+socketService.messageStream.listen((msg) {
+  // msg.positions → List<TraccarPosition>
+  // msg.devices   → List<TraccarDevice>
+  // msg.events    → List<TraccarEvent>
+});
 ```
 
 ---
 
-## Backend API Integration
+## المساهمة
 
-The app is pre-wired to these endpoints (defined in `lib/core/constants/api_constants.dart`):
-
-| Endpoint | Feature |
-|---|---|
-| `POST /auth/login` | Authentication |
-| `POST /auth/refresh` | Token refresh |
-| `GET /auth/me` | Current user |
-| `GET /dashboard/summary` | Fleet KPIs |
-| `GET /dashboard/insights` | Smart insights |
-| `GET /vehicles` | Vehicle list |
-| `GET /vehicles/:id` | Vehicle detail |
-| `GET /vehicles/:id/live` | Live position |
-| `GET /vehicles/:id/trips` | Trip history |
-| `GET /vehicles/:id/alerts` | Per-vehicle alerts |
-| `GET /alerts` | All alerts |
-| `GET /alerts/smart` | Smart/interpreted alerts |
-| `GET /analytics/weekly` | Weekly KPIs |
-| `GET /notifications` | Notification centre |
-| `POST /devices/fcm` | Register FCM token |
-
-All repositories fall back to `MockData` when the API is unavailable — remove fallbacks before going to production.
+1. افتح `feature/your-feature` من `main`
+2. تأكد من عدم وجود أخطاء: `flutter analyze`
+3. أرسل Pull Request مع وصف واضح للتغييرات
 
 ---
 
-## Push Notifications (FCM)
+## الترخيص
 
-FCM integration is stubbed in `lib/features/notifications/services/fcm_service.dart`.  
-To activate:
-
-1. Add `firebase_core` and `firebase_messaging` to `pubspec.yaml`
-2. Configure `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
-3. Uncomment the implementation in `FcmService.initialize()`
-
-The backend token registration call (`POST /devices/fcm`) is already wired — it fires automatically after the token is obtained.
-
----
-
-## Mock Data
-
-`lib/shared/mock/mock_data.dart` contains realistic fallback data for all features.  
-Each repository catches API errors and returns mock data during development.  
-**Remove the `catch (_) { return MockData.xxx; }` blocks before production.**
-
----
-
-## Environment Configuration
-
-```bash
-# Development (default)
-flutter run
-
-# Production
-flutter run --dart-define=ENV=production
-
-# Build release APK
-flutter build apk --dart-define=ENV=production --release
-```
+حقوق محفوظة © 2024 ELMO GPS. جميع الحقوق محفوظة.

@@ -15,6 +15,8 @@ import '../../../trips/presentation/providers/trips_provider.dart';
 import '../../../trips/domain/entities/trip.dart';
 import '../../../alerts/presentation/providers/alerts_provider.dart';
 import '../../../alerts/domain/entities/alert.dart';
+import '../../../../core/models/traccar_position.dart';
+import '../../../../shared/providers/traccar_providers.dart';
 import '../../domain/entities/vehicle.dart';
 import '../providers/vehicles_provider.dart';
 
@@ -28,9 +30,13 @@ class VehicleDetailScreen extends ConsumerWidget {
     final vehicleAsync = ref.watch(vehicleDetailProvider(vehicleId));
     final tripsAsync = ref.watch(vehicleTripsProvider(vehicleId));
     final alertsAsync = ref.watch(vehicleAlertsProvider(vehicleId));
+    final livePositions = ref.watch(livePositionsProvider);
 
     return Scaffold(      body: vehicleAsync.when(
         data: (vehicle) {
+          final deviceId = int.tryParse(vehicle.id);
+          final livePos =
+              deviceId != null ? livePositions[deviceId] : null;
           final status = StatusBadge.fromString(vehicle.status);
           return CustomScrollView(
             slivers: [
@@ -49,9 +55,10 @@ class VehicleDetailScreen extends ConsumerWidget {
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.map_rounded),
-                    onPressed: () => context.go('/map'),
-                    tooltip: 'View on map',
+                    icon: const Icon(Icons.gps_fixed_rounded),
+                    onPressed: () =>
+                        context.push('/vehicles/$vehicleId/track'),
+                    tooltip: 'تتبع السيارة',
                   ),
                 ],
               ),
@@ -65,32 +72,52 @@ class VehicleDetailScreen extends ConsumerWidget {
                       // Status bar
                       ElmoCard(
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _StatusItem(
-                              label: 'Status',
-                              value: StatusBadge(status: status),
-                            ),
-                            _divider(),
-                            _StatusItem(
-                              label: 'Speed',
-                              value: Text(
-                                FormatUtils.speed(vehicle.speed),
-                                style: AppTextStyles.headlineSmall,
+                            Expanded(
+                              child: _StatusItem(
+                                label: 'Statut',
+                                value: StatusBadge(status: status),
                               ),
                             ),
                             _divider(),
-                            _StatusItem(
-                              label: 'Ignition',
-                              value: Icon(
-                                vehicle.ignition
-                                    ? Icons.power_settings_new_rounded
-                                    : Icons.power_off_rounded,
-                                color: vehicle.ignition
-                                    ? AppColors.statusMoving
-                                    : AppColors.textMuted,
-                                size: 22,
+                            Expanded(
+                              child: _StatusItem(
+                                label: 'Vitesse',
+                                value: Text(
+                                  FormatUtils.speed(
+                                    livePos?.speedKmh ?? vehicle.speed,
+                                  ),
+                                  style: AppTextStyles.headlineSmall,
+                                ),
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.md),
+
+                      ElmoCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Télémétrie (temps réel)',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            _TelemetryGrid(
+                              ignition:
+                                  livePos?.ignitionOn ?? vehicle.ignition,
+                              motion: livePos?.motion ?? vehicle.isMoving,
+                              speedKmh: livePos?.speedKmh ?? vehicle.speed,
+                              fuelLiters:
+                                  livePos?.fuelLevel ?? vehicle.fuelLevel,
+                              voltage: livePos?.vehicleVoltage ??
+                                  vehicle.batteryVoltage,
+                              hardBrake: livePos?.hardBrake ?? false,
                             ),
                           ],
                         ),
@@ -129,7 +156,7 @@ class VehicleDetailScreen extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.md),
 
                       // Info grid
-                      _buildInfoGrid(vehicle),
+                      _buildInfoGrid(vehicle, livePos),
 
                       const SizedBox(height: AppSpacing.sectionSpacing),
 
@@ -218,7 +245,7 @@ class VehicleDetailScreen extends ConsumerWidget {
 
   Widget _buildMapSection(BuildContext context, VehicleEntity vehicle) {
     return GestureDetector(
-      onTap: () => context.go('/map'),
+      onTap: () => context.push('/vehicles/$vehicleId/track'),
       child: Container(
         height: 160,
         decoration: BoxDecoration(
@@ -228,7 +255,6 @@ class VehicleDetailScreen extends ConsumerWidget {
         ),
         child: Stack(
           children: [
-            // Map grid lines (decorative)
             CustomPaint(
               painter: _MapGridPainter(),
               child: const SizedBox.expand(),
@@ -245,7 +271,7 @@ class VehicleDetailScreen extends ConsumerWidget {
                       border: Border.all(
                           color: AppColors.accent.withOpacity(0.5), width: 2),
                     ),
-                    child: const Icon(Icons.location_pin,
+                    child: const Icon(Icons.gps_fixed_rounded,
                         color: AppColors.accent, size: 24),
                   ),
                   const SizedBox(height: 8),
@@ -257,7 +283,7 @@ class VehicleDetailScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      'View on Live Map',
+                      'تتبع السيارة',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -274,7 +300,8 @@ class VehicleDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoGrid(VehicleEntity vehicle) {
+  Widget _buildInfoGrid(VehicleEntity vehicle, TraccarPosition? livePos) {
+    final voltage = livePos?.vehicleVoltage ?? vehicle.batteryVoltage;
     return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -291,12 +318,12 @@ class VehicleDetailScreen extends ConsumerWidget {
             label: 'Driver',
             value: vehicle.driverName!,
           ),
-        if (vehicle.batteryVoltage != null)
+        if (voltage != null)
           _InfoGridTile(
             icon: Icons.battery_charging_full_rounded,
             label: 'Battery',
-            value: FormatUtils.voltage(vehicle.batteryVoltage),
-            color: vehicle.batteryVoltage! < 11.8 ? AppColors.warning : null,
+            value: FormatUtils.voltage(voltage),
+            color: voltage < 11.8 ? AppColors.warning : null,
           ),
         _InfoGridTile(
           icon: Icons.gps_fixed_rounded,
@@ -319,6 +346,151 @@ class VehicleDetailScreen extends ConsumerWidget {
       width: 0.5,
       height: 40,
       color: AppColors.border,
+    );
+  }
+}
+
+class _TelemetryGrid extends StatelessWidget {
+  const _TelemetryGrid({
+    required this.ignition,
+    required this.motion,
+    required this.speedKmh,
+    required this.fuelLiters,
+    required this.voltage,
+    required this.hardBrake,
+  });
+
+  final bool ignition;
+  final bool motion;
+  final double speedKmh;
+  final double? fuelLiters;
+  final double? voltage;
+  final bool hardBrake;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _TelemetryCell(
+                label: 'Allumage',
+                child: Icon(
+                  ignition
+                      ? Icons.power_settings_new_rounded
+                      : Icons.power_off_rounded,
+                  color: ignition
+                      ? AppColors.statusMoving
+                      : AppColors.textMuted,
+                  size: 22,
+                ),
+              ),
+            ),
+            Expanded(
+              child: _TelemetryCell(
+                label: 'Mouvement',
+                child: Icon(
+                  motion ? Icons.directions_run_rounded : Icons.pause_circle_outline,
+                  color: motion ? AppColors.accent : AppColors.textMuted,
+                  size: 22,
+                ),
+              ),
+            ),
+            Expanded(
+              child: _TelemetryCell(
+                label: 'Vitesse',
+                child: Text(
+                  FormatUtils.speed(speedKmh),
+                  style: AppTextStyles.labelLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _TelemetryCell(
+                label: 'Carburant',
+                child: Text(
+                  FormatUtils.fuelLevel(fuelLiters),
+                  style: AppTextStyles.labelLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            Expanded(
+              child: _TelemetryCell(
+                label: 'Batterie',
+                child: Text(
+                  FormatUtils.voltage(voltage),
+                  style: AppTextStyles.labelLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+            Expanded(
+              child: _TelemetryCell(
+                label: 'Freinage',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      hardBrake
+                          ? Icons.warning_amber_rounded
+                          : Icons.check_circle_outline_rounded,
+                      color: hardBrake ? AppColors.warning : AppColors.textMuted,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        hardBrake ? 'Dur' : 'OK',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: hardBrake
+                              ? AppColors.warning
+                              : AppColors.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _TelemetryCell extends StatelessWidget {
+  const _TelemetryCell({
+    required this.label,
+    required this.child,
+  });
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        child,
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: AppTextStyles.labelSmall,
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -460,7 +632,7 @@ class _AlertTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  alert.title ?? '',
+                  alert.title,
                   style: AppTextStyles.labelLarge.copyWith(fontSize: 12),
                 ),
                 Text(

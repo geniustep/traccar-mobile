@@ -8,7 +8,7 @@ import '../../../../shared/providers/core_providers.dart';
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   return DashboardRepositoryImpl(
-    DashboardRemoteDataSource(ref.read(dioClientProvider)),
+    DashboardRemoteDataSource(ref.read(traccarClientProvider)),
   );
 });
 

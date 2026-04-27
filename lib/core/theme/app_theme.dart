@@ -1,13 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
-import 'app_text_styles.dart';
 import 'app_spacing.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light {
+  static TextTheme _buildTextTheme(TextTheme base, bool isArabic) {
+    if (isArabic) {
+      return GoogleFonts.cairoTextTheme(base);
+    }
+    return GoogleFonts.nunitoTextTheme(base);
+  }
+
+  static ThemeData light({bool isArabic = false}) {
+    final base = _lightBase();
+    return base.copyWith(
+      textTheme: _buildTextTheme(base.textTheme, isArabic),
+      primaryTextTheme: _buildTextTheme(base.primaryTextTheme, isArabic),
+    );
+  }
+
+  static ThemeData dark({bool isArabic = false}) {
+    final base = _darkBase();
+    return base.copyWith(
+      textTheme: _buildTextTheme(base.textTheme, isArabic),
+      primaryTextTheme: _buildTextTheme(base.primaryTextTheme, isArabic),
+    );
+  }
+
+  static ThemeData _lightBase() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -17,6 +40,7 @@ class AppTheme {
         onPrimary: Colors.white,
         secondary: AppColors.accentLight,
         onSecondary: Colors.white,
+        tertiary: AppColors.purple,
         surface: AppColors.lightSurface,
         onSurface: AppColors.lightTextPrimary,
         error: AppColors.error,
@@ -30,11 +54,6 @@ class AppTheme {
         scrolledUnderElevation: 1,
         shadowColor: AppColors.lightBorder,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.lightTextPrimary,
-        ),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
@@ -63,7 +82,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.lightSurface,
-        indicatorColor: AppColors.accent.withOpacity(0.12),
+        indicatorColor: AppColors.accent.withValues(alpha: 0.12),
         elevation: 4,
         shadowColor: AppColors.lightBorder,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -74,10 +93,7 @@ class AppTheme {
               color: AppColors.accent,
             );
           }
-          return const TextStyle(
-            fontSize: 10,
-            color: AppColors.lightTextMuted,
-          );
+          return const TextStyle(fontSize: 10, color: AppColors.lightTextMuted);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -113,8 +129,6 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.lightTextMuted),
-        labelStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.lightTextSecondary),
         prefixIconColor: AppColors.lightTextMuted,
         suffixIconColor: AppColors.lightTextMuted,
       ),
@@ -126,15 +140,11 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
-          textStyle: AppTextStyles.labelLarge.copyWith(fontSize: 15),
           elevation: 0,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.accent,
-          textStyle: AppTextStyles.labelLarge,
-        ),
+        style: TextButton.styleFrom(foregroundColor: AppColors.accent),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.lightDivider,
@@ -143,46 +153,30 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.lightSurfaceElevated,
-        selectedColor: AppColors.accent.withOpacity(0.15),
-        labelStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.lightTextSecondary),
+        selectedColor: AppColors.accent.withValues(alpha: 0.15),
         side: const BorderSide(color: AppColors.lightBorder),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
         ),
       ),
-      textTheme: TextTheme(
-        displayLarge: AppTextStyles.displayLarge.copyWith(color: AppColors.lightTextPrimary),
-        displayMedium: AppTextStyles.displayMedium.copyWith(color: AppColors.lightTextPrimary),
-        headlineLarge: AppTextStyles.headlineLarge.copyWith(color: AppColors.lightTextPrimary),
-        headlineMedium: AppTextStyles.headlineMedium.copyWith(color: AppColors.lightTextPrimary),
-        headlineSmall: AppTextStyles.headlineSmall.copyWith(color: AppColors.lightTextPrimary),
-        bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.lightTextPrimary),
-        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.lightTextPrimary),
-        bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.lightTextSecondary),
-        labelLarge: AppTextStyles.labelLarge.copyWith(color: AppColors.lightTextPrimary),
-        labelMedium: AppTextStyles.labelMedium.copyWith(color: AppColors.lightTextSecondary),
-        labelSmall: AppTextStyles.labelSmall.copyWith(color: AppColors.lightTextMuted),
-      ),
       iconTheme: const IconThemeData(color: AppColors.lightTextSecondary, size: 22),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.accent,
-      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(color: AppColors.accent),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.accent;
-          return AppColors.lightTextMuted;
+          return states.contains(WidgetState.selected)
+              ? AppColors.accent
+              : AppColors.lightTextMuted;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.accent.withOpacity(0.35);
-          }
-          return AppColors.lightSurfaceElevated;
+          return states.contains(WidgetState.selected)
+              ? AppColors.accent.withValues(alpha: 0.35)
+              : AppColors.lightSurfaceElevated;
         }),
       ),
     );
   }
 
-  static ThemeData get dark {
+  static ThemeData _darkBase() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -192,6 +186,7 @@ class AppTheme {
         onPrimary: AppColors.primary,
         secondary: AppColors.accentLight,
         onSecondary: AppColors.primary,
+        tertiary: AppColors.purple,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
@@ -203,7 +198,6 @@ class AppTheme {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.headlineMedium,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
@@ -231,7 +225,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.accent.withOpacity(0.15),
+        indicatorColor: AppColors.accent.withValues(alpha: 0.15),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
@@ -240,10 +234,7 @@ class AppTheme {
               color: AppColors.accent,
             );
           }
-          return const TextStyle(
-            fontSize: 10,
-            color: AppColors.textMuted,
-          );
+          return const TextStyle(fontSize: 10, color: AppColors.textMuted);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -279,8 +270,6 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-        labelStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary),
         prefixIconColor: AppColors.textMuted,
         suffixIconColor: AppColors.textMuted,
       ),
@@ -292,15 +281,11 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
-          textStyle: AppTextStyles.labelLarge.copyWith(fontSize: 15),
           elevation: 0,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.accent,
-          textStyle: AppTextStyles.labelLarge,
-        ),
+        style: TextButton.styleFrom(foregroundColor: AppColors.accent),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
@@ -309,40 +294,24 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceElevated,
-        selectedColor: AppColors.accent.withOpacity(0.2),
-        labelStyle: AppTextStyles.labelMedium,
+        selectedColor: AppColors.accent.withValues(alpha: 0.2),
         side: const BorderSide(color: AppColors.border),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
         ),
       ),
-      textTheme: const TextTheme(
-        displayLarge: AppTextStyles.displayLarge,
-        displayMedium: AppTextStyles.displayMedium,
-        headlineLarge: AppTextStyles.headlineLarge,
-        headlineMedium: AppTextStyles.headlineMedium,
-        headlineSmall: AppTextStyles.headlineSmall,
-        bodyLarge: AppTextStyles.bodyLarge,
-        bodyMedium: AppTextStyles.bodyMedium,
-        bodySmall: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.labelLarge,
-        labelMedium: AppTextStyles.labelMedium,
-        labelSmall: AppTextStyles.labelSmall,
-      ),
       iconTheme: const IconThemeData(color: AppColors.textSecondary, size: 22),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.accent,
-      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(color: AppColors.accent),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.accent;
-          return AppColors.textMuted;
+          return states.contains(WidgetState.selected)
+              ? AppColors.accent
+              : AppColors.textMuted;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.accent.withOpacity(0.4);
-          }
-          return AppColors.surfaceElevated;
+          return states.contains(WidgetState.selected)
+              ? AppColors.accent.withValues(alpha: 0.4)
+              : AppColors.surfaceElevated;
         }),
       ),
     );

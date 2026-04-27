@@ -1,35 +1,52 @@
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/network/traccar_client.dart';
+import '../../../../core/api/traccar_endpoints.dart';
 import '../models/trip_model.dart';
 
 class TripsRemoteDataSource {
   const TripsRemoteDataSource(this._client);
 
-  final DioClient _client;
+  final TraccarClient _client;
 
+  /// Fetches trips for a device (vehicleId = Traccar deviceId).
+  ///
+  /// Defaults to the last 30 days when [from]/[to] are not provided.
   Future<List<TripModel>> getVehicleTrips(
     String vehicleId, {
     DateTime? from,
     DateTime? to,
   }) async {
-    final params = <String, dynamic>{};
-    if (from != null) params['from'] = DateFormatter.toApiDate(from);
-    if (to != null) params['to'] = DateFormatter.toApiDate(to);
+    final now = DateTime.now().toUtc();
+    final fromDate = (from ?? now.subtract(const Duration(days: 30))).toUtc();
+    final toDate = (to ?? now).toUtc();
 
-    return _client.get<List<TripModel>>(
-      ApiConstants.vehicleTrips(vehicleId),
-      queryParameters: params.isEmpty ? null : params,
+    return (await _client.get<List<TripModel>>(
+      TraccarEndpoints.reportTrips,
+      query: {
+        'deviceId': int.tryParse(vehicleId) ?? vehicleId,
+        'from': fromDate.toIso8601String(),
+        'to': toDate.toIso8601String(),
+      },
       fromJson: (data) => (data as List)
-          .map((e) => TripModel.fromJson(e as Map<String, dynamic>))
+          .whereType<Map<String, dynamic>>()
+          .map(TripModel.fromJson)
           .toList(),
-    );
+    )).getOrThrow();
   }
 
+  /// Fetches a single trip by its composite identifier.
+  /// Traccar doesn't have GET /trips/:id — we fetch the device trips
+  /// and find the matching one by its generated id.
   Future<TripModel> getTrip(String id) async {
-    return _client.get<TripModel>(
-      ApiConstants.tripById(id),
-      fromJson: (data) => TripModel.fromJson(data as Map<String, dynamic>),
-    );
+    // id format: "{deviceId}_{startTime}"
+    final parts = id.split('_');
+    if (parts.length >= 2) {
+      final deviceId = parts[0];
+      final trips = await getVehicleTrips(deviceId);
+      return trips.firstWhere(
+        (t) => t.id == id,
+        orElse: () => trips.first,
+      );
+    }
+    throw Exception('Invalid trip id: $id');
   }
 }

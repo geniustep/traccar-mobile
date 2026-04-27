@@ -7,7 +7,7 @@ import '../../../../shared/providers/core_providers.dart';
 
 final alertsRepositoryProvider = Provider<AlertsRepository>((ref) {
   return AlertsRepositoryImpl(
-    AlertsRemoteDataSource(ref.read(dioClientProvider)),
+    AlertsRemoteDataSource(ref.read(traccarClientProvider)),
   );
 });
 

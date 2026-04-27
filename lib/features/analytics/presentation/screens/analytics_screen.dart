@@ -4,7 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elmo_card.dart';
-import '../../../../core/widgets/elmo_button.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -19,7 +18,9 @@ class AnalyticsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final analyticsAsync = ref.watch(analyticsProvider);
 
-    return Scaffold(      appBar: AppBar(        title: const Text('Analytics'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Analytics'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -60,19 +61,19 @@ class _AnalyticsContent extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
 
           // Weekly bar chart
-          Text('Weekly Distance', style: AppTextStyles.headlineSmall),
+          const Text('Weekly Distance', style: AppTextStyles.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           _WeeklyBarChart(data: data),
           const SizedBox(height: AppSpacing.sectionSpacing),
 
           // Stats grid
-          Text('Fleet KPIs', style: AppTextStyles.headlineSmall),
+          const Text('Fleet KPIs', style: AppTextStyles.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           _StatsGrid(data: data),
           const SizedBox(height: AppSpacing.sectionSpacing),
 
           // Highlights
-          Text('Highlights', style: AppTextStyles.headlineSmall),
+          const Text('Highlights', style: AppTextStyles.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           _HighlightCard(
             icon: Icons.emoji_events_rounded,
@@ -113,7 +114,7 @@ class _PeriodHeader extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Weekly Report', style: AppTextStyles.headlineLarge),
+            const Text('Weekly Report', style: AppTextStyles.headlineLarge),
             Text(
               'Week of ${DateFormatter.toDate(weekStart)}',
               style: AppTextStyles.bodySmall,

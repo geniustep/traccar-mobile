@@ -13,4 +13,8 @@ abstract interface class AuthRepository {
   Future<bool> isLoggedIn();
 
   Future<UserEntity?> getCachedUser();
+
+  /// Re-run POST /session if [JSESSIONID] is missing (e.g. app update) so
+  /// [TraccarSocketService] can send `Cookie` on the WebSocket handshake.
+  Future<void> ensureTraccarSocketSession();
 }

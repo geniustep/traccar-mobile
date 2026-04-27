@@ -13,13 +13,11 @@ class MockData {
   MockData._();
 
   static UserEntity get user => const UserEntity(
-        id: 'usr_001',
+        id: '1',
         name: 'Ahmed Al-Rashidi',
         email: 'ahmed@elmofleet.com',
-        role: 'manager',
-        avatarUrl: null,
         phone: '+966 50 123 4567',
-        organization: 'Al-Rashidi Logistics',
+        administrator: false,
       );
 
   static DashboardSummary get summary => DashboardSummary(

@@ -7,6 +7,7 @@ import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/vehicles/presentation/screens/vehicles_screen.dart';
 import '../features/vehicles/presentation/screens/vehicle_detail_screen.dart';
 import '../features/map/presentation/screens/live_map_screen.dart';
+import '../features/map/presentation/screens/vehicle_tracking_screen.dart';
 import '../features/alerts/presentation/screens/alerts_screen.dart';
 import '../features/alerts/presentation/screens/alert_detail_screen.dart';
 import '../features/trips/presentation/screens/trips_screen.dart';
@@ -16,7 +17,8 @@ import '../features/settings/presentation/screens/settings_screen.dart';
 import 'main_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authNotifier = ValueNotifier<bool>(false);
+  final initialAuth = ref.read(authProvider);
+  final authNotifier = ValueNotifier<bool>(initialAuth.isAuthenticated);
 
   ref.listen<AuthState>(authProvider, (prev, next) {
     if (!next.isLoading) {
@@ -26,7 +28,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     refreshListenable: authNotifier,
-    initialLocation: '/dashboard',
+    initialLocation: initialAuth.isAuthenticated ? '/dashboard' : '/login',
     redirect: (context, state) {
       final auth = ref.read(authProvider);
       if (auth.isLoading) return null;
@@ -77,6 +79,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/vehicles/:id',
         builder: (context, state) => VehicleDetailScreen(
+          vehicleId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/vehicles/:id/track',
+        builder: (context, state) => VehicleTrackingScreen(
           vehicleId: state.pathParameters['id']!,
         ),
       ),

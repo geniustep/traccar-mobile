@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../../../core/network/network_exception.dart';
 import '../../../../shared/providers/core_providers.dart';
 
 // ── Shared Prefs ─────────────────────────────────────────────────────────────
@@ -18,7 +20,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider).valueOrNull;
   if (prefs == null) throw StateError('SharedPreferences not ready');
   return AuthRepositoryImpl(
-    AuthRemoteDataSource(ref.read(dioClientProvider)),
+    AuthRemoteDataSource(ref.read(traccarClientProvider)),
     ref.read(secureStorageServiceProvider),
     prefs,
   );
@@ -100,13 +102,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
       );
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[Auth] Login failed: $e');
+      if (kDebugMode) debugPrintStack(stackTrace: stack, label: '[Auth]');
+
       state = state.copyWith(
         isLoading: false,
-        error: e.toString().replaceFirst('Exception: ', ''),
+        error: _friendlyMessage(e),
       );
       return false;
     }
+  }
+
+  /// Converts any thrown error into a user-readable message.
+  static String _friendlyMessage(Object e) {
+    if (e is NetworkException) {
+      return switch (e.code) {
+        'NO_CONNECTION'      => 'No internet connection. Check your network.',
+        'TIMEOUT'            => 'Connection timed out. Is the server reachable?',
+        'CANCELLED'          => 'Request was cancelled.',
+        'UNAUTHORIZED'       => 'Incorrect email or password.',
+        'FORBIDDEN'          => 'Your account does not have access.',
+        'NOT_FOUND'          => 'Endpoint not found. Check the API path.',
+        'SERVER_ERROR'       => 'Server error. Please try again later.',
+        'UNAVAILABLE'        => 'Service is temporarily unavailable.',
+        'HOST_NOT_FOUND'     => e.message, // already has useful context
+        'CONNECTION_REFUSED' => e.message,
+        'CONNECTION_ERROR'   => e.message,
+        _                    => e.message,
+      };
+    }
+    // Strip Dart's default "Exception: " prefix
+    final raw = e.toString();
+    return raw.startsWith('Exception: ')
+        ? raw.substring('Exception: '.length)
+        : raw;
   }
 
   Future<void> logout() async {

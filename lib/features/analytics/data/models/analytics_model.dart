@@ -27,6 +27,20 @@ class AnalyticsModel {
   final List<double> dailyDistances;
   final List<String> dailyLabels;
 
+  factory AnalyticsModel.empty() => const AnalyticsModel(
+        weeklyDistanceMeters: 0,
+        totalIdleSeconds: 0,
+        overspeedCount: 0,
+        hardBrakingCount: 0,
+        mostActiveVehicle: '--',
+        leastEfficientVehicle: '--',
+        topAlertCategory: '--',
+        weeklyTripCount: 0,
+        fleetEfficiencyScore: 0,
+        dailyDistances: [],
+        dailyLabels: [],
+      );
+
   factory AnalyticsModel.fromJson(Map<String, dynamic> json) {
     final daily = json['dailyDistances'] as List<dynamic>? ?? [];
     final labels = json['dailyLabels'] as List<dynamic>? ?? [];

@@ -239,10 +239,10 @@ class AlertCard extends StatelessWidget {
                     top: 0,
                     right: 0,
                     child: Container(
-                      width: 9,
-                      height: 9,
+                      width: 10,
+                      height: 10,
                       decoration: const BoxDecoration(
-                        color: AppColors.accent,
+                        color: Color(0xFFFF4757),
                         shape: BoxShape.circle,
                       ),
                     ),

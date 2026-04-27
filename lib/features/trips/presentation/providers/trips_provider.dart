@@ -7,7 +7,7 @@ import '../../../../shared/providers/core_providers.dart';
 
 final tripsRepositoryProvider = Provider<TripsRepository>((ref) {
   return TripsRepositoryImpl(
-    TripsRemoteDataSource(ref.read(dioClientProvider)),
+    TripsRemoteDataSource(ref.read(traccarClientProvider)),
   );
 });
 

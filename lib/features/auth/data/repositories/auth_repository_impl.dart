@@ -19,23 +19,26 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final response = await _dataSource.login(email, password);
-    final accessToken = response['accessToken'] as String;
-    final refreshToken = response['refreshToken'] as String;
-    final userData = response['user'] as Map<String, dynamic>;
-    final user = UserModel.fromJson(userData).toEntity();
+    // 1. Verify credentials by calling POST /session
+    final result = await _dataSource.login(email, password);
+    final userModel = result.user;
 
-    await _storage.saveAccessToken(accessToken);
-    await _storage.saveRefreshToken(refreshToken);
-    await _storage.saveUserId(user.id);
-    await _prefs.setString(StorageKeys.userJson, jsonEncode(userData));
+    // 2. Persist credentials for Basic auth + JSESSIONID for WebSocket
+    await _storage.saveCredentials(email, password);
+    await _storage.saveUserId(userModel.id.toString());
+    await _storage.saveJsessionId(result.jsessionId);
 
-    return (user, accessToken, refreshToken);
+    // 3. Cache user JSON locally
+    await _prefs.setString(StorageKeys.userJson, jsonEncode(userModel.toJson()));
+
+    final user = userModel.toEntity();
+    // Return dummy token strings — Traccar uses Basic auth, no real tokens
+    return (user, email, password);
   }
 
   @override
   Future<UserEntity> getMe() async {
-    final model = await _dataSource.getMe();
+    final model = await _dataSource.getSession();
     await _prefs.setString(StorageKeys.userJson, jsonEncode(model.toJson()));
     return model.toEntity();
   }
@@ -50,9 +53,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<bool> isLoggedIn() async {
-    final token = await _storage.getAccessToken();
-    return token != null && token.isNotEmpty;
+  Future<bool> isLoggedIn() => _storage.hasCredentials();
+
+  @override
+  Future<void> ensureTraccarSocketSession() async {
+    if (await _storage.getJsessionId() != null) return;
+    final email = await _storage.getEmail();
+    final password = await _storage.getPassword();
+    if (email == null || password == null) return;
+    try {
+      final r = await _dataSource.login(email, password);
+      await _storage.saveJsessionId(r.jsessionId);
+    } catch (_) {
+      // WebSocket will still use Basic auth if possible.
+    }
   }
 
   @override
@@ -60,7 +74,9 @@ class AuthRepositoryImpl implements AuthRepository {
     final json = _prefs.getString(StorageKeys.userJson);
     if (json == null) return null;
     try {
-      return UserModel.fromJson(jsonDecode(json) as Map<String, dynamic>).toEntity();
+      return UserModel.fromJson(
+        jsonDecode(json) as Map<String, dynamic>,
+      ).toEntity();
     } catch (_) {
       return null;
     }

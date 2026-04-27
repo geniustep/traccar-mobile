@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'shared/providers/traccar_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,13 @@ void main() async {
   );
 
   // Pre-warm SharedPreferences before the widget tree builds
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [
+      traccarSocketServiceProvider.overrideWith(
+        (ref) => ref.read(concreteSocketServiceProvider),
+      ),
+    ],
+  );
   try {
     await container.read(sharedPreferencesProvider.future);
   } catch (_) {}

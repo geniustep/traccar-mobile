@@ -21,18 +21,74 @@ class NotificationModel {
   final String? vehicleId;
   final String? alertId;
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    return NotificationModel(
-      id: json['id']?.toString() ?? '',
-      title: json['title'] as String? ?? '',
-      body: json['body'] as String? ?? json['message'] as String? ?? '',
-      category: json['category'] as String? ?? 'info',
-      isRead: json['isRead'] as bool? ?? false,
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal() ??
-          DateTime.now(),
-      vehicleId: json['vehicleId'] as String?,
-      alertId: json['alertId'] as String?,
+  /// Maps a Traccar event (from `GET /reports/events`) to a notification.
+  factory NotificationModel.fromTraccarEvent(
+    Map<String, dynamic> event, {
+    String deviceName = '',
+  }) {
+    final type = event['type'] as String? ?? '';
+    final attrs = Map<String, dynamic>.from(
+      event['attributes'] as Map? ?? {},
     );
+    return NotificationModel(
+      id: event['id']?.toString() ?? '',
+      title: _title(type),
+      body: _body(type, attrs, deviceName),
+      category: _category(type),
+      isRead: false,
+      createdAt:
+          DateTime.tryParse(event['eventTime'] as String? ?? '')?.toLocal() ??
+              DateTime.now(),
+      vehicleId: event['deviceId']?.toString(),
+      alertId: event['id']?.toString(),
+    );
+  }
+
+  static String _title(String type) {
+    const map = {
+      'deviceOverspeed': 'تجاوز السرعة',
+      'geofenceExit': 'خروج من المنطقة الجغرافية',
+      'geofenceEnter': 'دخول المنطقة الجغرافية',
+      'alarm': 'إنذار',
+      'deviceOffline': 'انقطع الاتصال بالجهاز',
+      'deviceOnline': 'عاد الاتصال بالجهاز',
+      'deviceMoving': 'بدأت الحركة',
+      'deviceStopped': 'توقفت المركبة',
+      'ignitionOn': 'تشغيل المحرك',
+      'ignitionOff': 'إيقاف المحرك',
+      'maintenance': 'تنبيه صيانة',
+    };
+    return map[type] ?? type;
+  }
+
+  static String _body(
+    String type,
+    Map<String, dynamic> attrs,
+    String deviceName,
+  ) {
+    final name = deviceName.isNotEmpty ? deviceName : 'المركبة';
+    switch (type) {
+      case 'deviceOverspeed':
+        final speed = (attrs['speed'] as num?)?.toDouble();
+        if (speed != null) {
+          return '$name: ${(speed * 1.852).toStringAsFixed(0)} كم/س';
+        }
+        return '$name تجاوزت الحد المسموح';
+      case 'geofenceExit':
+        return '$name خرجت من المنطقة المحددة';
+      case 'geofenceEnter':
+        return '$name دخلت المنطقة المحددة';
+      case 'alarm':
+        return '$name — ${attrs['alarm'] ?? 'إنذار'}';
+      default:
+        return name;
+    }
+  }
+
+  static String _category(String type) {
+    if (type == 'alarm' || type == 'deviceOverspeed') return 'critical';
+    if (type == 'geofenceExit') return 'warning';
+    return 'info';
   }
 
   AppNotification toEntity() => AppNotification(

@@ -7,7 +7,7 @@ import '../../../../shared/providers/core_providers.dart';
 
 final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
   return VehicleRepositoryImpl(
-    VehicleRemoteDataSource(ref.read(dioClientProvider)),
+    VehicleRemoteDataSource(ref.read(traccarClientProvider)),
   );
 });
 
