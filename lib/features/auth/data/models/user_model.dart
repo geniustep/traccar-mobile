@@ -73,5 +73,6 @@ class UserModel {
         readonly: readonly,
         disabled: disabled,
         deviceLimit: deviceLimit,
+        attributes: attributes,
       );
 }

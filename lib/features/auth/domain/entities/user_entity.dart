@@ -8,6 +8,7 @@ class UserEntity {
     this.readonly = false,
     this.disabled = false,
     this.deviceLimit = -1,
+    this.attributes = const {},
     // Legacy / display helpers
     this.avatarUrl,
     this.organization,
@@ -22,6 +23,9 @@ class UserEntity {
   final bool readonly;
   final bool disabled;
   final int deviceLimit;
+
+  /// Traccar user attributes (e.g. `{'speedUnit': 'kmh', 'appRole': 'technician'}`).
+  final Map<String, dynamic> attributes;
 
   // ── Display helpers ───────────────────────────────────────────────────────
 
@@ -46,6 +50,7 @@ class UserEntity {
     bool? administrator,
     bool? readonly,
     bool? disabled,
+    Map<String, dynamic>? attributes,
     String? avatarUrl,
     String? organization,
   }) =>
@@ -58,6 +63,7 @@ class UserEntity {
         readonly: readonly ?? this.readonly,
         disabled: disabled ?? this.disabled,
         deviceLimit: deviceLimit,
+        attributes: attributes ?? this.attributes,
         avatarUrl: avatarUrl ?? this.avatarUrl,
         organization: organization ?? this.organization,
       );
