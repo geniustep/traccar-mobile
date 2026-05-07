@@ -1,4 +1,6 @@
 import '../../domain/entities/dashboard_summary.dart';
+import '../services/dashboard_alert_filter.dart';
+import '../services/fleet_status_classifier.dart';
 
 class DashboardSummaryModel {
   const DashboardSummaryModel({
@@ -37,7 +39,7 @@ class DashboardSummaryModel {
     required List<Map<String, dynamic>> trips,
     required List<Map<String, dynamic>> events,
   }) {
-    // Index positions by deviceId
+    // Index positions by deviceId for O(1) lookup
     final posMap = <int, Map<String, dynamic>>{
       for (final p in positions)
         if (p['deviceId'] is int) (p['deviceId'] as int): p,
@@ -45,29 +47,38 @@ class DashboardSummaryModel {
 
     int moving = 0, stopped = 0, idle = 0, offline = 0;
     for (final d in devices) {
-      final status = d['status'] as String? ?? 'offline';
-      if (status == 'offline' || status == 'unknown') {
-        offline++;
-        continue;
-      }
+      final status = d['status'] as String?;
       final pos = posMap[d['id'] as int?];
       final posAttrs =
           Map<String, dynamic>.from(pos?['attributes'] as Map? ?? {});
-      final speedKnots = (pos?['speed'] as num?)?.toDouble() ?? 0;
-      final ignition = posAttrs['ignition'] as bool? ?? false;
+      final speedKnots = (pos?['speed'] as num?)?.toDouble() ?? 0.0;
+      final ignition = posAttrs['ignition'] as bool?;
 
-      if (speedKnots * 1.852 > 2.0) {
-        moving++;
-      } else if (ignition) {
-        idle++;
-      } else {
-        stopped++;
+      // Delegate to the shared classifier — same logic as live WebSocket path
+      final bucket = FleetStatusClassifier.classify(
+        deviceStatus: status,
+        speedKmh: speedKnots * 1.852,
+        ignition: ignition,
+      );
+
+      switch (bucket) {
+        case FleetBucket.moving:
+          moving++;
+        case FleetBucket.stopped:
+          stopped++;
+        case FleetBucket.idle:
+          idle++;
+        case FleetBucket.offline:
+          offline++;
       }
     }
 
+    // Only count events that qualify as dashboard alerts
+    final importantEvents =
+        events.where((e) => DashboardAlertFilter.isImportant(e['type'] as String? ?? '')).toList();
     final criticalTypes = {'alarm', 'deviceOverspeed'};
     final critical =
-        events.where((e) => criticalTypes.contains(e['type'])).length;
+        importantEvents.where((e) => criticalTypes.contains(e['type'])).length;
 
     final totalDistance = trips.fold<double>(
       0,
@@ -80,7 +91,7 @@ class DashboardSummaryModel {
       stoppedVehicles: stopped,
       idleVehicles: idle,
       offlineVehicles: offline,
-      alertsToday: events.length,
+      alertsToday: importantEvents.length,
       criticalAlerts: critical,
       tripsToday: trips.length,
       totalDistanceToday: totalDistance,

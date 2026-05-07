@@ -14,6 +14,13 @@ import '../features/trips/presentation/screens/trips_screen.dart';
 import '../features/analytics/presentation/screens/analytics_screen.dart';
 import '../features/notifications/presentation/screens/notifications_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
+import '../features/commands/presentation/screens/device_commands_screen.dart';
+import '../features/commands/presentation/screens/command_logs_screen.dart';
+import '../features/reports/presentation/screens/reports_screen.dart';
+import '../features/reports/presentation/screens/route_report_map_screen.dart';
+import '../features/reports/presentation/screens/replay_report_screen.dart';
+import '../features/reports/presentation/screens/charts_report_screen.dart';
+import '../features/reports/presentation/providers/reports_providers.dart';
 import 'main_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -69,6 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AnalyticsScreen(),
           ),
           GoRoute(
+            path: '/reports',
+            builder: (context, state) => const ReportsScreen(),
+          ),
+          GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
           ),
@@ -100,6 +111,30 @@ final routerProvider = Provider<GoRouter>((ref) {
           alertId: state.pathParameters['id']!,
         ),
       ),
+
+      // ── Commands routes ─────────────────────────────────────────────────────
+      GoRoute(
+        path: '/vehicles/:id/commands',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id']!) ?? 0;
+          final extra = state.extra;
+          final name = (extra is Map<String, dynamic>)
+              ? (extra['name'] as String? ?? 'Véhicule')
+              : 'Véhicule';
+          return DeviceCommandsScreen(deviceId: id, deviceName: name);
+        },
+      ),
+      GoRoute(
+        path: '/vehicles/:id/commands/logs',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id']!) ?? 0;
+          final extra = state.extra;
+          final name = (extra is Map<String, dynamic>)
+              ? (extra['name'] as String? ?? 'Véhicule')
+              : 'Véhicule';
+          return CommandLogsScreen(deviceId: id, deviceName: name);
+        },
+      ),
       GoRoute(
         path: '/trips/:id',
         builder: (context, state) => TripsScreen(
@@ -109,6 +144,47 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // ── Reports sub-routes ──────────────────────────────────────────────────
+      GoRoute(
+        path: '/reports/route-map',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final params = extra['params'] as ReportFilterParams?;
+          final vehicleName = extra['vehicleName'] as String? ?? '';
+          if (params == null) return const ReportsScreen();
+          return RouteReportMapScreen(
+            params: params,
+            vehicleName: vehicleName,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/reports/replay',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final params = extra['params'] as ReportFilterParams?;
+          final vehicleName = extra['vehicleName'] as String? ?? '';
+          if (params == null) return const ReportsScreen();
+          return ReplayReportScreen(
+            params: params,
+            vehicleName: vehicleName,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/reports/charts',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final params = extra['params'] as ReportFilterParams?;
+          final vehicleName = extra['vehicleName'] as String? ?? '';
+          if (params == null) return const ReportsScreen();
+          return ChartsReportScreen(
+            params: params,
+            vehicleName: vehicleName,
+          );
+        },
       ),
     ],
   );

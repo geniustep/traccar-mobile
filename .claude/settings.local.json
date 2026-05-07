@@ -3,7 +3,10 @@
     "allow": [
       "Bash(flutter pub *)",
       "Bash(flutter analyze *)",
-      "Bash(flutter build *)"
+      "Bash(flutter build *)",
+      "Bash(grep -E \"\\\\.dart$\")",
+      "Bash(python3 -c ' *)",
+      "Bash(Get-ChildItem -Path lib/ -Directory)"
     ]
   }
 }

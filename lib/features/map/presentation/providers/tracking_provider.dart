@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../shared/providers/core_providers.dart';
@@ -5,6 +6,82 @@ import '../../../vehicles/data/datasources/vehicle_remote_datasource.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../data/datasources/route_datasource.dart';
 import '../../../../core/socket/socket_provider.dart';
+
+// ── RouteQuery ────────────────────────────────────────────────────────────────
+
+/// Identifies a route request: vehicle + explicit local from/to datetimes.
+///
+/// Use the factory constructors for common cases:
+/// - [RouteQuery.today]   → today 00:00 → now
+/// - [RouteQuery.forDate] → full calendar day 00:00 → 23:59:59
+@immutable
+class RouteQuery {
+  const RouteQuery({
+    required this.vehicleId,
+    required this.from,
+    required this.to,
+  });
+
+  final String vehicleId;
+
+  /// Start of the range (local time).
+  final DateTime from;
+
+  /// End of the range (local time).
+  final DateTime to;
+
+  DateTime get fromUtc => from.toUtc();
+  DateTime get toUtc   => to.toUtc();
+
+  /// True when both [from] and [to] fall on today's local date.
+  bool get isToday {
+    final now = DateTime.now();
+    return from.year == now.year &&
+        from.month == now.month &&
+        from.day == now.day &&
+        to.year == now.year &&
+        to.month == now.month &&
+        to.day == now.day;
+  }
+
+  /// True when [from] and [to] are on the same calendar day.
+  bool get isSingleDay =>
+      from.year == to.year &&
+      from.month == to.month &&
+      from.day == to.day;
+
+  /// Duration of the requested window.
+  Duration get window => to.difference(from);
+
+  // ── Factories ──────────────────────────────────────────────────────────────
+
+  /// Today: midnight → now.
+  factory RouteQuery.today(String vehicleId) {
+    final now = DateTime.now();
+    return RouteQuery(
+      vehicleId: vehicleId,
+      from: DateTime(now.year, now.month, now.day),
+      to: now,
+    );
+  }
+
+  /// Full calendar day: 00:00:00 → 23:59:59.
+  factory RouteQuery.forDate(String vehicleId, DateTime date) => RouteQuery(
+        vehicleId: vehicleId,
+        from: DateTime(date.year, date.month, date.day),
+        to: DateTime(date.year, date.month, date.day, 23, 59, 59),
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is RouteQuery &&
+      other.vehicleId == vehicleId &&
+      other.from == from &&
+      other.to == to;
+
+  @override
+  int get hashCode => Object.hash(vehicleId, from, to);
+}
 
 // ── Providers ──────────────────────────────────────────────────────────────────
 
@@ -57,7 +134,8 @@ final liveVehicleProvider =
   });
 });
 
-/// Today's route points for a vehicle as LatLng list (for polyline).
+/// Today's route points for a vehicle as LatLng list.
+/// Kept for backwards-compatibility with any caller outside tracking screen.
 final todayRouteProvider =
     FutureProvider.autoDispose.family<List<LatLng>, String>((ref, id) async {
   final ds = ref.read(routeDataSourceProvider);
@@ -65,10 +143,20 @@ final todayRouteProvider =
   return points.map((p) => p.position).toList();
 });
 
-/// Full route points with metadata (speed, time, etc.).
+/// Full route details for a specific [RouteQuery] (vehicleId + date).
+/// This is the primary provider used by the tracking screen.
+final routeDetailProvider =
+    FutureProvider.autoDispose.family<List<RoutePoint>, RouteQuery>(
+        (ref, query) async {
+  final ds = ref.read(routeDataSourceProvider);
+  return ds.getRoute(query.vehicleId, from: query.fromUtc, to: query.toUtc);
+});
+
+/// Today's full route details — thin wrapper over [routeDetailProvider].
 final todayRouteDetailProvider =
     FutureProvider.autoDispose.family<List<RoutePoint>, String>(
         (ref, id) async {
-  final ds = ref.read(routeDataSourceProvider);
-  return ds.getRoute(id);
+  return ref.watch(
+    routeDetailProvider(RouteQuery.today(id)).future,
+  );
 });

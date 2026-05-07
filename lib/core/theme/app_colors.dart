@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// ignore_for_file: use_build_context_synchronously
 class AppColors {
   AppColors._();
 
@@ -195,4 +196,66 @@ class AppColors {
     colors: [Color(0x337C3AED), Color(0x007C3AED)],
     radius: 0.8,
   );
+
+  // ── Theme-aware helpers ────────────────────────────────────────────────────
+
+  static Color backgroundOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? background
+        : lightBackground;
+  }
+
+  static Color surfaceOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? surface
+        : lightSurface;
+  }
+
+  static Color surfaceElevatedOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? surfaceElevated
+        : lightSurfaceElevated;
+  }
+
+  static Color cardBackgroundOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? cardBackground
+        : lightCardBackground;
+  }
+
+  static Color borderOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? border
+        : lightBorder;
+  }
+
+  static Color dividerOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? divider
+        : lightDivider;
+  }
+
+  static Color textPrimaryOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? textPrimary
+        : lightTextPrimary;
+  }
+
+  static Color textSecondaryOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? textSecondary
+        : lightTextSecondary;
+  }
+
+  static Color textMutedOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? textMuted
+        : lightTextMuted;
+  }
+
+  static LinearGradient cardGradientOf(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? cardGradient
+        : lightCardGradient;
+  }
 }

@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/empty_view.dart';
-import '../../../../core/widgets/status_badge.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../domain/entities/vehicle.dart';
 import '../providers/vehicles_provider.dart';
 import '../widgets/vehicle_card.dart';
@@ -29,20 +29,19 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final filter = ref.watch(vehicleFilterProvider);
     final allAsync = ref.watch(vehiclesListProvider);
     final filteredAsync = ref.watch(filteredVehiclesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ── App bar ─────────────────────────────────────────────────────────
+          // ── App bar ───────────────────────────────────────────────────────
           SliverAppBar(
             pinned: true,
             floating: true,
-            backgroundColor: AppColors.surface,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             title: AnimatedSwitcher(
@@ -51,6 +50,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                   ? _SearchField(
                       key: const ValueKey('search'),
                       controller: _searchController,
+                      hint: l10n.searchHint,
                       onChanged: (q) =>
                           ref.read(vehicleFilterProvider.notifier).setQuery(q),
                       onClose: () {
@@ -59,13 +59,12 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                         ref.read(vehicleFilterProvider.notifier).setQuery('');
                       },
                     )
-                  : const Align(
-                      key: ValueKey('title'),
+                  : Align(
+                      key: const ValueKey('title'),
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'لائحة المركبات',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
+                        l10n.vehicleList,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
                         ),
@@ -75,25 +74,25 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
             actions: [
               if (!_searchActive)
                 IconButton(
-                  icon: const Icon(Icons.search_rounded,
-                      color: AppColors.textSecondary),
-                  tooltip: 'بحث',
+                  icon: const Icon(Icons.search_rounded),
+                  tooltip: l10n.searchTooltip,
                   onPressed: () => setState(() => _searchActive = true),
                 ),
               IconButton(
-                icon: const Icon(Icons.refresh_rounded,
-                    color: AppColors.textSecondary),
-                tooltip: 'تحديث',
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: l10n.refreshTooltip,
                 onPressed: () => ref.invalidate(vehiclesListProvider),
               ),
             ],
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: AppColors.border),
+              child: Container(
+                  height: 1,
+                  color: AppColors.borderOf(context)),
             ),
           ),
 
-          // ── Fleet stats summary ──────────────────────────────────────────────
+          // ── Fleet stats summary ──────────────────────────────────────────
           SliverToBoxAdapter(
             child: allAsync.whenOrNull(
                   data: (vehicles) => _FleetStatsBar(vehicles: vehicles),
@@ -101,7 +100,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                 const SizedBox.shrink(),
           ),
 
-          // ── Sticky filter chips ──────────────────────────────────────────────
+          // ── Sticky filter chips ──────────────────────────────────────────
           SliverPersistentHeader(
             pinned: true,
             delegate: _FilterDelegate(
@@ -112,9 +111,14 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
             ),
           ),
 
-          // ── Vehicle list ─────────────────────────────────────────────────────
+          // ── Vehicle list ─────────────────────────────────────────────────
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              4,
+              16,
+              16 + MediaQuery.paddingOf(context).bottom,
+            ),
             sliver: filteredAsync.when(
               data: (vehicles) {
                 if (vehicles.isEmpty) {
@@ -123,28 +127,30 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                       padding: const EdgeInsets.only(top: 48),
                       child: EmptyView(
                         icon: Icons.directions_car_outlined,
-                        title: 'لا توجد مركبات',
+                        title: l10n.noVehicles,
                         message: filter.query.isNotEmpty ||
                                 filter.statusFilter != null
-                            ? 'جرّب تغيير معايير البحث أو الفلتر.'
-                            : 'لا توجد مركبات مسجلة.',
+                            ? l10n.tryChangingFilters
+                            : l10n.noVehiclesRegistered,
                       ),
                     ),
                   );
                 }
                 return SliverList.separated(
                   itemCount: vehicles.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: 10),
                   itemBuilder: (context, i) => VehicleCard(
                     vehicle: vehicles[i],
-                    onTap: () => context.push('/vehicles/${vehicles[i].id}'),
+                    onTap: () =>
+                        context.push('/vehicles/${vehicles[i].id}'),
                   ),
                 );
               },
-              loading: () => const SliverToBoxAdapter(
+              loading: () => SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 64),
-                  child: LoadingView(message: 'جار تحميل الأسطول…'),
+                  padding: const EdgeInsets.only(top: 64),
+                  child: LoadingView(message: l10n.loadingFleet),
                 ),
               ),
               error: (e, _) => SliverToBoxAdapter(
@@ -167,11 +173,13 @@ class _SearchField extends StatelessWidget {
   const _SearchField({
     super.key,
     required this.controller,
+    required this.hint,
     required this.onChanged,
     required this.onClose,
   });
 
   final TextEditingController controller;
+  final String hint;
   final ValueChanged<String> onChanged;
   final VoidCallback onClose;
 
@@ -181,16 +189,19 @@ class _SearchField extends StatelessWidget {
       controller: controller,
       autofocus: true,
       onChanged: onChanged,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+      style: TextStyle(
+          color: AppColors.textPrimaryOf(context), fontSize: 15),
       decoration: InputDecoration(
-        hintText: 'البحث بالاسم أو رقم اللوحة…',
-        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+        hintText: hint,
+        hintStyle: TextStyle(
+            color: AppColors.textMutedOf(context), fontSize: 14),
         border: InputBorder.none,
         isDense: true,
         contentPadding: EdgeInsets.zero,
         suffixIcon: IconButton(
-          icon: const Icon(Icons.close_rounded,
-              size: 20, color: AppColors.textSecondary),
+          icon: Icon(Icons.close_rounded,
+              size: 20,
+              color: AppColors.textSecondaryOf(context)),
           onPressed: onClose,
         ),
       ),
@@ -207,26 +218,28 @@ class _FleetStatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final moving = vehicles.where((v) => v.isMoving).length;
     final stopped = vehicles.where((v) => v.isStopped).length;
     final idle = vehicles.where((v) => v.isIdle).length;
     final offline = vehicles.where((v) => v.isOffline).length;
 
     return Container(
-      color: AppColors.surface,
+      color: AppColors.surfaceOf(context),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.directions_car_filled_rounded,
-                  size: 13, color: AppColors.textMuted),
+              Icon(Icons.directions_car_filled_rounded,
+                  size: 13,
+                  color: AppColors.textMutedOf(context)),
               const SizedBox(width: 5),
               Text(
-                'إجمالي الأسطول: ${vehicles.length} مركبة',
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                l10n.totalFleetCount(vehicles.length),
+                style: TextStyle(
+                  color: AppColors.textMutedOf(context),
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
@@ -240,7 +253,7 @@ class _FleetStatsBar extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   count: moving,
-                  label: 'متحركة',
+                  label: l10n.statusMovingPlural,
                   icon: Icons.play_circle_filled_rounded,
                   color: AppColors.statusMoving,
                 ),
@@ -249,7 +262,7 @@ class _FleetStatsBar extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   count: stopped,
-                  label: 'متوقفة',
+                  label: l10n.statusStoppedPlural,
                   icon: Icons.stop_circle_rounded,
                   color: AppColors.statusStopped,
                 ),
@@ -258,7 +271,7 @@ class _FleetStatsBar extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   count: idle,
-                  label: 'خاملة',
+                  label: l10n.statusIdlePlural,
                   icon: Icons.pause_circle_filled_rounded,
                   color: AppColors.statusIdle,
                 ),
@@ -267,7 +280,7 @@ class _FleetStatsBar extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   count: offline,
-                  label: 'مقطوعة',
+                  label: l10n.statusOfflinePlural,
                   icon: Icons.wifi_off_rounded,
                   color: AppColors.statusOffline,
                 ),
@@ -349,12 +362,12 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
   final AsyncValue<List<VehicleEntity>> allAsync;
   final ValueChanged<String?> onStatusChanged;
 
-  static const _items = [
-    (label: 'الكل', status: null as String?),
-    (label: 'متحرك', status: 'moving'),
-    (label: 'متوقف', status: 'stopped'),
-    (label: 'خامل', status: 'idle'),
-    (label: 'مقطوع', status: 'offline'),
+  static const _statuses = [
+    null,
+    'moving',
+    'stopped',
+    'idle',
+    'offline',
   ];
 
   int _count(String? status) {
@@ -372,28 +385,41 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
         _ => AppColors.accent,
       };
 
+  String _chipLabel(String? status, AppLocalizations l10n) =>
+      switch (status) {
+        'moving' => l10n.filterMoving,
+        'stopped' => l10n.filterStopped,
+        'idle' => l10n.filterIdle,
+        'offline' => l10n.filterOffline,
+        _ => l10n.filterAll,
+      };
+
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final l10n = context.l10n;
     return Container(
-      color: AppColors.background,
+      color: AppColors.backgroundOf(context),
       child: Column(
         children: [
           Expanded(
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _items.length,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: _statuses.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
-                final item = _items[i];
-                final isSelected = item.status == null
+                final status = _statuses[i];
+                final isSelected = status == null
                     ? filter.statusFilter == null
-                    : filter.statusFilter == item.status;
-                final color = _chipColor(item.status);
-                final count = _count(item.status);
+                    : filter.statusFilter == status;
+                final color = _chipColor(status);
+                final count = _count(status);
+                final label = _chipLabel(status, l10n);
 
                 return GestureDetector(
-                  onTap: () => onStatusChanged(item.status),
+                  onTap: () => onStatusChanged(status),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOut,
@@ -402,19 +428,19 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? color.withValues(alpha: 0.14)
-                          : AppColors.surfaceElevated,
+                          : AppColors.surfaceElevatedOf(context),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
                             ? color.withValues(alpha: 0.55)
-                            : AppColors.border,
+                            : AppColors.borderOf(context),
                         width: isSelected ? 1.2 : 0.8,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (item.status != null) ...[
+                        if (status != null) ...[
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             width: 7,
@@ -429,7 +455,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
                           const SizedBox(width: 6),
                         ],
                         Text(
-                          item.label,
+                          label,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected
@@ -437,7 +463,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
                                 : FontWeight.w500,
                             color: isSelected
                                 ? color
-                                : AppColors.textSecondary,
+                                : AppColors.textSecondaryOf(context),
                           ),
                         ),
                         const SizedBox(width: 7),
@@ -448,7 +474,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? color.withValues(alpha: 0.22)
-                                : AppColors.border,
+                                : AppColors.borderOf(context),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -456,7 +482,9 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: isSelected ? color : AppColors.textMuted,
+                              color: isSelected
+                                  ? color
+                                  : AppColors.textMutedOf(context),
                             ),
                           ),
                         ),
@@ -467,7 +495,9 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
               },
             ),
           ),
-          Container(height: 1, color: AppColors.border),
+          Container(
+              height: 1,
+              color: AppColors.borderOf(context)),
         ],
       ),
     );

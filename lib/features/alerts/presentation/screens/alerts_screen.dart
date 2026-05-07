@@ -9,6 +9,7 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/empty_view.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../providers/alerts_provider.dart';
 import '../../domain/entities/alert.dart';
 
@@ -41,6 +42,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final alertsAsync = ref.watch(alertsProvider);
     final unread = ref.watch(unreadAlertsCountProvider);
 
@@ -48,7 +50,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen>
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Alerts'),
+            Text(l10n.navAlerts),
             if (unread > 0) ...[
               const SizedBox(width: 8),
               Container(
@@ -72,12 +74,12 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.done_all_rounded),
-            tooltip: 'Mark all read',
+            tooltip: l10n.markAllRead,
             onPressed: alertsAsync.hasValue
                 ? () {
-                    alertsAsync.value!.forEach(
-                      (a) => ref.read(alertsProvider.notifier).markAsRead(a.id),
-                    );
+                    for (final a in alertsAsync.value!) {
+                      ref.read(alertsProvider.notifier).markAsRead(a.id);
+                    }
                   }
                 : null,
           ),
@@ -86,21 +88,24 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen>
           controller: _tabController,
           indicatorColor: AppColors.accent,
           labelColor: AppColors.accent,
-          tabs: const [
-            Tab(text: 'All Alerts'),
-            Tab(text: 'Smart Alerts'),
+          tabs: [
+            Tab(text: l10n.allAlerts),
+            Tab(text: l10n.smartAlerts),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _AlertsList(
-            alertsAsync: alertsAsync,
-            onRetry: () => ref.read(alertsProvider.notifier).load(),
-          ),
-          _SmartAlertsList(),
-        ],
+      body: SafeArea(
+        top: false,
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _AlertsList(
+              alertsAsync: alertsAsync,
+              onRetry: () => ref.read(alertsProvider.notifier).load(),
+            ),
+            const _SmartAlertsList(),
+          ],
+        ),
       ),
     );
   }
@@ -114,13 +119,14 @@ class _AlertsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     return alertsAsync.when(
       data: (alerts) {
         if (alerts.isEmpty) {
-          return const EmptyView(
+          return EmptyView(
             icon: Icons.notifications_off_outlined,
-            title: 'No alerts',
-            message: 'Your fleet has no active alerts.',
+            title: l10n.noAlerts,
+            message: l10n.noAlertsMessage,
           );
         }
         return RefreshIndicator(
@@ -145,24 +151,27 @@ class _AlertsList extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const LoadingView(message: 'Loading alerts…'),
+      loading: () => LoadingView(message: l10n.loadingAlerts),
       error: (e, _) => ErrorView(message: e.toString(), onRetry: onRetry),
     );
   }
 }
 
 class _SmartAlertsList extends ConsumerWidget {
+  const _SmartAlertsList();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final smartAsync = ref.watch(smartAlertsProvider);
 
     return smartAsync.when(
       data: (alerts) {
         if (alerts.isEmpty) {
-          return const EmptyView(
+          return EmptyView(
             icon: Icons.lightbulb_outline_rounded,
-            title: 'No smart alerts',
-            message: 'Critical patterns will appear here.',
+            title: l10n.noSmartAlerts,
+            message: l10n.noSmartAlertsMessage,
           );
         }
         return ListView.separated(
@@ -276,8 +285,9 @@ class AlertCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.directions_car_outlined,
-                          size: 11, color: AppColors.textMuted),
+                      Icon(Icons.directions_car_outlined,
+                          size: 11,
+                          color: AppColors.textMutedOf(context)),
                       const SizedBox(width: 3),
                       Text(alert.vehicleName,
                           style: AppTextStyles.labelSmall),

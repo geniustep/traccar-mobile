@@ -49,7 +49,8 @@ class TraccarClient {
         connectTimeout: ApiConfig.connectTimeout,
         receiveTimeout: ApiConfig.receiveTimeout,
         headers: ApiConfig.defaultHeaders,
-        validateStatus: (status) => status != null && status < 500,
+        // Only 2xx is a genuine success; 4xx/5xx go through ErrorInterceptor.
+        validateStatus: (status) => status != null && status >= 200 && status < 300,
       ),
     );
 

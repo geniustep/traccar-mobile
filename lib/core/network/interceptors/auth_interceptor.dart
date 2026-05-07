@@ -30,8 +30,12 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    if (err.response?.statusCode == 401) {
-      // Credentials are wrong or expired — force re-login
+    // Clear stored credentials on 401, but only when this is NOT the login
+    // request itself (login sends Authorization: null explicitly, but check
+    // the path as an extra guard to avoid clearing on wrong-password attempts).
+    final isLoginPath = err.requestOptions.path.contains('/session') &&
+        err.requestOptions.method == 'POST';
+    if (err.response?.statusCode == 401 && !isLoginPath) {
       await _storage.clearAll();
     }
     handler.next(err);

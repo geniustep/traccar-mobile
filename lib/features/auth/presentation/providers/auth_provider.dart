@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +6,7 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../../../core/error/app_exception.dart';
 import '../../../../core/network/network_exception.dart';
 import '../../../../shared/providers/core_providers.dart';
 
@@ -116,6 +118,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Converts any thrown error into a user-readable message.
   static String _friendlyMessage(Object e) {
+    // AppException thrown by getOrThrow() in data-sources
+    if (e is AppException) return _fromAppException(e);
+
+    // DioException from direct _client.dio calls (e.g. login).
+    // ErrorInterceptor wraps the AppException into DioException.error.
+    if (e is DioException) {
+      if (e.error is AppException) {
+        return _fromAppException(e.error as AppException);
+      }
+      return e.message ?? 'Connection error. Please try again.';
+    }
+
+    // Legacy NetworkException
     if (e is NetworkException) {
       return switch (e.code) {
         'NO_CONNECTION'      => 'No internet connection. Check your network.',
@@ -126,18 +141,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'NOT_FOUND'          => 'Endpoint not found. Check the API path.',
         'SERVER_ERROR'       => 'Server error. Please try again later.',
         'UNAVAILABLE'        => 'Service is temporarily unavailable.',
-        'HOST_NOT_FOUND'     => e.message, // already has useful context
-        'CONNECTION_REFUSED' => e.message,
-        'CONNECTION_ERROR'   => e.message,
         _                    => e.message,
       };
     }
-    // Strip Dart's default "Exception: " prefix
+
+    // Fallback — strip Dart's default "Exception: " prefix
     final raw = e.toString();
     return raw.startsWith('Exception: ')
         ? raw.substring('Exception: '.length)
         : raw;
   }
+
+  static String _fromAppException(AppException e) => switch (e.code) {
+        'UNAUTHORIZED'  => 'Incorrect email or password.',
+        'FORBIDDEN'     => 'Your account does not have access.',
+        'NO_CONNECTION' => 'No internet connection. Check your network.',
+        'TIMEOUT'       => 'Connection timed out. Is the server reachable?',
+        'NOT_FOUND'     => 'Endpoint not found. Check the server configuration.',
+        'SERVER_ERROR'  => 'Server error. Please try again later.',
+        'CANCELLED'     => 'Request was cancelled.',
+        _               => e.message,
+      };
 
   Future<void> logout() async {
     await _repository.logout();

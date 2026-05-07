@@ -114,6 +114,23 @@ class MapHelper {
         fillColor: fillColor,
       );
 
+  // ── Route speed colouring ─────────────────────────────────────────────────
+
+  /// Colour band for a given [speedKmh] on the route polyline.
+  ///
+  /// ```
+  /// < 5 km/h   → grey   (stopped / very slow)
+  /// 5–40 km/h  → green  (urban)
+  /// 40–80 km/h → orange (road)
+  /// ≥ 80 km/h  → red    (fast / highway)
+  /// ```
+  static Color routeColorForSpeed(double speedKmh) {
+    if (speedKmh < 5) return const Color(0xFF9E9E9E);
+    if (speedKmh < 40) return const Color(0xFF4CAF50);
+    if (speedKmh < 80) return const Color(0xFFFF9800);
+    return const Color(0xFFF44336);
+  }
+
   // ── Polygons (geofence) ───────────────────────────────────────────────────
 
   /// Builds a [Polygon] for visualising a polygon geofence.

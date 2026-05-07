@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,6 +7,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/empty_view.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../providers/notifications_provider.dart';
 import '../../domain/entities/app_notification.dart';
 
@@ -15,20 +16,24 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final notificationsAsync = ref.watch(notificationsProvider);
     final unread = ref.watch(unreadNotificationsCountProvider);
 
-    return Scaffold(      appBar: AppBar(        leading: IconButton(
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
         title: Row(
           children: [
-            const Text('Notifications'),
+            Text(l10n.notifications),
             if (unread > 0) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(10),
@@ -36,7 +41,7 @@ class NotificationsScreen extends ConsumerWidget {
                 child: Text(
                   '$unread',
                   style: const TextStyle(
-                    color: AppColors.primary,
+                    color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -50,72 +55,74 @@ class NotificationsScreen extends ConsumerWidget {
             TextButton(
               onPressed: () =>
                   ref.read(notificationsProvider.notifier).markAllAsRead(),
-              child: const Text('Mark all read'),
+              child: Text(l10n.markAllRead),
             ),
         ],
       ),
-      body: notificationsAsync.when(
-        data: (notifications) {
-          if (notifications.isEmpty) {
-            return const EmptyView(
-              icon: Icons.notifications_off_outlined,
-              title: 'No notifications',
-              message: 'You\'re all caught up!',
+      body: SafeArea(
+        top: false,
+        child: notificationsAsync.when(
+          data: (notifications) {
+            if (notifications.isEmpty) {
+              return EmptyView(
+                icon: Icons.notifications_off_outlined,
+                title: l10n.noNotifications,
+                message: l10n.allCaughtUp,
+              );
+            }
+
+            final groups = <String, List<AppNotification>>{};
+            for (final n in notifications) {
+              final key = DateFormatter.toDate(n.createdAt);
+              groups.putIfAbsent(key, () => []).add(n);
+            }
+
+            return RefreshIndicator(
+              color: AppColors.accent,
+              onRefresh: () async =>
+                  ref.read(notificationsProvider.notifier).load(),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                itemCount: groups.length,
+                itemBuilder: (context, i) {
+                  final key = groups.keys.elementAt(i);
+                  final items = groups[key]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.sm),
+                        child: Text(key,
+                            style: AppTextStyles.labelMedium),
+                      ),
+                      ...items.map((n) => Padding(
+                            padding: const EdgeInsets.only(
+                                bottom: AppSpacing.sm),
+                            child: _NotificationItem(
+                              notification: n,
+                              onTap: () {
+                                if (!n.isRead) {
+                                  ref
+                                      .read(notificationsProvider.notifier)
+                                      .markAsRead(n.id);
+                                }
+                                if (n.alertId != null) {
+                                  context.push('/alerts/${n.alertId}');
+                                }
+                              },
+                            ),
+                          )),
+                    ],
+                  );
+                },
+              ),
             );
-          }
-
-          // Group by date
-          final groups = <String, List<AppNotification>>{};
-          for (final n in notifications) {
-            final key = DateFormatter.toDate(n.createdAt);
-            groups.putIfAbsent(key, () => []).add(n);
-          }
-
-          return RefreshIndicator(
-            color: AppColors.accent,
-            backgroundColor: AppColors.surface,
-            onRefresh: () async =>
-                ref.read(notificationsProvider.notifier).load(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.screenPadding),
-              itemCount: groups.length,
-              itemBuilder: (context, i) {
-                final key = groups.keys.elementAt(i);
-                final items = groups[key]!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.sm),
-                      child: Text(key, style: AppTextStyles.labelMedium),
-                    ),
-                    ...items.map((n) => Padding(
-                          padding: const EdgeInsets.only(
-                              bottom: AppSpacing.sm),
-                          child: _NotificationItem(
-                            notification: n,
-                            onTap: () {
-                              if (!n.isRead) {
-                                ref
-                                    .read(notificationsProvider.notifier)
-                                    .markAsRead(n.id);
-                              }
-                              if (n.alertId != null) {
-                                context.push('/alerts/${n.alertId}');
-                              }
-                            },
-                          ),
-                        )),
-                  ],
-                );
-              },
-            ),
-          );
-        },
-        loading: () => const LoadingView(message: 'Loading notifications…'),
-        error: (_, __) => const EmptyView(
-          message: 'Failed to load notifications.',
+          },
+          loading: () => LoadingView(message: l10n.loadingNotifications),
+          error: (_, __) => EmptyView(
+            message: l10n.failedToLoadNotifications,
+          ),
         ),
       ),
     );
@@ -153,13 +160,13 @@ class _NotificationItem extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: notification.isRead
-              ? AppColors.cardBackground
-              : AppColors.accent.withOpacity(0.04),
+              ? AppColors.cardBackgroundOf(context)
+              : AppColors.accent.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           border: Border.all(
             color: notification.isRead
-                ? AppColors.border
-                : AppColors.accent.withOpacity(0.2),
+                ? AppColors.borderOf(context)
+                : AppColors.accent.withValues(alpha: 0.2),
             width: 0.5,
           ),
         ),
@@ -170,7 +177,7 @@ class _NotificationItem extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(_categoryIcon(notification.category),
@@ -189,8 +196,8 @@ class _NotificationItem extends StatelessWidget {
                           style: AppTextStyles.labelLarge.copyWith(
                             fontSize: 13,
                             color: notification.isRead
-                                ? AppColors.textSecondary
-                                : AppColors.textPrimary,
+                                ? AppColors.textSecondaryOf(context)
+                                : AppColors.textPrimaryOf(context),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

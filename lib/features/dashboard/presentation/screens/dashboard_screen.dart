@@ -1,41 +1,24 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/socket/socket_provider.dart';
+import '../../../../core/socket/socket_state.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../alerts/domain/entities/alert.dart';
-import '../../../alerts/presentation/providers/alerts_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/fleet_live_provider.dart';
+import '../widgets/animated_live_number.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
 // ─────────────────────────────────────────────────────────────────────────────
-
-DashboardSummary _mergeWithLiveFleet(
-  DashboardSummary base,
-  FleetLiveCounts live,
-) {
-  if (!live.hasLiveData || live.total == 0) return base;
-  return DashboardSummary(
-    totalVehicles: base.totalVehicles,
-    movingVehicles: live.moving,
-    stoppedVehicles: live.stopped,
-    idleVehicles: live.idle,
-    offlineVehicles: live.offline,
-    alertsToday: base.alertsToday,
-    criticalAlerts: base.criticalAlerts,
-    tripsToday: base.tripsToday,
-    totalDistanceToday: base.totalDistanceToday,
-    lastUpdated: base.lastUpdated,
-  );
-}
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -43,10 +26,15 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final summaryAsync = ref.watch(dashboardSummaryProvider);
-    final alertsAsync = ref.watch(alertsProvider);
-    final liveFleet = ref.watch(fleetLiveCountsProvider);
-    final socketAlertsToday = ref.watch(socketEventsTodayCountProvider);
+    // Merged summary (REST + WebSocket) computed once in the provider layer
+    final mergedAsync = ref.watch(mergedDashboardSummaryProvider);
+    final alertsAsync = ref.watch(dashboardAlertsProvider);
+    // Tracks whether socket has ever delivered data (drives animation mode)
+    final isLive = ref.watch(
+      fleetLiveCountsProvider.select((c) => c.hasLiveData),
+    );
+    final socketState =
+        ref.watch(socketStateProvider).valueOrNull ?? const SocketDisconnected();
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -56,8 +44,9 @@ class DashboardScreen extends ConsumerWidget {
           color: AppColors.accent,
           displacement: 20,
           onRefresh: () async {
+            // Refresh REST data; WebSocket keeps running uninterrupted
             ref.read(dashboardNotifierProvider.notifier).refresh();
-            await Future.delayed(const Duration(milliseconds: 600));
+            await Future.delayed(const Duration(milliseconds: 700));
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -72,7 +61,7 @@ class DashboardScreen extends ConsumerWidget {
                     children: [
                       const SizedBox(height: AppSpacing.md),
 
-                      // ── Header ─────────────────────────────────────
+                      // ── Header — static, no socket rebuilds ────────
                       _DashboardHeader(
                         name: user?.name,
                         l10n: l10n,
@@ -86,17 +75,20 @@ class DashboardScreen extends ConsumerWidget {
                       // ── Hero Fleet Card ────────────────────────────
                       Expanded(
                         flex: 27,
-                        child: summaryAsync.when(
+                        child: mergedAsync.when(
                           data: (s) => _HeroFleetCard(
-                            summary: _mergeWithLiveFleet(s, liveFleet),
+                            summary: s,
+                            socketState: socketState,
+                            isLive: isLive,
                             l10n: l10n,
                             isDark: isDark,
                           ),
                           loading: () => const _SkeletonCard(radius: 20),
                           error: (_, __) => _ErrorCard(
                             l10n: l10n,
-                            onRetry: () =>
-                                ref.read(dashboardNotifierProvider.notifier).refresh(),
+                            onRetry: () => ref
+                                .read(dashboardNotifierProvider.notifier)
+                                .refresh(),
                           ),
                         ),
                       ),
@@ -106,9 +98,10 @@ class DashboardScreen extends ConsumerWidget {
                       // ── Status Stats Row ───────────────────────────
                       Expanded(
                         flex: 16,
-                        child: summaryAsync.when(
+                        child: mergedAsync.when(
                           data: (s) => _StatusStatsRow(
-                            summary: _mergeWithLiveFleet(s, liveFleet),
+                            summary: s,
+                            isLive: isLive,
                             l10n: l10n,
                             isDark: isDark,
                           ),
@@ -122,12 +115,12 @@ class DashboardScreen extends ConsumerWidget {
                       // ── Metrics Row ────────────────────────────────
                       Expanded(
                         flex: 19,
-                        child: summaryAsync.when(
+                        child: mergedAsync.when(
                           data: (s) => _MetricsRow(
-                            summary: _mergeWithLiveFleet(s, liveFleet),
+                            summary: s,
+                            isLive: isLive,
                             l10n: l10n,
                             isDark: isDark,
-                            socketAlertsToday: socketAlertsToday,
                           ),
                           loading: () => const _SkeletonCard(radius: 16),
                           error: (_, __) => const SizedBox.shrink(),
@@ -187,7 +180,7 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Header
+// Header  (StatelessWidget — never rebuilds from socket updates)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DashboardHeader extends StatelessWidget {
@@ -300,11 +293,15 @@ class _HeroFleetCard extends StatelessWidget {
     required this.summary,
     required this.l10n,
     required this.isDark,
+    required this.socketState,
+    required this.isLive,
   });
 
   final DashboardSummary summary;
   final AppLocalizations l10n;
   final bool isDark;
+  final SocketState socketState;
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
@@ -355,10 +352,10 @@ class _HeroFleetCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── LIVE indicator ─────────────────────
+                // ── LIVE indicator with pulse ───────────
                 Row(
                   children: [
-                    const _LiveIndicator(),
+                    _LiveIndicator(socketState: socketState),
                     const SizedBox(width: AppSpacing.sm),
                     Text(
                       l10n.fleetOverview.toUpperCase(),
@@ -387,8 +384,10 @@ class _HeroFleetCard extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
-                                '${summary.totalVehicles}',
+                              AnimatedLiveNumber(
+                                value: summary.totalVehicles,
+                                isLive: isLive,
+                                flashColor: AppColors.accent,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 52,
@@ -434,24 +433,28 @@ class _HeroFleetCard extends StatelessWidget {
                             color: AppColors.statusMoving,
                             label: l10n.moving,
                             count: summary.movingVehicles,
+                            isLive: isLive,
                           ),
                           const SizedBox(height: 7),
                           _LegendItem(
                             color: AppColors.statusStopped,
                             label: l10n.stopped,
                             count: summary.stoppedVehicles,
+                            isLive: isLive,
                           ),
                           const SizedBox(height: 7),
                           _LegendItem(
                             color: AppColors.statusIdle,
                             label: l10n.idle,
                             count: summary.idleVehicles,
+                            isLive: isLive,
                           ),
                           const SizedBox(height: 7),
                           _LegendItem(
                             color: AppColors.statusOffline,
                             label: l10n.offline,
                             count: summary.offlineVehicles,
+                            isLive: isLive,
                           ),
                         ],
                       ),
@@ -472,30 +475,97 @@ class _HeroFleetCard extends StatelessWidget {
   }
 }
 
-class _LiveIndicator extends StatelessWidget {
-  const _LiveIndicator();
+// ─────────────────────────────────────────────────────────────────────────────
+// Live Indicator  — pulse dot when connected
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LiveIndicator extends StatefulWidget {
+  const _LiveIndicator({required this.socketState});
+
+  final SocketState socketState;
+
+  @override
+  State<_LiveIndicator> createState() => _LiveIndicatorState();
+}
+
+class _LiveIndicatorState extends State<_LiveIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    _pulseAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(_LiveIndicator old) {
+    super.didUpdateWidget(old);
+    if (old.socketState.runtimeType != widget.socketState.runtimeType) {
+      _updateAnimation();
+    }
+  }
+
+  void _updateAnimation() {
+    final isConnected = widget.socketState is SocketConnected;
+    if (isConnected) {
+      _pulseCtrl.repeat(reverse: true);
+    } else {
+      _pulseCtrl.stop();
+      _pulseCtrl.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final (color, label) = switch (widget.socketState) {
+      SocketConnected() => (AppColors.statusMoving, 'LIVE'),
+      SocketConnecting() => (AppColors.amber, 'CONNECTING'),
+      SocketReconnecting() => (AppColors.amber, 'RECONNECTING'),
+      _ => (AppColors.statusOffline, 'OFFLINE'),
+    };
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: const BoxDecoration(
-            color: AppColors.statusMoving,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: Color(0x7010B981), blurRadius: 6),
-            ],
+        // Pulse dot — only animates when connected
+        AnimatedBuilder(
+          animation: _pulseAnim,
+          builder: (_, __) => Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.7 * _pulseAnim.value),
+                  blurRadius: 8 * _pulseAnim.value,
+                  spreadRadius: 1 * _pulseAnim.value,
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 5),
-        const Text(
-          'LIVE',
+        Text(
+          label,
           style: TextStyle(
-            color: AppColors.statusMoving,
+            color: color,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.5,
@@ -511,11 +581,13 @@ class _LegendItem extends StatelessWidget {
     required this.color,
     required this.label,
     required this.count,
+    required this.isLive,
   });
 
   final Color color;
   final String label;
   final int count;
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
@@ -532,8 +604,10 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          '$count',
+        AnimatedLiveNumber(
+          value: count,
+          isLive: isLive,
+          flashColor: color,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 14,
@@ -613,11 +687,13 @@ class _StatusStatsRow extends StatelessWidget {
     required this.summary,
     required this.l10n,
     required this.isDark,
+    required this.isLive,
   });
 
   final DashboardSummary summary;
   final AppLocalizations l10n;
   final bool isDark;
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
@@ -629,6 +705,7 @@ class _StatusStatsRow extends StatelessWidget {
           color: AppColors.statusMoving,
           icon: Icons.navigation_rounded,
           isDark: isDark,
+          isLive: isLive,
         ),
         const SizedBox(width: AppSpacing.sm),
         _StatChip(
@@ -637,6 +714,7 @@ class _StatusStatsRow extends StatelessWidget {
           color: AppColors.statusStopped,
           icon: Icons.stop_circle_outlined,
           isDark: isDark,
+          isLive: isLive,
         ),
         const SizedBox(width: AppSpacing.sm),
         _StatChip(
@@ -645,6 +723,7 @@ class _StatusStatsRow extends StatelessWidget {
           color: AppColors.statusIdle,
           icon: Icons.timelapse_rounded,
           isDark: isDark,
+          isLive: isLive,
         ),
         const SizedBox(width: AppSpacing.sm),
         _StatChip(
@@ -653,6 +732,7 @@ class _StatusStatsRow extends StatelessWidget {
           color: AppColors.statusOffline,
           icon: Icons.signal_wifi_off_rounded,
           isDark: isDark,
+          isLive: isLive,
         ),
       ],
     );
@@ -666,6 +746,7 @@ class _StatChip extends StatelessWidget {
     required this.color,
     required this.icon,
     required this.isDark,
+    required this.isLive,
   });
 
   final int count;
@@ -673,6 +754,7 @@ class _StatChip extends StatelessWidget {
   final Color color;
   final IconData icon;
   final bool isDark;
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
@@ -691,8 +773,10 @@ class _StatChip extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 15),
             const SizedBox(height: 3),
-            Text(
-              '$count',
+            AnimatedLiveNumber(
+              value: count,
+              isLive: isLive,
+              flashColor: color,
               style: TextStyle(
                 color: color,
                 fontSize: 22,
@@ -728,19 +812,19 @@ class _MetricsRow extends StatelessWidget {
     required this.summary,
     required this.l10n,
     required this.isDark,
-    this.socketAlertsToday = 0,
+    required this.isLive,
   });
 
   final DashboardSummary summary;
   final AppLocalizations l10n;
   final bool isDark;
-  final int socketAlertsToday;
+  final bool isLive;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Distance – tall card
+        // Distance — tall card (no raw int, uses formatted string)
         Expanded(
           flex: 5,
           child: _MetricCard(
@@ -762,7 +846,7 @@ class _MetricsRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        // Right column – two compact cards stacked
+        // Right column — two compact cards stacked
         Expanded(
           flex: 5,
           child: Column(
@@ -771,6 +855,8 @@ class _MetricsRow extends StatelessWidget {
                 child: _MetricCard(
                   icon: Icons.alt_route_rounded,
                   value: '${summary.tripsToday}',
+                  rawValue: summary.tripsToday,
+                  isLive: false, // Trips don't update from socket
                   label: l10n.tripsToday,
                   darkGradient: const LinearGradient(
                     begin: Alignment.topLeft,
@@ -792,10 +878,9 @@ class _MetricsRow extends StatelessWidget {
                 child: _MetricCard(
                   icon: Icons.warning_amber_rounded,
                   value: '${summary.alertsToday}',
+                  rawValue: summary.alertsToday,
+                  isLive: isLive, // Alerts count can increase from socket
                   label: l10n.alertsToday,
-                  footer: socketAlertsToday > 0
-                      ? 'WebSocket · $socketAlertsToday (aujourd’hui)'
-                      : null,
                   darkGradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -829,7 +914,8 @@ class _MetricCard extends StatelessWidget {
     required this.accentColor,
     required this.isDark,
     this.compact = false,
-    this.footer,
+    this.rawValue,
+    this.isLive = false,
   });
 
   final IconData icon;
@@ -840,7 +926,19 @@ class _MetricCard extends StatelessWidget {
   final Color accentColor;
   final bool isDark;
   final bool compact;
-  final String? footer;
+
+  /// When provided, the number rolls smoothly to the new value.
+  final int? rawValue;
+
+  /// When true, scale + flash animation plays for socket-driven changes.
+  final bool isLive;
+
+  static const _valueStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 20,
+    fontWeight: FontWeight.w800,
+    height: 1.1,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -880,15 +978,15 @@ class _MetricCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        value,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          height: 1.1,
-                        ),
-                      ),
+                      if (rawValue != null)
+                        AnimatedLiveNumber(
+                          value: rawValue!,
+                          isLive: isLive,
+                          flashColor: accentColor,
+                          style: _valueStyle,
+                        )
+                      else
+                        Text(value, style: _valueStyle),
                       Text(
                         label,
                         style: TextStyle(
@@ -899,19 +997,6 @@ class _MetricCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (footer != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          footer!,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.45),
-                            fontSize: 8,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -988,10 +1073,12 @@ class _QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _QAItem(Icons.directions_car_rounded, l10n.vehicles, AppColors.accent, onVehiclesTap),
+      _QAItem(Icons.directions_car_rounded, l10n.vehicles, AppColors.accent,
+          onVehiclesTap),
       _QAItem(Icons.map_rounded, l10n.liveMap, AppColors.emerald, onMapTap),
       _QAItem(Icons.alt_route_rounded, l10n.trips, AppColors.purple, onTripsTap),
-      _QAItem(Icons.bar_chart_rounded, l10n.analytics, AppColors.amber, onAnalyticsTap),
+      _QAItem(
+          Icons.bar_chart_rounded, l10n.analytics, AppColors.amber, onAnalyticsTap),
     ];
 
     return Row(
@@ -1017,10 +1104,12 @@ class _QuickActionsRow extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: items[i].color.withOpacity(isDark ? 0.18 : 0.12),
+                        color:
+                            items[i].color.withOpacity(isDark ? 0.18 : 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(items[i].icon, color: items[i].color, size: 18),
+                      child:
+                          Icon(items[i].icon, color: items[i].color, size: 18),
                     ),
                     const SizedBox(height: 5),
                     Text(
@@ -1102,7 +1191,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Recent Alerts
+// Recent Alerts  — slide-in animation for new socket alerts
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _RecentAlertsList extends StatelessWidget {
@@ -1157,16 +1246,32 @@ class _RecentAlertsList extends StatelessWidget {
         ),
       );
     }
+
     final widgets = <Widget>[];
     for (int i = 0; i < alerts.length; i++) {
       if (i > 0) widgets.add(const SizedBox(height: 6));
       widgets.add(
         Expanded(
-          child: _AlertTile(
-            alert: alerts[i],
-            isDark: isDark,
-            color: _severityColor(alerts[i].severity),
-            icon: _severityIcon(alerts[i].severity),
+          // AnimatedSwitcher gives a fade-in when a new alert appears at the top
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 350),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, -0.15),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: _AlertTile(
+              key: ValueKey(alerts[i].id),
+              alert: alerts[i],
+              isDark: isDark,
+              color: _severityColor(alerts[i].severity),
+              icon: _severityIcon(alerts[i].severity),
+            ),
           ),
         ),
       );
@@ -1177,6 +1282,7 @@ class _RecentAlertsList extends StatelessWidget {
 
 class _AlertTile extends StatelessWidget {
   const _AlertTile({
+    super.key,
     required this.alert,
     required this.isDark,
     required this.color,
@@ -1331,8 +1437,7 @@ class _ErrorCard extends StatelessWidget {
           GestureDetector(
             onTap: onRetry,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.error.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -1363,7 +1468,8 @@ class _InlineLoader extends StatelessWidget {
       child: SizedBox(
         width: 20,
         height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+        child:
+            CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
       ),
     );
   }

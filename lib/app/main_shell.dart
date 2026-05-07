@@ -9,12 +9,20 @@ class MainShell extends ConsumerWidget {
 
   final Widget child;
 
-  static const _paths = ['/dashboard', '/vehicles', '/map', '/alerts', '/settings'];
+  static const _paths = [
+    '/dashboard',
+    '/vehicles',
+    '/map',
+    '/alerts',
+    '/reports',
+    '/settings',
+  ];
   static const _activeIcons = [
     Icons.home_rounded,
     Icons.directions_car_rounded,
     Icons.map_rounded,
     Icons.notifications_rounded,
+    Icons.assessment_rounded,
     Icons.person_rounded,
   ];
   static const _icons = [
@@ -22,6 +30,7 @@ class MainShell extends ConsumerWidget {
     Icons.directions_car_outlined,
     Icons.map_outlined,
     Icons.notifications_outlined,
+    Icons.assessment_outlined,
     Icons.person_outline_rounded,
   ];
 
@@ -44,6 +53,7 @@ class MainShell extends ConsumerWidget {
       l10n.navFleet,
       l10n.navMap,
       l10n.navAlerts,
+      l10n.navReports,
       l10n.navProfile,
     ];
 

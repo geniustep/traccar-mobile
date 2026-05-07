@@ -179,8 +179,23 @@ class TraccarEndpoints {
   /// POST /commands/send — send command to device
   static const String commandSend = '/commands/send';
 
-  /// GET /commands/types — available command types for device
+  /// GET /commands/types?deviceId=X — available command types for a device
   static const String commandTypes = '/commands/types';
+
+  /// GET /commands — list saved commands (optionally by deviceId)
+  static const String commands = '/commands';
+
+  /// POST /commands — save a command
+  static const String commandCreate = '/commands';
+
+  /// GET /commands/{id}
+  static String commandById(int id) => '/commands/$id';
+
+  /// PUT /commands/{id}
+  static String commandUpdate(int id) => '/commands/$id';
+
+  /// DELETE /commands/{id}
+  static String commandDelete(int id) => '/commands/$id';
 
   // ── Statistics ────────────────────────────────────────────────────────────
 

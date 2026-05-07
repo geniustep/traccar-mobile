@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -10,6 +10,7 @@ import '../../../../core/widgets/empty_view.dart';
 import '../../../../core/widgets/elmo_card.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../providers/trips_provider.dart';
 import '../../domain/entities/trip.dart';
 
@@ -20,47 +21,54 @@ class TripsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final tripsAsync = ref.watch(vehicleTripsProvider(vehicleId));
 
-    return Scaffold(      appBar: AppBar(        leading: IconButton(
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Trip History'),
+        title: Text(l10n.tripHistory),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today_rounded, size: 18),
-            onPressed: () {}, // TODO: date range picker
-            tooltip: 'Filter by date',
+            onPressed: () {},
+            tooltip: l10n.filterByDate,
           ),
         ],
       ),
-      body: tripsAsync.when(
-        data: (trips) {
-          if (trips.isEmpty) {
-            return const EmptyView(
-              icon: Icons.route_outlined,
-              title: 'No trips recorded',
-              message: 'Trip history will appear here.',
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
-            itemCount: trips.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-            itemBuilder: (context, i) {
-              final trip = trips[i];
-              return TripCard(
-                trip: trip,
-                onTap: () => context.push('/trips/${trip.id}'),
+      body: SafeArea(
+        top: false,
+        child: tripsAsync.when(
+          data: (trips) {
+            if (trips.isEmpty) {
+              return EmptyView(
+                icon: Icons.route_outlined,
+                title: l10n.noTrips,
+                message: l10n.noTripsMessage,
               );
-            },
-          );
-        },
-        loading: () => const LoadingView(message: 'Loading trips…'),
-        error: (e, _) => ErrorView(
-          message: e.toString(),
-          onRetry: () => ref.invalidate(vehicleTripsProvider(vehicleId)),
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
+              itemCount: trips.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (context, i) {
+                final trip = trips[i];
+                return TripCard(
+                  trip: trip,
+                  onTap: () => context.push('/trips/${trip.id}'),
+                );
+              },
+            );
+          },
+          loading: () => LoadingView(message: l10n.loadingTrips),
+          error: (e, _) => ErrorView(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(vehicleTripsProvider(vehicleId)),
+          ),
         ),
       ),
     );
@@ -75,6 +83,7 @@ class TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return ElmoCard(
       onTap: onTap,
       child: Column(
@@ -85,7 +94,7 @@ class TripCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
+                  color: AppColors.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.route_rounded,
@@ -102,7 +111,7 @@ class TripCard extends StatelessWidget {
                     ),
                     Text(
                       '${DateFormatter.toTime(trip.startTime)} – '
-                      '${trip.endTime != null ? DateFormatter.toTime(trip.endTime!) : "Ongoing"}',
+                      '${trip.endTime != null ? DateFormatter.toTime(trip.endTime!) : l10n.ongoingTrip}',
                       style: AppTextStyles.bodySmall,
                     ),
                   ],
@@ -113,12 +122,12 @@ class TripCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.statusMoving.withOpacity(0.12),
+                    color: AppColors.statusMoving.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'Ongoing',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.ongoingTrip,
+                    style: const TextStyle(
                       color: AppColors.statusMoving,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -135,17 +144,17 @@ class TripCard extends StatelessWidget {
             children: [
               _TripStat(
                 icon: Icons.route_rounded,
-                label: 'Distance',
+                label: l10n.distanceLabel,
                 value: FormatUtils.distance(trip.distanceMeters),
               ),
               _TripStat(
                 icon: Icons.timer_rounded,
-                label: 'Duration',
+                label: l10n.durationLabel,
                 value: DateFormatter.duration(trip.durationSeconds),
               ),
               _TripStat(
                 icon: Icons.speed_rounded,
-                label: 'Max speed',
+                label: l10n.maxSpeedLabel,
                 value: FormatUtils.speed(trip.maxSpeedKmh),
               ),
             ],
@@ -153,8 +162,8 @@ class TripCard extends StatelessWidget {
           if (trip.startAddress != null || trip.endAddress != null) ...[
             const SizedBox(height: AppSpacing.md),
             _RouteRow(
-              start: trip.startAddress ?? 'Unknown',
-              end: trip.endAddress ?? 'Unknown',
+              start: trip.startAddress ?? l10n.noData,
+              end: trip.endAddress ?? l10n.noData,
             ),
           ],
         ],
@@ -180,7 +189,8 @@ class _TripStat extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: AppColors.accent),
         const SizedBox(height: 4),
-        Text(value, style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
+        Text(value,
+            style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
         Text(label, style: AppTextStyles.labelSmall),
       ],
     );
@@ -198,22 +208,26 @@ class _RouteRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surfaceElevatedOf(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         children: [
-          _Location(icon: Icons.radio_button_checked, label: start,
+          _Location(
+              icon: Icons.radio_button_checked,
+              label: start,
               color: AppColors.statusMoving),
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: Container(
               width: 1.5,
               height: 12,
-              color: AppColors.border,
+              color: AppColors.borderOf(context),
             ),
           ),
-          _Location(icon: Icons.location_on_rounded, label: end,
+          _Location(
+              icon: Icons.location_on_rounded,
+              label: end,
               color: AppColors.error),
         ],
       ),

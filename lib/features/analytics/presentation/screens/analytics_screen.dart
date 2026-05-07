@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -8,6 +8,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../providers/analytics_provider.dart';
 import '../../domain/entities/analytics_data.dart';
 
@@ -16,11 +17,12 @@ class AnalyticsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final analyticsAsync = ref.watch(analyticsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analytics'),
+        title: Text(l10n.analytics),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -28,12 +30,15 @@ class AnalyticsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: analyticsAsync.when(
-        data: (data) => _AnalyticsContent(data: data),
-        loading: () => const LoadingView(message: 'Loading analytics…'),
-        error: (e, _) => ErrorView(
-          message: e.toString(),
-          onRetry: () => ref.invalidate(analyticsProvider),
+      body: SafeArea(
+        top: false,
+        child: analyticsAsync.when(
+          data: (data) => _AnalyticsContent(data: data),
+          loading: () => LoadingView(message: l10n.loadingAnalytics),
+          error: (e, _) => ErrorView(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(analyticsProvider),
+          ),
         ),
       ),
     );
@@ -47,56 +52,53 @@ class _AnalyticsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.screenPadding),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.screenPadding,
+        AppSpacing.screenPadding,
+        AppSpacing.screenPadding + bottomPadding,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           _PeriodHeader(),
           const SizedBox(height: AppSpacing.sectionSpacing),
-
-          // Efficiency score
           _EfficiencyScoreCard(score: data.fleetEfficiencyScore),
           const SizedBox(height: AppSpacing.md),
-
-          // Weekly bar chart
-          const Text('Weekly Distance', style: AppTextStyles.headlineSmall),
+          Text(l10n.weeklyDistance, style: AppTextStyles.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           _WeeklyBarChart(data: data),
           const SizedBox(height: AppSpacing.sectionSpacing),
-
-          // Stats grid
-          const Text('Fleet KPIs', style: AppTextStyles.headlineSmall),
+          Text(l10n.fleetKPIs, style: AppTextStyles.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           _StatsGrid(data: data),
           const SizedBox(height: AppSpacing.sectionSpacing),
-
-          // Highlights
-          const Text('Highlights', style: AppTextStyles.headlineSmall),
+          Text(l10n.highlightsLabel, style: AppTextStyles.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           _HighlightCard(
             icon: Icons.emoji_events_rounded,
-            label: 'Most active vehicle',
+            label: l10n.mostActiveVehicleLabel,
             value: data.mostActiveVehicle,
             color: AppColors.statusMoving,
           ),
           const SizedBox(height: AppSpacing.sm),
           _HighlightCard(
             icon: Icons.trending_down_rounded,
-            label: 'Least efficient vehicle',
+            label: l10n.leastEfficientVehicleLabel,
             value: data.leastEfficientVehicle,
             color: AppColors.warning,
           ),
           const SizedBox(height: AppSpacing.sm),
           _HighlightCard(
             icon: Icons.warning_amber_rounded,
-            label: 'Top alert category',
+            label: l10n.topAlertCategoryLabel,
             value: data.topAlertCategory,
             color: AppColors.error,
           ),
-
-          const SizedBox(height: 80),
         ],
       ),
     );
@@ -106,6 +108,7 @@ class _AnalyticsContent extends StatelessWidget {
 class _PeriodHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
     return Row(
@@ -114,9 +117,9 @@ class _PeriodHeader extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Weekly Report', style: AppTextStyles.headlineLarge),
+            Text(l10n.weeklyReport, style: AppTextStyles.headlineLarge),
             Text(
-              'Week of ${DateFormatter.toDate(weekStart)}',
+              l10n.weekOfDate(DateFormatter.toDate(weekStart)),
               style: AppTextStyles.bodySmall,
             ),
           ],
@@ -124,11 +127,11 @@ class _PeriodHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.surfaceElevated,
+            color: AppColors.surfaceElevatedOf(context),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.borderOf(context)),
           ),
-          child: const Text('This Week', style: AppTextStyles.labelMedium),
+          child: Text(l10n.thisWeek, style: AppTextStyles.labelMedium),
         ),
       ],
     );
@@ -142,6 +145,7 @@ class _EfficiencyScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final color = score >= 80
         ? AppColors.statusMoving
         : score >= 60
@@ -154,7 +158,10 @@ class _EfficiencyScoreCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withOpacity(0.12), AppColors.cardBackground],
+          colors: [
+            color.withOpacity(0.12),
+            AppColors.cardBackgroundOf(context),
+          ],
         ),
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
         border: Border.all(color: color.withOpacity(0.3)),
@@ -164,7 +171,7 @@ class _EfficiencyScoreCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Fleet Efficiency Score',
+              Text(l10n.fleetEfficiencyScore,
                   style: AppTextStyles.bodySmall),
               Text(
                 '${score.toStringAsFixed(1)}%',
@@ -172,10 +179,10 @@ class _EfficiencyScoreCard extends StatelessWidget {
               ),
               Text(
                 score >= 80
-                    ? 'Excellent performance'
+                    ? l10n.excellentPerformance
                     : score >= 60
-                        ? 'Good, room for improvement'
-                        : 'Needs attention',
+                        ? l10n.goodPerformance
+                        : l10n.needsAttention,
                 style: AppTextStyles.bodySmall.copyWith(color: color),
               ),
             ],
@@ -189,13 +196,14 @@ class _EfficiencyScoreCard extends StatelessWidget {
                 CircularProgressIndicator(
                   value: score / 100,
                   strokeWidth: 7,
-                  backgroundColor: AppColors.surfaceElevated,
+                  backgroundColor: AppColors.surfaceElevatedOf(context),
                   color: color,
                 ),
                 Center(
                   child: Text(
                     '${score.toInt()}',
-                    style: AppTextStyles.headlineSmall.copyWith(color: color),
+                    style:
+                        AppTextStyles.headlineSmall.copyWith(color: color),
                   ),
                 ),
               ],
@@ -224,7 +232,8 @@ class _WeeklyBarChart extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(data.dailyDistances.length, (i) {
-                final ratio = max > 0 ? data.dailyDistances[i] / max : 0.0;
+                final ratio =
+                    max > 0 ? data.dailyDistances[i] / max : 0.0;
                 final isMax = data.dailyDistances[i] == max;
                 return Expanded(
                   child: Padding(
@@ -236,7 +245,8 @@ class _WeeklyBarChart extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 3),
                             child: Text(
-                              FormatUtils.distance(data.dailyDistances[i]),
+                              FormatUtils.distance(
+                                  data.dailyDistances[i]),
                               style: AppTextStyles.labelSmall.copyWith(
                                 fontSize: 9,
                                 color: AppColors.accent,
@@ -255,10 +265,12 @@ class _WeeklyBarChart extends StatelessWidget {
                                   colors: [
                                     isMax
                                         ? AppColors.accent
-                                        : AppColors.accent.withOpacity(0.4),
+                                        : AppColors.accent
+                                            .withOpacity(0.4),
                                     isMax
                                         ? AppColors.accentDark
-                                        : AppColors.accent.withOpacity(0.2),
+                                        : AppColors.accent
+                                            .withOpacity(0.2),
                                   ],
                                 ),
                                 borderRadius: const BorderRadius.vertical(
@@ -299,6 +311,7 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -310,25 +323,25 @@ class _StatsGrid extends StatelessWidget {
       ),
       children: [
         _KPICard(
-          label: 'Total Distance',
+          label: l10n.totalDistance,
           value: FormatUtils.distance(data.weeklyDistanceMeters),
           icon: Icons.route_rounded,
           color: AppColors.accent,
         ),
         _KPICard(
-          label: 'Total Trips',
+          label: l10n.totalTripsLabel,
           value: '${data.weeklyTripCount}',
           icon: Icons.directions_car_rounded,
           color: AppColors.statusMoving,
         ),
         _KPICard(
-          label: 'Idle Time',
+          label: l10n.idleTimeLabel,
           value: DateFormatter.duration(data.totalIdleSeconds),
           icon: Icons.timer_off_rounded,
           color: AppColors.warning,
         ),
         _KPICard(
-          label: 'Overspeed Events',
+          label: l10n.overspeedEvents,
           value: '${data.overspeedCount}',
           icon: Icons.speed_rounded,
           color: AppColors.error,

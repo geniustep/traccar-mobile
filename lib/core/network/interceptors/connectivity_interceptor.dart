@@ -15,8 +15,15 @@ class ConnectivityInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final result = await _connectivity.checkConnectivity();
-    final hasConnection = result != ConnectivityResult.none;
+    // connectivity_plus v5+ returns List<ConnectivityResult>; earlier versions
+    // returned a single ConnectivityResult. Handle both shapes defensively.
+    final dynamic result = await _connectivity.checkConnectivity();
+    final bool hasConnection = switch (result) {
+      final List<dynamic> list =>
+          list.any((r) => r != ConnectivityResult.none),
+      ConnectivityResult.none => false,
+      _ => true,
+    };
 
     if (!hasConnection) {
       return handler.reject(

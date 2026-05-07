@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/models/traccar_device.dart';
 import '../../../../shared/providers/traccar_providers.dart';
+import '../../../vehicles/presentation/providers/vehicles_provider.dart';
 import '../../domain/entities/device_command.dart';
 import '../../domain/entities/resolved_device_command.dart';
 import '../../domain/services/command_execution_service.dart';
@@ -46,11 +47,18 @@ class _DeviceCommandsScreenState extends ConsumerState<DeviceCommandsScreen> {
   Widget build(BuildContext context) {
     final liveDevices = ref.watch(liveDevicesProvider);
     final TraccarDevice? device = liveDevices[widget.deviceId];
-    final isOnline = device?.isOnline ?? false;
 
     final livePositions = ref.watch(livePositionsProvider);
     final livePos = livePositions[widget.deviceId];
-    final currentSpeedKmh = livePos?.speedKmh ?? 0.0;
+
+    // Fallback to REST API when WebSocket is unavailable (e.g. server 503)
+    final vehicleFallback = ref
+        .watch(vehicleDetailProvider(widget.deviceId.toString()))
+        .valueOrNull;
+
+    final isOnline = device?.isOnline ?? vehicleFallback?.isOnline ?? false;
+    final currentSpeedKmh =
+        livePos?.speedKmh ?? vehicleFallback?.speed ?? 0.0;
 
     final resolvedAsync = ref.watch(
       resolvedCommandsProvider((
@@ -74,7 +82,7 @@ class _DeviceCommandsScreenState extends ConsumerState<DeviceCommandsScreen> {
               deviceName: widget.deviceName,
               isOnline: isOnline,
               currentSpeedKmh: currentSpeedKmh,
-              lastUpdate: device?.lastUpdate,
+              lastUpdate: device?.lastUpdate ?? vehicleFallback?.lastUpdate,
             ),
             Expanded(
               child: resolvedAsync.when(

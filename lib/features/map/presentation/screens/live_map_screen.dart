@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/maps/map_config.dart';
 import '../../../../core/maps/map_helper.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -13,6 +14,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/utils/vehicle_category_utils.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../providers/map_provider.dart';
 
@@ -78,10 +80,10 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
       return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
     }
     return switch (status) {
-      'moving' => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      'idle'   => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-      'stopped'=> BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-      _        => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+      'moving'  => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      'idle'    => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      'stopped' => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+      _         => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
     };
   }
 
@@ -95,14 +97,8 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
     };
   }
 
-  static int _iconCodePoint(String type) => switch (type.toLowerCase()) {
-    'truck'                  => 0xe558, // local_shipping
-    'bus'                    => 0xe530, // directions_bus
-    'motorcycle' || 'moto'   => 0xf8b6, // two_wheeler
-    'van'                    => 0xe068, // airport_shuttle
-    'pickup'                 => 0xe558, // local_shipping (small)
-    _                        => 0xe1b0, // directions_car
-  };
+  static int _iconCodePoint(String? type) =>
+      vehicleCategoryIcon(type).codePoint;
 
   static Future<BitmapDescriptor> _buildVehicleMarker(
     VehicleEntity v, {
@@ -110,7 +106,7 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
   }) async {
     const double w = 56;
     const double circleR = 22;
-    const double totalH = 68; // circle(44) + pointer(24)
+    const double totalH = 68;
     const double cx = w / 2;
     const double cy = circleR + 2;
 
@@ -119,7 +115,6 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, w, totalH));
 
-    // 1. Drop shadow beneath circle
     canvas.drawCircle(
       Offset(cx, cy + 3),
       circleR,
@@ -128,7 +123,6 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
 
-    // 2. Teardrop pointer shadow
     final pointerShadow = Path()
       ..moveTo(cx - 8, cy + circleR - 5)
       ..lineTo(cx, totalH)
@@ -141,10 +135,8 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // 3. Circle body
     canvas.drawCircle(Offset(cx, cy), circleR, Paint()..color = color);
 
-    // 4. Teardrop pointer
     final pointer = Path()
       ..moveTo(cx - 8, cy + circleR - 5)
       ..lineTo(cx, totalH - 2)
@@ -152,7 +144,6 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
       ..close();
     canvas.drawPath(pointer, Paint()..color = color);
 
-    // 5. White border ring
     canvas.drawCircle(
       Offset(cx, cy),
       circleR - 0.5,
@@ -162,7 +153,6 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
         ..strokeWidth = isSelected ? 2.5 : 1.5,
     );
 
-    // 6. Vehicle icon (Material Icons font)
     final iconPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(_iconCodePoint(v.type)),
@@ -183,7 +173,6 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
       ),
     );
 
-    // 7. Selected: outer glow ring
     if (isSelected) {
       canvas.drawCircle(
         Offset(cx, cy),
@@ -243,6 +232,7 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final vehiclesAsync = ref.watch(mapVehiclesProvider);
     final selectedId   = ref.watch(selectedMapVehicleProvider);
 
@@ -252,8 +242,9 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
             MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     final mapStyle = isDark ? MapConfig.darkStyle : MapConfig.lightStyle;
 
+    final navBottom = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // ── Full-screen map ────────────────────────────────────────────────
@@ -335,6 +326,7 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
                     if (v == null) return null;
                     return _VehicleBottomCard(
                       vehicle: v,
+                      navBottom: navBottom,
                       onClose: () =>
                           ref.read(selectedMapVehicleProvider.notifier).state = null,
                       onTrack: () => context.push('/vehicles/${v.id}/track'),
@@ -346,8 +338,13 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
                     );
                   }) ?? const SizedBox.shrink())
                 : (vehiclesAsync.whenOrNull(data: (all) => Padding(
-                    padding: const EdgeInsets.all(AppSpacing.screenPadding),
-                    child: _FleetSummaryPill(vehicles: all),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.screenPadding,
+                      AppSpacing.screenPadding,
+                      AppSpacing.screenPadding,
+                      AppSpacing.screenPadding + navBottom,
+                    ),
+                    child: _FleetSummaryPill(vehicles: all, l10n: l10n),
                   )) ?? const SizedBox.shrink()),
           ),
         ],
@@ -366,15 +363,16 @@ class _MapHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.96),
+        color: AppColors.surfaceOf(context).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.borderOf(context), width: 0.8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -382,7 +380,6 @@ class _MapHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Live dot
           Container(
             width: 8, height: 8,
             decoration: const BoxDecoration(
@@ -392,12 +389,12 @@ class _MapHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 9),
-          const Text(
-            'خريطة الأسطول',
+          Text(
+            l10n.liveMap,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryOf(context),
             ),
           ),
           const Spacer(),
@@ -450,7 +447,7 @@ class _MiniDot extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: color.withOpacity(0.55), blurRadius: 5)],
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.55), blurRadius: 5)],
             ),
           ),
           const SizedBox(width: 4),
@@ -482,6 +479,7 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final counts = vehiclesAsync.whenOrNull(data: (v) => {
       'all':     v.length,
       'moving':  v.where((x) => x.isMoving).length,
@@ -490,12 +488,12 @@ class _FilterBar extends StatelessWidget {
       'offline': v.where((x) => x.isOffline).length,
     });
 
-    const filters = [
-      ('all',     'الكل',    null,                       Icons.grid_view_rounded),
-      ('moving',  'متحرك',   AppColors.statusMoving,     Icons.navigation_rounded),
-      ('stopped', 'متوقف',   AppColors.statusStopped,    Icons.stop_circle_outlined),
-      ('idle',    'خامل',    AppColors.statusIdle,       Icons.timelapse_rounded),
-      ('offline', 'مقطوع',   AppColors.statusOffline,    Icons.signal_wifi_off_rounded),
+    final filters = [
+      ('all',     l10n.filterAll,     null,                       Icons.grid_view_rounded),
+      ('moving',  l10n.filterMoving,  AppColors.statusMoving,     Icons.navigation_rounded),
+      ('stopped', l10n.filterStopped, AppColors.statusStopped,    Icons.stop_circle_outlined),
+      ('idle',    l10n.filterIdle,    AppColors.statusIdle,       Icons.timelapse_rounded),
+      ('offline', l10n.filterOffline, AppColors.statusOffline,    Icons.signal_wifi_off_rounded),
     ];
 
     return SizedBox(
@@ -548,16 +546,16 @@ class _FilterPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? activeColor.withOpacity(0.18)
-              : AppColors.surface.withOpacity(0.94),
+              ? activeColor.withValues(alpha: 0.18)
+              : AppColors.surfaceOf(context).withValues(alpha: 0.94),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? activeColor : AppColors.border,
+            color: isSelected ? activeColor : AppColors.borderOf(context),
             width: isSelected ? 1.2 : 0.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -567,13 +565,13 @@ class _FilterPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 12,
-                color: isSelected ? activeColor : AppColors.textMuted),
+                color: isSelected ? activeColor : AppColors.textMutedOf(context)),
             const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11,
-                color: isSelected ? activeColor : AppColors.textSecondary,
+                color: isSelected ? activeColor : AppColors.textSecondaryOf(context),
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
@@ -603,15 +601,16 @@ class _MapControlsColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       children: [
-        _CtrlBtn(icon: Icons.add_rounded,        onTap: onZoomIn,  tooltip: 'تكبير'),
+        _CtrlBtn(icon: Icons.add_rounded,        onTap: onZoomIn,  tooltip: l10n.zoomIn),
         const SizedBox(height: 2),
-        _CtrlBtn(icon: Icons.remove_rounded,      onTap: onZoomOut, tooltip: 'تصغير'),
+        _CtrlBtn(icon: Icons.remove_rounded,      onTap: onZoomOut, tooltip: l10n.zoomOut),
         const SizedBox(height: 8),
-        _CtrlBtn(icon: Icons.fit_screen_rounded,  onTap: onFitAll,  tooltip: 'ضبط العرض'),
+        _CtrlBtn(icon: Icons.fit_screen_rounded,  onTap: onFitAll,  tooltip: l10n.fitBounds),
         const SizedBox(height: 2),
-        _CtrlBtn(icon: Icons.refresh_rounded,     onTap: onRefresh, tooltip: 'تحديث'),
+        _CtrlBtn(icon: Icons.refresh_rounded,     onTap: onRefresh, tooltip: l10n.refreshTooltip),
       ],
     );
   }
@@ -632,12 +631,12 @@ class _CtrlBtn extends StatelessWidget {
         child: Container(
           width: 40, height: 40,
           decoration: BoxDecoration(
-            color: AppColors.surface.withOpacity(0.96),
+            color: AppColors.surfaceOf(context).withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border, width: 0.8),
+            border: Border.all(color: AppColors.borderOf(context), width: 0.8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.28),
+                color: Colors.black.withValues(alpha: 0.28),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -655,8 +654,9 @@ class _CtrlBtn extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _FleetSummaryPill extends StatelessWidget {
-  const _FleetSummaryPill({required this.vehicles});
+  const _FleetSummaryPill({required this.vehicles, required this.l10n});
   final List<VehicleEntity> vehicles;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -669,12 +669,12 @@ class _FleetSummaryPill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.surface.withOpacity(0.96),
+          color: AppColors.surfaceOf(context).withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border, width: 0.8),
+          border: Border.all(color: AppColors.borderOf(context), width: 0.8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -693,10 +693,10 @@ class _FleetSummaryPill extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '$online/$total متصل  ·  $moving متحرك',
-              style: const TextStyle(
+              l10n.fleetOnlineCount(online, total, moving),
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textPrimary,
+                color: AppColors.textPrimaryOf(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -714,6 +714,7 @@ class _FleetSummaryPill extends StatelessWidget {
 class _VehicleBottomCard extends StatelessWidget {
   const _VehicleBottomCard({
     required this.vehicle,
+    required this.navBottom,
     required this.onClose,
     required this.onTrack,
     required this.onDetails,
@@ -721,6 +722,7 @@ class _VehicleBottomCard extends StatelessWidget {
   });
 
   final VehicleEntity vehicle;
+  final double        navBottom;
   final VoidCallback  onClose;
   final VoidCallback  onTrack;
   final VoidCallback  onDetails;
@@ -733,40 +735,34 @@ class _VehicleBottomCard extends StatelessWidget {
     _         => AppColors.statusOffline,
   };
 
-  static String _statusLabel(String s) => switch (s) {
-    'moving'  => 'متحرك',
-    'stopped' => 'متوقف',
-    'idle'    => 'خامل',
-    _         => 'مقطوع',
+  static String _statusLabel(String s, AppLocalizations l10n) => switch (s) {
+    'moving'  => l10n.filterMoving,
+    'stopped' => l10n.filterStopped,
+    'idle'    => l10n.filterIdle,
+    _         => l10n.filterOffline,
   };
 
-  static IconData _vehicleIcon(String type) => switch (type.toLowerCase()) {
-    'truck'                => Icons.local_shipping_rounded,
-    'bus'                  => Icons.directions_bus_rounded,
-    'motorcycle' || 'moto' => Icons.two_wheeler_rounded,
-    'van'                  => Icons.airport_shuttle_rounded,
-    _                      => Icons.directions_car_rounded,
-  };
+  static IconData _vehicleIcon(String? type) => vehicleCategoryIcon(type);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final sc   = _statusColor(vehicle.status);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      margin: EdgeInsets.fromLTRB(12, 0, 12, 12 + navBottom),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : Colors.white,
+        color: AppColors.surfaceOf(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: sc.withOpacity(0.3), width: 1.0),
+        border: Border.all(color: sc.withValues(alpha: 0.3), width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: sc.withOpacity(0.12),
+            color: sc.withValues(alpha: 0.12),
             blurRadius: 28,
             offset: const Offset(0, -4),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.38),
+            color: Colors.black.withValues(alpha: 0.38),
             blurRadius: 20,
             offset: const Offset(0, -2),
           ),
@@ -775,12 +771,11 @@ class _VehicleBottomCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
           Container(
             margin: const EdgeInsets.only(top: 8),
             width: 32, height: 3,
             decoration: BoxDecoration(
-              color: sc.withOpacity(0.4),
+              color: sc.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -794,19 +789,17 @@ class _VehicleBottomCard extends StatelessWidget {
                 // ── Header row ────────────────────────────────────────────────
                 Row(
                   children: [
-                    // Vehicle type icon
                     Container(
                       width: 46, height: 46,
                       decoration: BoxDecoration(
-                        color: sc.withOpacity(0.12),
+                        color: sc.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: sc.withOpacity(0.3), width: 0.8),
+                        border: Border.all(color: sc.withValues(alpha: 0.3), width: 0.8),
                       ),
                       child: Icon(_vehicleIcon(vehicle.type), color: sc, size: 24),
                     ),
                     const SizedBox(width: 12),
 
-                    // Name + plate
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -816,16 +809,15 @@ class _VehicleBottomCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? AppColors.textPrimary
-                                           : const Color(0xFF0D1B2A),
+                              color: AppColors.textPrimaryOf(context),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             vehicle.plateNumber,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: AppColors.textSecondaryOf(context),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -833,21 +825,19 @@ class _VehicleBottomCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Status badge
-                    _StatusPill(label: _statusLabel(vehicle.status), color: sc),
+                    _StatusPill(label: _statusLabel(vehicle.status, l10n), color: sc),
                     const SizedBox(width: 8),
 
-                    // Close
                     GestureDetector(
                       onTap: onClose,
                       child: Container(
                         width: 28, height: 28,
                         decoration: BoxDecoration(
-                          color: AppColors.textMuted.withOpacity(0.1),
+                          color: AppColors.textMutedOf(context).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.close_rounded,
-                            size: 16, color: AppColors.textSecondary),
+                        child: Icon(Icons.close_rounded,
+                            size: 16, color: AppColors.textSecondaryOf(context)),
                       ),
                     ),
                   ],
@@ -862,7 +852,7 @@ class _VehicleBottomCard extends StatelessWidget {
                       icon: Icons.speed_rounded,
                       color: sc,
                       value: FormatUtils.speed(vehicle.speed),
-                      label: 'السرعة',
+                      label: l10n.speedLabel,
                     ),
                     const SizedBox(width: 8),
                     _InfoTile(
@@ -871,9 +861,11 @@ class _VehicleBottomCard extends StatelessWidget {
                           : Icons.key_off_rounded,
                       color: vehicle.ignition
                           ? AppColors.statusMoving
-                          : AppColors.textMuted,
-                      value: vehicle.ignition ? 'مشتعل' : 'مطفأ',
-                      label: 'المحرك',
+                          : AppColors.textMutedOf(context),
+                      value: vehicle.ignition
+                          ? l10n.ignitionOnLabel
+                          : l10n.ignitionOffLabel,
+                      label: l10n.engineLabel,
                     ),
                     const SizedBox(width: 8),
                     _InfoTile(
@@ -882,7 +874,7 @@ class _VehicleBottomCard extends StatelessWidget {
                       value: vehicle.lastUpdate != null
                           ? DateFormatter.toRelative(vehicle.lastUpdate!)
                           : '–',
-                      label: 'آخر تحديث',
+                      label: l10n.lastUpdateLabel,
                     ),
                   ],
                 ),
@@ -894,10 +886,10 @@ class _VehicleBottomCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.textMuted.withOpacity(0.05),
+                      color: AppColors.textMutedOf(context).withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: AppColors.border.withOpacity(0.5)),
+                          color: AppColors.borderOf(context).withValues(alpha: 0.5)),
                     ),
                     child: Row(
                       children: [
@@ -906,15 +898,15 @@ class _VehicleBottomCard extends StatelessWidget {
                               ? Icons.person_rounded
                               : Icons.location_on_rounded,
                           size: 13,
-                          color: AppColors.textMuted,
+                          color: AppColors.textMutedOf(context),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             vehicle.driverName ?? vehicle.address ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: AppColors.textSecondaryOf(context),
                               fontWeight: FontWeight.w500,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -934,7 +926,7 @@ class _VehicleBottomCard extends StatelessWidget {
                       flex: 5,
                       child: _ActionBtn(
                         icon: Icons.my_location_rounded,
-                        label: 'تتبع مباشر',
+                        label: l10n.liveTrack,
                         color: AppColors.accent,
                         filled: true,
                         onTap: onTrack,
@@ -945,7 +937,7 @@ class _VehicleBottomCard extends StatelessWidget {
                       flex: 3,
                       child: _ActionBtn(
                         icon: Icons.center_focus_strong_rounded,
-                        label: 'توسيط',
+                        label: l10n.centerMap,
                         color: AppColors.emerald,
                         filled: false,
                         onTap: onCenter,
@@ -956,7 +948,7 @@ class _VehicleBottomCard extends StatelessWidget {
                       flex: 3,
                       child: _ActionBtn(
                         icon: Icons.info_outline_rounded,
-                        label: 'التفاصيل',
+                        label: l10n.detailsLabel,
                         color: AppColors.purple,
                         filled: false,
                         onTap: onDetails,
@@ -987,9 +979,9 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3), width: 0.8),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -999,7 +991,7 @@ class _StatusPill extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: color.withOpacity(0.6), blurRadius: 4)],
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 4)],
             ),
           ),
           const SizedBox(width: 5),
@@ -1032,9 +1024,9 @@ class _InfoTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.07),
+          color: color.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.2), width: 0.8),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1052,8 +1044,8 @@ class _InfoTile extends StatelessWidget {
             ),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 9, color: AppColors.textMuted,
+              style: TextStyle(
+                fontSize: 9, color: AppColors.textMutedOf(context),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1085,11 +1077,11 @@ class _ActionBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: filled ? color : color.withOpacity(0.08),
+          color: filled ? color : color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
           border: filled
               ? null
-              : Border.all(color: color.withOpacity(0.3), width: 0.8),
+              : Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1121,22 +1113,23 @@ class _ActionBtn extends StatelessWidget {
 class _MapLoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
-      color: AppColors.background,
+    final l10n = context.l10n;
+    return ColoredBox(
+      color: AppColors.backgroundOf(context),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 28, height: 28,
               child: CircularProgressIndicator(
                 color: AppColors.accent, strokeWidth: 2),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'جارٍ تحميل الخريطة…',
+              l10n.mapLoadingFleet,
               style: TextStyle(
-                color: AppColors.textSecondary, fontSize: 13),
+                color: AppColors.textSecondaryOf(context), fontSize: 13),
             ),
           ],
         ),
@@ -1151,8 +1144,9 @@ class _MapErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return ColoredBox(
-      color: AppColors.background,
+      color: AppColors.backgroundOf(context),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1160,7 +1154,7 @@ class _MapErrorState extends StatelessWidget {
             Container(
               width: 64, height: 64,
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -1168,10 +1162,10 @@ class _MapErrorState extends StatelessWidget {
                 color: AppColors.error, size: 30),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'تعذّر تحميل بيانات المركبات',
+            Text(
+              l10n.mapLoadError,
               style: TextStyle(
-                color: AppColors.textSecondary, fontSize: 14),
+                color: AppColors.textSecondaryOf(context), fontSize: 14),
             ),
             const SizedBox(height: 16),
             GestureDetector(
@@ -1180,20 +1174,20 @@ class _MapErrorState extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.12),
+                  color: AppColors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: AppColors.accent.withOpacity(0.4)),
+                      color: AppColors.accent.withValues(alpha: 0.4)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.refresh_rounded,
+                    const Icon(Icons.refresh_rounded,
                         color: AppColors.accent, size: 16),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
-                      'إعادة المحاولة',
-                      style: TextStyle(
+                      l10n.retry,
+                      style: const TextStyle(
                         color: AppColors.accent,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
