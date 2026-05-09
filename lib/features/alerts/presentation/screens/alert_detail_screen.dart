@@ -8,6 +8,7 @@ import '../../../../core/widgets/elmo_card.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../geofences/presentation/providers/geofences_providers.dart';
 import '../providers/alerts_provider.dart';
 
 class AlertDetailScreen extends ConsumerWidget {
@@ -40,6 +41,23 @@ class AlertDetailScreen extends ConsumerWidget {
           ),
         ),
       );
+    }
+
+    final names = ref.watch(geofenceNameMapProvider);
+    final String title;
+    final String body;
+    switch (alert.type) {
+      case 'geofenceEnter':
+        final zn = alert.geofenceId != null ? names[alert.geofenceId!] : null;
+        title = zn != null ? '${l10n.geofenceZoneEntry} · $zn' : l10n.geofenceZoneEntry;
+        body = alert.vehicleName;
+      case 'geofenceExit':
+        final zn = alert.geofenceId != null ? names[alert.geofenceId!] : null;
+        title = zn != null ? '${l10n.geofenceZoneExit} · $zn' : l10n.geofenceZoneExit;
+        body = alert.vehicleName;
+      default:
+        title = alert.title;
+        body = alert.description;
     }
 
     return Scaffold(
@@ -80,10 +98,10 @@ class AlertDetailScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    Text(alert.title, style: AppTextStyles.headlineMedium),
+                    Text(title, style: AppTextStyles.headlineMedium),
                     const SizedBox(height: 8),
                     Text(
-                      alert.description,
+                      body,
                       style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textSecondaryOf(context)),
                     ),

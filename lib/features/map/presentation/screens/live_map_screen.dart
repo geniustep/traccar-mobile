@@ -13,8 +13,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/geofence_area_codec.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/vehicle_category_utils.dart';
+import '../../../geofences/domain/entities/geofence.dart';
+import '../../../geofences/presentation/providers/geofences_providers.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../providers/map_provider.dart';
 
@@ -190,6 +193,88 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
     return BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
   }
 
+  void _maybeShowGeofenceDialog(
+    BuildContext context,
+    WidgetRef ref,
+    LatLng tap,
+    List<GeofenceEntity> geos,
+    AppLocalizations l10n,
+  ) {
+    final entries = geos
+        .take(80)
+        .map((g) => MapEntry('${g.id}', g.area));
+    final idStr = GeofenceAreaCodec.hitTestGeofence(tap, entries);
+    if (idStr == null) return;
+    final id = int.tryParse(idStr);
+    if (id == null) return;
+    final name = ref.read(geofenceNameMapProvider)[id] ?? l10n.geofencesTitle;
+    GeofenceEntity? g;
+    for (final e in geos) {
+      if (e.id == id) {
+        g = e;
+        break;
+      }
+    }
+    if (g == null) return;
+    final typeLabel =
+        g.isCircle ? l10n.geofenceTypeCircle : l10n.geofenceTypePolygon;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(name),
+        content: Text(typeLabel),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  (Set<Circle>, Set<Polygon>) _geofenceShapes(List<GeofenceEntity> geos) {
+    final circles = <Circle>{};
+    final polygons = <Polygon>{};
+    final cap = geos.length > 80 ? geos.sublist(0, 80) : geos;
+    for (final g in cap) {
+      final sid = 'gf_${g.id}';
+      final stroke = Color.fromARGB(
+        255,
+        g.fillColor.red,
+        g.fillColor.green,
+        g.fillColor.blue,
+      );
+      if (g.isCircle) {
+        final c = GeofenceAreaCodec.decodeCircle(g.area);
+        if (c != null) {
+          circles.add(
+            MapHelper.buildGeofenceCircle(
+              id: sid,
+              center: LatLng(c.latitude, c.longitude),
+              radiusMeters: c.radiusMeters,
+              strokeColor: stroke,
+              fillColor: g.fillColor,
+            ),
+          );
+        }
+      } else if (g.isPolygon) {
+        final pts = GeofenceAreaCodec.decodePolygon(g.area);
+        if (pts.length >= 3) {
+          polygons.add(
+            MapHelper.buildGeofencePolygon(
+              id: sid,
+              points: pts,
+              strokeColor: stroke,
+              fillColor: g.fillColor,
+            ),
+          );
+        }
+      }
+    }
+    return (circles, polygons);
+  }
+
   // ── Marker set ──────────────────────────────────────────────────────────────
 
   Set<Marker> _buildMarkers(List<VehicleEntity> vehicles, String? selectedId) {
@@ -235,6 +320,8 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
     final l10n = context.l10n;
     final vehiclesAsync = ref.watch(mapVehiclesProvider);
     final selectedId   = ref.watch(selectedMapVehicleProvider);
+    final showGf       = ref.watch(showGeofencesOnMapProvider);
+    final geofencesAsync = ref.watch(geofencesListProvider);
 
     final themeMode = ref.watch(themeProvider);
     final isDark = themeMode == ThemeMode.dark ||
@@ -259,9 +346,14 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
                     .addPostFrameCallback((_) => _fitAll(all));
               }
 
+              final geos = geofencesAsync.valueOrNull ?? const <GeofenceEntity>[];
+              final gfShapes = _geofenceShapes(geos);
+
               return GoogleMap(
                 initialCameraPosition: MapConfig.defaultCameraPosition,
                 markers: markers,
+                circles: showGf ? gfShapes.$1 : const {},
+                polygons: showGf ? gfShapes.$2 : const {},
                 onMapCreated: (c) {
                   _mapController = c;
                   if (all.isNotEmpty) _fitAll(all);
@@ -272,8 +364,12 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
                 compassEnabled:          false,
                 buildingsEnabled:        false,
                 style: mapStyle,
-                onTap: (_) =>
-                    ref.read(selectedMapVehicleProvider.notifier).state = null,
+                onTap: (pos) {
+                  if (showGf && geos.isNotEmpty) {
+                    _maybeShowGeofenceDialog(context, ref, pos, geos, l10n);
+                  }
+                  ref.read(selectedMapVehicleProvider.notifier).state = null;
+                },
               );
             },
             loading: () => _MapLoadingState(),
@@ -293,7 +389,13 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
                     AppSpacing.screenPadding, AppSpacing.md,
                     AppSpacing.screenPadding, 0,
                   ),
-                  child: _MapHeader(vehiclesAsync: vehiclesAsync),
+                  child: _MapHeader(
+                    vehiclesAsync: vehiclesAsync,
+                    showGeofences: showGf,
+                    onToggleGeofences: (v) =>
+                        ref.read(showGeofencesOnMapProvider.notifier).state = v,
+                    l10n: l10n,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _FilterBar(
@@ -358,12 +460,20 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MapHeader extends StatelessWidget {
-  const _MapHeader({required this.vehiclesAsync});
+  const _MapHeader({
+    required this.vehiclesAsync,
+    required this.showGeofences,
+    required this.onToggleGeofences,
+    required this.l10n,
+  });
+
   final AsyncValue<List<VehicleEntity>> vehiclesAsync;
+  final bool showGeofences;
+  final ValueChanged<bool> onToggleGeofences;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -398,6 +508,24 @@ class _MapHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          Text(
+            l10n.geofenceShowOnMap,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondaryOf(context),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Transform.scale(
+            scale: 0.82,
+            child: Switch.adaptive(
+              value: showGeofences,
+              onChanged: onToggleGeofences,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const SizedBox(width: 8),
           vehiclesAsync.whenOrNull(
             data: (v) => _HeaderStatusRow(vehicles: v),
           ) ?? const SizedBox.shrink(),

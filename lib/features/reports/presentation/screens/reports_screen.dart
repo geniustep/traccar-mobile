@@ -12,6 +12,7 @@ import '../../../../core/widgets/empty_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../geofences/presentation/providers/geofences_providers.dart';
 import '../../../vehicles/presentation/providers/vehicles_provider.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../../trips/domain/entities/trip.dart';
@@ -101,6 +102,64 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ref.read(reportFilterProvider.notifier).setTo(dt),
             onGenerate: () =>
                 ref.read(reportFilterProvider.notifier).generate(),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                  width: 0.6,
+                ),
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.layers_outlined,
+                            size: 16,
+                            color:
+                                Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.sectionFleet,
+                          style: AppTextStyles.labelMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.reportFleetMaintenanceSoon,
+                      style: AppTextStyles.bodySmall.copyWith(
+                          color:
+                              AppColors.textSecondaryOf(context)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.reportFleetDriversSoon,
+                      style: AppTextStyles.bodySmall.copyWith(
+                          color:
+                              AppColors.textSecondaryOf(context)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
 
           // ── Tabs ───────────────────────────────────────────────────────────
@@ -1865,7 +1924,7 @@ class _EventsTab extends ConsumerWidget {
   }
 }
 
-class _EventTimelineItem extends StatelessWidget {
+class _EventTimelineItem extends ConsumerWidget {
   const _EventTimelineItem({required this.event});
 
   final EventReport event;
@@ -1896,8 +1955,22 @@ class _EventTimelineItem extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) {
-    final color = _color(event.severity);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final names = ref.watch(geofenceNameMapProvider);
+    var label = l10n.reportEventTypeDisplay(event.type, event.labelFr);
+    final gfId = event.geofenceId;
+    if (gfId != null && (event.type == 'geofenceEnter' || event.type == 'geofenceExit')) {
+      final zn = names[gfId];
+      if (zn != null) label = '$label · $zn';
+    }
+
+    var color = _color(event.severity);
+    if (event.type == 'geofenceEnter') {
+      color = const Color(0xFF1E88E5);
+    } else if (event.type == 'geofenceExit') {
+      color = const Color(0xFFFF9800);
+    }
     final icon = _icon(event.type);
 
     return Row(
@@ -1938,7 +2011,7 @@ class _EventTimelineItem extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(event.labelFr,
+                      child: Text(label,
                           style: AppTextStyles.labelMedium
                               .copyWith(color: color)),
                     ),

@@ -6,6 +6,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/empty_view.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../fleet/presentation/fleet_vehicle_brief_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../providers/vehicles_provider.dart';
 import '../widgets/vehicle_card.dart';
@@ -33,6 +34,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
     final filter = ref.watch(vehicleFilterProvider);
     final allAsync = ref.watch(vehiclesListProvider);
     final filteredAsync = ref.watch(filteredVehiclesProvider);
+    final fleetBriefMap = ref.watch(fleetVehicleBriefMapProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -142,6 +144,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                       const SizedBox(height: 10),
                   itemBuilder: (context, i) => VehicleCard(
                     vehicle: vehicles[i],
+                    fleetBrief: fleetBriefMap[vehicles[i].id],
                     onTap: () =>
                         context.push('/vehicles/${vehicles[i].id}'),
                   ),

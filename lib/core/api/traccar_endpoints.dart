@@ -169,6 +169,20 @@ class TraccarEndpoints {
   /// DELETE /drivers/{id}
   static String driverDelete(int id) => '/drivers/$id';
 
+  // ── Maintenance ───────────────────────────────────────────────────────────
+
+  /// GET /maintenance — list scheduled maintenance definitions
+  static const String maintenance = '/maintenance';
+
+  /// POST /maintenance
+  static const String maintenanceCreate = '/maintenance';
+
+  /// PUT /maintenance/{id}
+  static String maintenanceUpdate(int id) => '/maintenance/$id';
+
+  /// DELETE /maintenance/{id}
+  static String maintenanceDelete(int id) => '/maintenance/$id';
+
   // ── Calendars ─────────────────────────────────────────────────────────────
 
   /// GET /calendars

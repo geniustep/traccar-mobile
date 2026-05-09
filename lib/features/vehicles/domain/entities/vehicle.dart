@@ -15,6 +15,9 @@ class VehicleEntity {
     required this.fuelLevel,
     required this.driverName,
     required this.groupId,
+    this.insuranceExpiry,
+    this.technicalInspectionExpiry,
+    this.latestOdometerKm,
   });
 
   final String id;
@@ -32,6 +35,13 @@ class VehicleEntity {
   final double? fuelLevel;
   final String? driverName;
   final String? groupId;
+
+  /// مستمدة من الطبقة الموحّدة لـ Traccar داخل خصائص الجهاز.
+  final DateTime? insuranceExpiry;
+  final DateTime? technicalInspectionExpiry;
+
+  /// تقدير عداد المسافة بكيلومترات عندما تُتاح بيانات الموضع.
+  final double? latestOdometerKm;
 
   bool get isMoving => status == 'moving';
   bool get isStopped => status == 'stopped';
@@ -55,6 +65,9 @@ class VehicleEntity {
     double? fuelLevel,
     String? driverName,
     String? groupId,
+    DateTime? insuranceExpiry,
+    DateTime? technicalInspectionExpiry,
+    double? latestOdometerKm,
   }) {
     return VehicleEntity(
       id: id ?? this.id,
@@ -72,6 +85,10 @@ class VehicleEntity {
       fuelLevel: fuelLevel ?? this.fuelLevel,
       driverName: driverName ?? this.driverName,
       groupId: groupId ?? this.groupId,
+      insuranceExpiry: insuranceExpiry ?? this.insuranceExpiry,
+      technicalInspectionExpiry:
+          technicalInspectionExpiry ?? this.technicalInspectionExpiry,
+      latestOdometerKm: latestOdometerKm ?? this.latestOdometerKm,
     );
   }
 }

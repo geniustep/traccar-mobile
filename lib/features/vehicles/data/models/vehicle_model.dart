@@ -1,3 +1,5 @@
+import '../../../../core/constants/elmo_fleet_attribute_keys.dart';
+import '../../../fleet_domain/vehicle_odometer_reader.dart';
 import '../../domain/entities/vehicle.dart';
 
 /// Merged from Traccar `GET /devices` + `GET /positions`.
@@ -18,6 +20,9 @@ class VehicleModel {
     this.fuelLevel,
     this.driverName,
     this.groupId,
+    this.insuranceExpiry,
+    this.technicalInspectionExpiry,
+    this.latestOdometerKm,
   });
 
   final String id;
@@ -35,6 +40,9 @@ class VehicleModel {
   final double? fuelLevel;
   final String? driverName;
   final String? groupId;
+  final DateTime? insuranceExpiry;
+  final DateTime? technicalInspectionExpiry;
+  final double? latestOdometerKm;
 
   /// Build from a Traccar device JSON merged with its latest position JSON.
   ///
@@ -79,6 +87,14 @@ class VehicleModel {
       groupId: device['groupId'] == 0
           ? null
           : device['groupId']?.toString(),
+      insuranceExpiry: _parseFlexibleDate(
+        attrs[ElmoFleetAttributeKeys.vehicleInsuranceExpiryIso],
+      ),
+      technicalInspectionExpiry: _parseFlexibleDate(
+        attrs[ElmoFleetAttributeKeys.vehicleTechnicalExpiryIso],
+      ),
+      latestOdometerKm:
+          VehicleOdometerReader.odometerKmFromPositionAttrs(posAttrs),
     );
   }
 
@@ -98,6 +114,14 @@ class VehicleModel {
     return DateTime.tryParse(s)?.toLocal();
   }
 
+  static DateTime? _parseFlexibleDate(dynamic raw) {
+    if (raw == null) return null;
+    final s = '$raw'.trim();
+    if (s.isEmpty) return null;
+    final full = s.contains('T') ? s : '${s}T00:00:00Z';
+    return DateTime.tryParse(full)?.toLocal();
+  }
+
   VehicleEntity toEntity() => VehicleEntity(
         id: id,
         name: name,
@@ -114,5 +138,8 @@ class VehicleModel {
         fuelLevel: fuelLevel,
         driverName: driverName,
         groupId: groupId,
+        insuranceExpiry: insuranceExpiry,
+        technicalInspectionExpiry: technicalInspectionExpiry,
+        latestOdometerKm: latestOdometerKm,
       );
 }

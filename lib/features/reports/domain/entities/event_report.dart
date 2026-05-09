@@ -69,7 +69,7 @@ class EventReport {
     'hardBraking': 'critical',
     'hardAcceleration': 'warning',
     'hardCornering': 'warning',
-    'geofenceEnter': 'warning',
+    'geofenceEnter': 'info',
     'geofenceExit': 'warning',
     'ignitionOn': 'success',
     'deviceMoving': 'info',

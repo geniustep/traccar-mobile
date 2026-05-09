@@ -22,6 +22,7 @@ class AlertModel {
     this.latitude,
     this.longitude,
     required this.attributes,
+    this.geofenceId,
   });
 
   final String id;
@@ -36,6 +37,7 @@ class AlertModel {
   final double? latitude;
   final double? longitude;
   final Map<String, dynamic> attributes;
+  final int? geofenceId;
 
   /// Creates an AlertModel from a Traccar event JSON.
   ///
@@ -49,6 +51,7 @@ class AlertModel {
     final attrs = Map<String, dynamic>.from(
       event['attributes'] as Map? ?? {},
     );
+    final rawGf = (event['geofenceId'] as num?)?.toInt();
 
     return AlertModel(
       id: event['id']?.toString() ?? '',
@@ -64,6 +67,7 @@ class AlertModel {
       isRead: false,
       latitude: (event['latitude'] as num?)?.toDouble(),
       longitude: (event['longitude'] as num?)?.toDouble(),
+      geofenceId: (rawGf != null && rawGf > 0) ? rawGf : null,
       attributes: attrs,
     );
   }
@@ -182,5 +186,6 @@ class AlertModel {
         latitude: latitude,
         longitude: longitude,
         attributes: attributes,
+        geofenceId: geofenceId,
       );
 }

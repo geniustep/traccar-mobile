@@ -207,6 +207,7 @@ class MockData {
           latitude: 24.7136,
           longitude: 46.6753,
           attributes: {'speed': 105.0, 'limit': 100.0},
+          geofenceId: null,
         ),
         AlertEntity(
           id: 'alt_002',
@@ -221,6 +222,7 @@ class MockData {
           latitude: 24.6877,
           longitude: 46.7219,
           attributes: {},
+          geofenceId: null,
         ),
         AlertEntity(
           id: 'alt_003',
@@ -235,6 +237,7 @@ class MockData {
           latitude: null,
           longitude: null,
           attributes: {},
+          geofenceId: null,
         ),
         AlertEntity(
           id: 'alt_004',
@@ -249,6 +252,7 @@ class MockData {
           latitude: 24.6877,
           longitude: 46.7219,
           attributes: {'idleMinutes': 135},
+          geofenceId: null,
         ),
       ];
 

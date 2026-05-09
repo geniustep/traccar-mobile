@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../fleet/presentation/fleet_vehicle_brief_provider.dart';
 import '../../domain/entities/vehicle.dart';
 
 class VehicleCard extends StatefulWidget {
-  const VehicleCard({super.key, required this.vehicle, this.onTap});
+  const VehicleCard({
+    super.key,
+    required this.vehicle,
+    this.onTap,
+    this.fleetBrief,
+  });
 
   final VehicleEntity vehicle;
   final VoidCallback? onTap;
+  /// ملخص المرحلة الخامسة (سائق/صيانة/وثائق)؛ قد يكون تامًّا وحُمِّل خارج البطاقة لتفادي إعادة جلب ثقيلة.
+  final FleetVehicleBrief? fleetBrief;
 
   @override
   State<VehicleCard> createState() => _VehicleCardState();
@@ -68,8 +77,12 @@ class _VehicleCardState extends State<VehicleCard>
   @override
   Widget build(BuildContext context) {
     final v = widget.vehicle;
+    final l10n = context.l10n;
     final color = _statusColor;
     final status = StatusBadge.fromString(v.status);
+    final fb = widget.fleetBrief;
+    final String? rawDriverHint =
+        fb != null ? fb.driverLine : v.driverName?.trim();
 
     return Material(
       color: Colors.transparent,
@@ -153,12 +166,12 @@ class _VehicleCardState extends State<VehicleCard>
                                       ],
                                     ),
                                     const SizedBox(height: 5),
-                                    // Plate + driver
+                                    // Plate + driver/summary driver line
                                     Row(
                                       children: [
                                         _PlateBadge(plate: v.plateNumber),
-                                        if (v.driverName != null &&
-                                            v.driverName!.isNotEmpty) ...[
+                                        if (rawDriverHint != null &&
+                                            rawDriverHint.isNotEmpty) ...[
                                           const SizedBox(width: 8),
                                           const Icon(
                                             Icons.person_rounded,
@@ -168,13 +181,14 @@ class _VehicleCardState extends State<VehicleCard>
                                           const SizedBox(width: 3),
                                           Expanded(
                                             child: Text(
-                                              v.driverName!,
+                                              rawDriverHint,
                                               style: const TextStyle(
                                                 color: AppColors.textMuted,
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                               overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
                                             ),
                                           ),
                                         ],
@@ -200,7 +214,7 @@ class _VehicleCardState extends State<VehicleCard>
                               // Speed
                               _TelemetryItem(
                                 icon: Icons.speed_rounded,
-                                label: 'السرعة',
+                                label: l10n.speedLabel,
                                 value: FormatUtils.speed(v.speed),
                                 color: v.isMoving && v.speed > 0
                                     ? AppColors.statusMoving
@@ -210,8 +224,10 @@ class _VehicleCardState extends State<VehicleCard>
                               // Ignition
                               _TelemetryItem(
                                 icon: Icons.power_settings_new_rounded,
-                                label: 'المحرك',
-                                value: v.ignition ? 'شغّال' : 'مطفأ',
+                                label: l10n.ignitionLabel,
+                                value: v.ignition
+                                    ? l10n.ignitionOnLabel
+                                    : l10n.ignitionOffLabel,
                                 color: v.ignition
                                     ? AppColors.statusMoving
                                     : AppColors.textMuted,
@@ -219,7 +235,8 @@ class _VehicleCardState extends State<VehicleCard>
                               if (v.fuelLevel != null) ...[
                                 _dividerV(),
                                 Expanded(
-                                  child: _FuelBar(fuelLevel: v.fuelLevel!),
+                                  child: _FuelBar(
+                                      fuelLevel: v.fuelLevel!, l10n: l10n),
                                 ),
                               ] else
                                 const Spacer(),
@@ -227,13 +244,78 @@ class _VehicleCardState extends State<VehicleCard>
                                 _dividerV(),
                                 _TelemetryItem(
                                   icon: Icons.battery_charging_full_rounded,
-                                  label: 'البطارية',
+                                  label: l10n.batteryVoltageLabel,
                                   value: FormatUtils.voltage(v.batteryVoltage),
                                   color: _batteryColor(v.batteryVoltage),
                                 ),
                               ],
                             ],
                           ),
+
+                          if (fb case final b?
+                              when b.maintenanceLine.isNotEmpty ||
+                                  b.hasMaintenanceOverdue ||
+                                  b.insuranceLine.isNotEmpty ||
+                                  b.techLine.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceElevated
+                                    .withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (b.maintenanceLine.isNotEmpty)
+                                    Text(
+                                      b.maintenanceLine,
+                                      maxLines:
+                                          b.hasMaintenanceOverdue ? 2 : 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: b.hasMaintenanceOverdue
+                                            ? AppColors.error
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  if (b.insuranceLine.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      b.insuranceLine,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.statusStopped,
+                                      ),
+                                    ),
+                                  ],
+                                  if (b.techLine.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      b.techLine,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.statusStopped,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
 
                           // ── Row 3: Address + time ─────────────────────────
                           if ((v.address != null && v.address!.isNotEmpty) ||
@@ -471,9 +553,10 @@ class _TelemetryItem extends StatelessWidget {
 // ── Fuel level bar ────────────────────────────────────────────────────────────
 
 class _FuelBar extends StatelessWidget {
-  const _FuelBar({required this.fuelLevel});
+  const _FuelBar({required this.fuelLevel, required this.l10n});
 
   final double fuelLevel;
+  final AppLocalizations l10n;
 
   Color get _color {
     if (fuelLevel >= 60) return AppColors.statusMoving;
@@ -495,8 +578,8 @@ class _FuelBar extends StatelessWidget {
             Icon(Icons.local_gas_station_rounded,
                 size: 11, color: color.withValues(alpha: 0.7)),
             const SizedBox(width: 3),
-            const Text(
-              'الوقود',
+            Text(
+              l10n.fuelLabel,
               style: TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 9,

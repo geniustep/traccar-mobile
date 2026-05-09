@@ -362,6 +362,171 @@ class AppLocalizations {
   String get noSpeedData              => _t('noSpeedData');
   String get viewSpeedChart           => _t('viewSpeedChart');
 
+  // ── Geofences ─────────────────────────────────────────────────────────────
+  String get geofencesTitle => _t('geofencesTitle');
+  String get geofencesAdd => _t('geofencesAdd');
+  String get geofenceEdit => _t('geofenceEdit');
+  String get geofenceDelete => _t('geofenceDelete');
+  String get geofenceNameLabel => _t('geofenceNameLabel');
+  String get geofenceTypeLabel => _t('geofenceTypeLabel');
+  String get geofenceTypeCircle => _t('geofenceTypeCircle');
+  String get geofenceTypePolygon => _t('geofenceTypePolygon');
+  String get geofenceRadius => _t('geofenceRadius');
+  String get geofenceLinkedVehicles => _t('geofenceLinkedVehicles');
+  String get geofenceAlertSectionTitle => _t('geofenceAlertSectionTitle');
+  String get geofenceZoneEntry => _t('geofenceZoneEntry');
+  String get geofenceZoneExit => _t('geofenceZoneExit');
+  String get geofenceShowOnMap => _t('geofenceShowOnMap');
+  String get geofenceTapMapCenter => _t('geofenceTapMapCenter');
+  String get geofencePolygonMinPoints => _t('geofencePolygonMinPoints');
+  String get geofenceCreated => _t('geofenceCreated');
+  String get geofenceUpdated => _t('geofenceUpdated');
+  String get geofenceDeleted => _t('geofenceDeleted');
+  String get geofenceLoadError => _t('geofenceLoadError');
+  String get geofenceAlertStatusOn => _t('geofenceAlertStatusOn');
+  String get geofenceAlertStatusOff => _t('geofenceAlertStatusOff');
+  String get geofenceSearchHint => _t('geofenceSearchHint');
+  String get geofenceFilterAllTypes => _t('geofenceFilterAllTypes');
+  String get geofenceDeleteTitle => _t('geofenceDeleteTitle');
+  String get geofenceDeleteMessage => _t('geofenceDeleteMessage');
+  String geofenceDeleteWarningWithVehicles(int n) =>
+      _t('geofenceDeleteWarningWithVehicles').replaceAll('{n}', '$n');
+  String get geofencesEmptyTitle => _t('geofencesEmptyTitle');
+  String get geofencesEmptyMessage => _t('geofencesEmptyMessage');
+  String get geofenceColorLabel => _t('geofenceColorLabel');
+  String get geofenceTapMapCenterHint => _t('geofenceTapMapCenterHint');
+  String get geofencePolygonTapHint => _t('geofencePolygonTapHint');
+  String get geofencePolygonUndoLast => _t('geofencePolygonUndoLast');
+  String get geofenceNotifyEnter => _t('geofenceNotifyEnter');
+  String get geofenceNotifyExit => _t('geofenceNotifyExit');
+  String get geofenceNotifyBoth => _t('geofenceNotifyBoth');
+  String get geofenceNoVehiclesLinked => _t('geofenceNoVehiclesLinked');
+  String geofenceVehiclesSelectedCount(int n) =>
+      _t('geofenceVehiclesSelectedCount').replaceAll('{n}', '$n');
+  String get geofenceVehiclesClear => _t('geofenceVehiclesClear');
+  String get geofenceDetailsTitle => _t('geofenceDetailsTitle');
+  String get geofenceNotFound => _t('geofenceNotFound');
+
+  // ── الأسطيل — السائقون والصيانة (مرحلة ٥) ─────────────────────────────────────
+  String get driversTitle => _t('driversTitle');
+  String get driversAdd => _t('driversAdd');
+  String get driversEdit => _t('driversEdit');
+  String get driversDelete => _t('driversDelete');
+  String get driversSearchHint => _t('driversSearchHint');
+  String get driversEmptyTitle => _t('driversEmptyTitle');
+  String get driversEmptyMessage => _t('driversEmptyMessage');
+  String get driverDetailTitle => _t('driverDetailTitle');
+  String get driverNameLabel => _t('driverNameLabel');
+  String get driverCodeLabel => _t('driverCodeLabel');
+  String get driverPhoneLabel => _t('driverPhoneLabel');
+  String get drivingLicenseLabel => _t('drivingLicenseLabel');
+  String get licenseExpiryLabel => _t('licenseExpiryLabel');
+  String get driversLinkedVehicles => _t('driversLinkedVehicles');
+  String get driverNotesLabel => _t('driverNotesLabel');
+  String get driversSave => _t('driversSave');
+  String get driversDeleteConfirmTitle => _t('driversDeleteConfirmTitle');
+  String get driversDeleteConfirmBody => _t('driversDeleteConfirmBody');
+  String get driversLoadError => _t('driversLoadError');
+  String get driversSelectVehiclesHint => _t('driversSelectVehiclesHint');
+
+  String get licenseStatusUnknown => _t('licenseStatusUnknown');
+  String get licenseStatusValid => _t('licenseStatusValid');
+  String get licenseStatusSoon => _t('licenseStatusSoon');
+  String get licenseStatusExpired => _t('licenseStatusExpired');
+
+  String get maintenanceTitle => _t('maintenanceTitle');
+  String get maintenanceAdd => _t('maintenanceAdd');
+  String get maintenanceEdit => _t('maintenanceEdit');
+  String get maintenanceDelete => _t('maintenanceDelete');
+  String get maintenanceDetailTitle => _t('maintenanceDetailTitle');
+  String get maintenanceSearchHint => _t('maintenanceSearchHint');
+  String get maintenanceFilterAll => _t('maintenanceFilterAll');
+  String get maintenanceFilterVehicle => _t('maintenanceFilterVehicle');
+  String get maintenanceLoadError => _t('maintenanceLoadError');
+  String get maintenanceEmptyTitle => _t('maintenanceEmptyTitle');
+  String get maintenanceEmptyMessage => _t('maintenanceEmptyMessage');
+  String get maintenanceTypeLabelField => _t('maintenanceTypeLabelField');
+  String get maintenanceDueDateLabel => _t('maintenanceDueDateLabel');
+  String get maintenanceDueOdometerLabel => _t('maintenanceDueOdometerLabel');
+  String get maintenanceMarkCompletedHint => _t('maintenanceMarkCompletedHint');
+  String get maintenanceDeleteConfirmTitle =>
+      _t('maintenanceDeleteConfirmTitle');
+  String get maintenanceDeleteConfirmBody =>
+      _t('maintenanceDeleteConfirmBody');
+
+  String get maintStatusUnknown => _t('maintStatusUnknown');
+  String get maintStatusCompleted => _t('maintStatusCompleted');
+  String get maintStatusUpcoming => _t('maintStatusUpcoming');
+  String get maintStatusSoon => _t('maintStatusSoon');
+  String get maintStatusOverdue => _t('maintStatusOverdue');
+
+  String maintenanceTypeLocalized(String code) {
+    final clean =
+        code.trim().isEmpty ? 'other' : code.trim();
+    final key = 'maintType_$clean';
+    final loc = _strings[locale.languageCode]?[key];
+    if (loc != null) return loc;
+    final en = _strings['en']?[key];
+    if (en != null) return en;
+    return clean.replaceAll('_', ' ');
+  }
+
+  String get fleetCardNoDriver => _t('fleetCardNoDriver');
+  String fleetCardDriverAssigned(String name) =>
+      _t('fleetCardDriverAssigned').replaceAll('{name}', name);
+  String get fleetCardNoMaintenance => _t('fleetCardNoMaintenance');
+  String fleetCardMaintenanceSnippet(String snippet) =>
+      _t('fleetCardMaintenanceSnippet').replaceAll('{snippet}', snippet);
+
+  String get fleetSectionDocuments => _t('fleetSectionDocuments');
+  String get fleetDocInsuranceLabel => _t('fleetDocInsuranceLabel');
+  String get fleetDocInspectionLabel => _t('fleetDocInspectionLabel');
+
+  String get fleetAlertMaintSoonTitle => _t('fleetAlertMaintSoonTitle');
+  String fleetAlertMaintSoonDesc(String vehicle, String task) =>
+      _t('fleetAlertMaintSoonDesc')
+          .replaceAll('{vehicle}', vehicle)
+          .replaceAll('{task}', task);
+  String get fleetAlertMaintOverdueTitle =>
+      _t('fleetAlertMaintOverdueTitle');
+  String fleetAlertMaintOverdueDesc(String vehicle, String task) =>
+      _t('fleetAlertMaintOverdueDesc')
+          .replaceAll('{vehicle}', vehicle)
+          .replaceAll('{task}', task);
+  String get fleetAlertInsuranceSoonTitle =>
+      _t('fleetAlertInsuranceSoonTitle');
+  String fleetAlertInsuranceSoonDesc(String vehicle) =>
+      _t('fleetAlertInsuranceSoonDesc').replaceAll('{vehicle}', vehicle);
+  String get fleetAlertInsuranceExpiredTitle =>
+      _t('fleetAlertInsuranceExpiredTitle');
+  String fleetAlertInsuranceExpiredDesc(String vehicle) =>
+      _t('fleetAlertInsuranceExpiredDesc').replaceAll('{vehicle}', vehicle);
+  String get fleetAlertTechSoonTitle => _t('fleetAlertTechSoonTitle');
+  String fleetAlertTechSoonDesc(String vehicle) =>
+      _t('fleetAlertTechSoonDesc').replaceAll('{vehicle}', vehicle);
+  String get fleetAlertTechExpiredTitle => _t('fleetAlertTechExpiredTitle');
+  String fleetAlertTechExpiredDesc(String vehicle) =>
+      _t('fleetAlertTechExpiredDesc').replaceAll('{vehicle}', vehicle);
+  String get fleetAlertLicenseSoonTitle => _t('fleetAlertLicenseSoonTitle');
+  String fleetAlertLicenseSoonDesc(String name) =>
+      _t('fleetAlertLicenseSoonDesc').replaceAll('{name}', name);
+  String get fleetAlertLicenseExpiredTitle =>
+      _t('fleetAlertLicenseExpiredTitle');
+  String fleetAlertLicenseExpiredDesc(String name) =>
+      _t('fleetAlertLicenseExpiredDesc').replaceAll('{name}', name);
+
+  String get reportFleetMaintenanceSoon => _t('reportFleetMaintenanceSoon');
+  String get reportFleetDriversSoon => _t('reportFleetDriversSoon');
+
+  String get validationRequired => _t('validationRequired');
+
+  /// Localised label for report / alert rows; [fallback] is usually French CSV from server.
+  String reportEventTypeDisplay(String type, String fallback) => switch (type) {
+        'geofenceEnter' => _t('geofenceZoneEntry'),
+        'geofenceExit' => _t('geofenceZoneExit'),
+        _ => fallback,
+      };
+
   // ── PDF / Share ─────────────────────────────────────────────────────────────
   String get exportPdfLabel     => _t('exportPdfLabel');
   String get shareReportLabel   => _t('shareReportLabel');
@@ -690,6 +855,132 @@ class AppLocalizations {
       'speedChartGpsPoints': 'GPS points',
       'noSpeedData': 'No speed data available.',
       'viewSpeedChart': 'View speed chart',
+      'geofencesTitle': 'Geofences',
+      'geofencesAdd': 'Add zone',
+      'geofenceEdit': 'Edit zone',
+      'geofenceDelete': 'Delete zone',
+      'geofenceNameLabel': 'Zone name',
+      'geofenceTypeLabel': 'Zone type',
+      'geofenceTypeCircle': 'Circle',
+      'geofenceTypePolygon': 'Polygon',
+      'geofenceRadius': 'Radius',
+      'geofenceLinkedVehicles': 'Associated vehicles',
+      'geofenceAlertSectionTitle': 'Entry/exit alerts',
+      'geofenceZoneEntry': 'Zone entry',
+      'geofenceZoneExit': 'Zone exit',
+      'geofenceShowOnMap': 'Show zones',
+      'geofenceTapMapCenter': 'Tap on the map to set the center',
+      'geofencePolygonMinPoints': 'Add at least 3 points',
+      'geofenceCreated': 'Zone created successfully',
+      'geofenceUpdated': 'Zone updated',
+      'geofenceDeleted': 'Zone deleted',
+      'geofenceLoadError': 'Error loading zones',
+      'geofenceAlertStatusOn': 'Alerts on',
+      'geofenceAlertStatusOff': 'No alerts',
+      'geofenceSearchHint': 'Search by name',
+      'geofenceFilterAllTypes': 'All types',
+      'geofenceDeleteTitle': 'Delete zone',
+      'geofenceDeleteMessage': 'This zone will be permanently deleted.',
+      'geofenceDeleteWarningWithVehicles':
+          'This zone is linked to {n} vehicle(s). It will still be deleted.',
+      'geofencesEmptyTitle': 'No zones yet',
+      'geofencesEmptyMessage': 'Add a zone to see it on the map and get alerts.',
+      'geofenceColorLabel': 'Colour',
+      'geofenceTapMapCenterHint': 'Tap on the map to set the center',
+      'geofencePolygonTapHint': 'Tap the map to add polygon vertices',
+      'geofencePolygonUndoLast': 'Remove last point',
+      'geofenceNotifyEnter': 'Create an entry alert',
+      'geofenceNotifyExit': 'Create an exit alert',
+      'geofenceNotifyBoth': 'Create both',
+      'geofenceNoVehiclesLinked': 'No vehicles selected',
+      'geofenceVehiclesSelectedCount': '{n} vehicles selected',
+      'geofenceVehiclesClear': 'Clear',
+      'geofenceDetailsTitle': 'Zone details',
+      'geofenceNotFound': 'Zone not found',
+      'driversTitle': 'Drivers',
+      'driversAdd': 'Add driver',
+      'driversEdit': 'Edit driver',
+      'driversDelete': 'Delete driver',
+      'driversSearchHint': 'Search by name or code',
+      'driversEmptyTitle': 'No drivers',
+      'driversEmptyMessage': 'Add drivers to assign them to your vehicles.',
+      'driverDetailTitle': 'Driver detail',
+      'driverNameLabel': 'Driver name',
+      'driverCodeLabel': 'Driver code',
+      'driverPhoneLabel': 'Phone',
+      'drivingLicenseLabel': 'Driving license',
+      'licenseExpiryLabel': 'License expiry date',
+      'driversLinkedVehicles': 'Associated vehicles',
+      'driverNotesLabel': 'Notes',
+      'driversSave': 'Save',
+      'driversDeleteConfirmTitle': 'Delete driver',
+      'driversDeleteConfirmBody': 'This driver will be deleted permanently.',
+      'driversLoadError': 'Unable to load drivers',
+      'driversSelectVehiclesHint': 'Tap to select fleet vehicles.',
+      'licenseStatusUnknown': 'Status unknown',
+      'licenseStatusValid': 'License valid',
+      'licenseStatusSoon': 'License expiring soon',
+      'licenseStatusExpired': 'License expired',
+      'maintenanceTitle': 'Maintenance',
+      'maintenanceAdd': 'Add maintenance',
+      'maintenanceEdit': 'Edit maintenance',
+      'maintenanceDelete': 'Delete maintenance',
+      'maintenanceDetailTitle': 'Maintenance detail',
+      'maintenanceSearchHint': 'Search maintenance',
+      'maintenanceFilterAll': 'All vehicles',
+      'maintenanceFilterVehicle': 'Filter by vehicle',
+      'maintenanceLoadError': 'Unable to load maintenance',
+      'maintenanceEmptyTitle': 'No maintenance',
+      'maintenanceEmptyMessage': 'Create maintenance items to track due dates.',
+      'maintenanceTypeLabelField': 'Maintenance type',
+      'maintenanceDueDateLabel': 'Due date',
+      'maintenanceDueOdometerLabel': 'Due odometer (km)',
+      'maintenanceMarkCompletedHint': 'Mark as completed',
+      'maintenanceDeleteConfirmTitle': 'Delete maintenance',
+      'maintenanceDeleteConfirmBody': 'Are you sure you want to delete this maintenance record?',
+      'maintStatusUnknown': 'Unknown',
+      'maintStatusCompleted': 'Completed',
+      'maintStatusUpcoming': 'Upcoming',
+      'maintStatusSoon': 'Soon due',
+      'maintStatusOverdue': 'Overdue',
+      'maintType_oil_change': 'Oil change',
+      'maintType_oil_filter': 'Oil filter',
+      'maintType_air_filter': 'Air filter',
+      'maintType_tires': 'Tires',
+      'maintType_brakes': 'Brakes',
+      'maintType_battery': 'Battery',
+      'maintType_draining': 'Flushing',
+      'maintType_general_revision': 'General service',
+      'maintType_insurance': 'Insurance',
+      'maintType_technical_inspection': 'Technical inspection',
+      'maintType_vignette': 'Road tax vignette',
+      'maintType_other': 'Other',
+      'fleetCardNoDriver': 'No driver assigned',
+      'fleetCardDriverAssigned': 'Driver {name}',
+      'fleetCardNoMaintenance': 'No maintenance',
+      'fleetCardMaintenanceSnippet': 'Maintenance • {snippet}',
+      'fleetSectionDocuments': 'Documents',
+      'fleetDocInsuranceLabel': 'Insurance',
+      'fleetDocInspectionLabel': 'Technical inspection',
+      'fleetAlertMaintSoonTitle': 'Maintenance due soon',
+      'fleetAlertMaintSoonDesc': '{vehicle}: {task} is due soon',
+      'fleetAlertMaintOverdueTitle': 'Overdue maintenance',
+      'fleetAlertMaintOverdueDesc': '{vehicle}: {task} is overdue',
+      'fleetAlertInsuranceSoonTitle': 'Insurance expiring soon',
+      'fleetAlertInsuranceSoonDesc': '{vehicle}: insurance expiry is approaching',
+      'fleetAlertInsuranceExpiredTitle': 'Insurance expired',
+      'fleetAlertInsuranceExpiredDesc': '{vehicle}: insurance has expired',
+      'fleetAlertTechSoonTitle': 'Technical inspection expires soon',
+      'fleetAlertTechSoonDesc': '{vehicle}: technical inspection date is nearing',
+      'fleetAlertTechExpiredTitle': 'Technical inspection expired',
+      'fleetAlertTechExpiredDesc': '{vehicle}: technical inspection has expired',
+      'fleetAlertLicenseSoonTitle': 'Driver license expiring soon',
+      'fleetAlertLicenseSoonDesc': '{name}: driving license expiry is nearing',
+      'fleetAlertLicenseExpiredTitle': 'Driver license expired',
+      'fleetAlertLicenseExpiredDesc': '{name}: driving license has expired',
+      'reportFleetMaintenanceSoon': 'Maintenance report — Coming soon',
+      'reportFleetDriversSoon': 'Drivers report — Coming soon',
+      'validationRequired': 'This field is required',
       // PDF / Share
       'exportPdfLabel': 'Export PDF',
       'shareReportLabel': 'Share report',
@@ -1013,6 +1304,134 @@ class AppLocalizations {
       'speedChartGpsPoints': 'نقاط GPS',
       'noSpeedData': 'لا توجد بيانات سرعة متاحة.',
       'viewSpeedChart': 'عرض رسم السرعة',
+      'geofencesTitle': 'المناطق الجغرافية',
+      'geofencesAdd': 'إضافة منطقة',
+      'geofenceEdit': 'تعديل المنطقة',
+      'geofenceDelete': 'حذف المنطقة',
+      'geofenceNameLabel': 'اسم المنطقة',
+      'geofenceTypeLabel': 'نوع المنطقة',
+      'geofenceTypeCircle': 'دائرة',
+      'geofenceTypePolygon': 'مضلع',
+      'geofenceRadius': 'نصف القطر',
+      'geofenceLinkedVehicles': 'المركبات المرتبطة',
+      'geofenceAlertSectionTitle': 'تنبيهات الدخول والخروج',
+      'geofenceZoneEntry': 'دخول منطقة',
+      'geofenceZoneExit': 'خروج من منطقة',
+      'geofenceShowOnMap': 'عرض المناطق',
+      'geofenceTapMapCenter': 'اضغط على الخريطة لتحديد المركز',
+      'geofencePolygonMinPoints': 'أضف 3 نقاط على الأقل',
+      'geofenceCreated': 'تم إنشاء المنطقة بنجاح',
+      'geofenceUpdated': 'تم تحديث المنطقة',
+      'geofenceDeleted': 'تم حذف المنطقة',
+      'geofenceLoadError': 'حدث خطأ أثناء تحميل المناطق',
+      'geofenceAlertStatusOn': 'التنبيهات مفعّلة',
+      'geofenceAlertStatusOff': 'بدون تنبيهات',
+      'geofenceSearchHint': 'ابحث بالاسم',
+      'geofenceFilterAllTypes': 'كل الأنواع',
+      'geofenceDeleteTitle': 'حذف المنطقة',
+      'geofenceDeleteMessage': 'سيتم حذف المنطقة نهائياً.',
+      'geofenceDeleteWarningWithVehicles':
+          'المنطقة مرتبطة بـ {n} مركبة. سيتم الحذف على أي حال.',
+      'geofencesEmptyTitle': 'لا توجد مناطق',
+      'geofencesEmptyMessage': 'أضف منطقة لعرضها على الخريطة وتلقي التنبيهات.',
+      'geofenceColorLabel': 'اللون',
+      'geofenceTapMapCenterHint': 'اضغط على الخريطة لتحديد المركز',
+      'geofencePolygonTapHint': 'اضغط على الخريطة لإضافة نقاط المضلع',
+      'geofencePolygonUndoLast': 'حذف آخر نقطة',
+      'geofenceNotifyEnter': 'إنشاء تنبيه دخول',
+      'geofenceNotifyExit': 'إنشاء تنبيه خروج',
+      'geofenceNotifyBoth': 'إنشاء الاثنين',
+      'geofenceNoVehiclesLinked': 'لم يتم اختيار مركبات',
+      'geofenceVehiclesSelectedCount': '{n} مركبة مختارة',
+      'geofenceVehiclesClear': 'مسح',
+      'geofenceDetailsTitle': 'تفاصيل المنطقة',
+      'geofenceNotFound': 'المنطقة غير موجودة',
+      'driversTitle': 'السائقون',
+      'driversAdd': 'إضافة سائق',
+      'driversEdit': 'تعديل السائق',
+      'driversDelete': 'حذف السائق',
+      'driversSearchHint': 'بحث بالاسم أو الكود',
+      'driversEmptyTitle': 'لا يوجد سائقون',
+      'driversEmptyMessage': 'يمكنكم إنشاء ملفّات قائمة ومزامنتها بحسب المركبات.',
+      'driverDetailTitle': 'تفاصيل السائق',
+      'driverNameLabel': 'اسم السائق',
+      'driverCodeLabel': 'كود السائق',
+      'driverPhoneLabel': 'الهاتف',
+      'drivingLicenseLabel': 'رخصة السياقة',
+      'licenseExpiryLabel': 'تاريخ انتهاء الرخصة',
+      'driversLinkedVehicles': 'المركبات المرتبطة',
+      'driverNotesLabel': 'ملاحظات',
+      'driversSave': 'حفظ',
+      'driversDeleteConfirmTitle': 'حذف السائق',
+      'driversDeleteConfirmBody': 'سيجري حذف السائق بشكلٍ قطعي، هل تُؤكّد ذلك؟',
+      'driversLoadError': 'تعذّر تنزيل بيانات السائقين',
+      'driversSelectVehiclesHint': 'اختر المركبات من أسطولك.',
+      'licenseStatusUnknown': 'حالة مجهولة',
+      'licenseStatusValid': 'الرخصة صالحة',
+      'licenseStatusSoon': 'الرخصة قريبة الانتهاء',
+      'licenseStatusExpired': 'الرخصة منتهية',
+      'maintenanceTitle': 'الصيانة',
+      'maintenanceAdd': 'إضافة صيانة',
+      'maintenanceEdit': 'تعديل الصيانة',
+      'maintenanceDelete': 'حذف الصيانة',
+      'maintenanceDetailTitle': 'تفاصيل الصيانة',
+      'maintenanceSearchHint': 'بحث ضمن قائمة الصيانة',
+      'maintenanceFilterAll': 'جميع المركبات',
+      'maintenanceFilterVehicle': 'انتقاء المركبة',
+      'maintenanceLoadError': 'لم يمكن تحميل جدولة الصيانة',
+      'maintenanceEmptyTitle': 'لا توجد صيانة',
+      'maintenanceEmptyMessage': 'أنشِئ مهامًا تفصيلية وفق المواعيد المقررة.',
+      'maintenanceTypeLabelField': 'نوع الصيانة',
+      'maintenanceDueDateLabel': 'تاريخ الاستحقاق',
+      'maintenanceDueOdometerLabel': 'كيلومترات الاستحقاق',
+      'maintenanceMarkCompletedHint': 'وضْع تمّ الإنهاء إن أمكن ذلك',
+      'maintenanceDeleteConfirmTitle': 'حذف بطاقة الصيانة',
+      'maintenanceDeleteConfirmBody': 'تأكَّد قبل إزالة هذا السجل بصورة قطعية.',
+      'maintStatusUnknown': 'حالة مجهولة',
+      'maintStatusCompleted': 'مكتملة',
+      'maintStatusUpcoming': 'قادمة',
+      'maintStatusSoon': 'قريباً',
+      'maintStatusOverdue': 'متأخرة',
+      'maintType_oil_change': 'تغيير الزيت',
+      'maintType_oil_filter': 'فلتر الزيت',
+      'maintType_air_filter': 'فلتر الهواء',
+      'maintType_tires': 'إطارات',
+      'maintType_brakes': 'فرامل',
+      'maintType_battery': 'بطارية',
+      'maintType_draining': 'تفريغ/تخليل',
+      'maintType_general_revision': 'مراجعات عامّة شاملة',
+      'maintType_insurance': 'التأمين',
+      'maintType_technical_inspection': 'الفحص التقني',
+      'maintType_vignette': 'الرمز المروري أو الملصق',
+      'maintType_other': 'أنواع أخرى',
+      'fleetCardNoDriver': 'لا يوجد سائق مخصّص',
+      'fleetCardDriverAssigned': '{name}',
+      'fleetCardNoMaintenance': 'لا توجد صيانة',
+      'fleetCardMaintenanceSnippet': 'الصيانة • {snippet}',
+      'fleetSectionDocuments': 'وثائق المركبات',
+      'fleetDocInsuranceLabel': 'التأمين',
+      'fleetDocInspectionLabel': 'الفحص التقني',
+      'fleetAlertMaintSoonTitle': 'الصيانة قريبة الاستحقاق',
+      'fleetAlertMaintSoonDesc': '{vehicle}: {task} قريبة الوجوب',
+      'fleetAlertMaintOverdueTitle': 'الصيانة متأخّرة فعلًا',
+      'fleetAlertMaintOverdueDesc': '{vehicle}: تأخّرت {task}',
+      'fleetAlertInsuranceSoonTitle': 'التأمين سيُوشكُ على الانتهاء',
+      'fleetAlertInsuranceSoonDesc': '{vehicle}: يوشك تأمينها على الانقضاء',
+      'fleetAlertInsuranceExpiredTitle': 'التأمين منسوخ',
+      'fleetAlertInsuranceExpiredDesc': '{vehicle}: انقطع تأمينها، يجب تجديد الوثائق.',
+      'fleetAlertTechSoonTitle': 'تاريخ الفحص الفني يوشك الانتهاء',
+      'fleetAlertTechSoonDesc':
+          '{vehicle}: يوشك الموعد الزمني لفحصها الفني على الانقضاء',
+      'fleetAlertTechExpiredTitle': 'تاريخ الفحص الفني تجاوُز المهلة',
+      'fleetAlertTechExpiredDesc': '{vehicle}: تجاوُز زمن الفحص الفني الموعود',
+      'fleetAlertLicenseSoonTitle': 'رخصة القيادة ستنتهي قريباً',
+      'fleetAlertLicenseSoonDesc': '{name}: تبقَّى على انتهاء رخصته فترة قصيرة',
+      'fleetAlertLicenseExpiredTitle': 'رخصة القيادة منتهية السريان',
+      'fleetAlertLicenseExpiredDesc':
+          '{name}: انتهَت مهلة اعتبار رخصته سارية وفق الآجال',
+      'reportFleetMaintenanceSoon': 'إصدار تقرير الصيانة — يُفعَّل لاحقاً',
+      'reportFleetDriversSoon': 'تقرير السائقين — يتوفر خلال المرات القادمة',
+      'validationRequired': 'هذا الحقل إلزامي',
       // PDF / Share
       'exportPdfLabel': 'تصدير PDF',
       'shareReportLabel': 'مشاركة التقرير',
@@ -1341,6 +1760,137 @@ class AppLocalizations {
       'speedChartGpsPoints': 'Points GPS',
       'noSpeedData': 'Aucune donnée de vitesse disponible.',
       'viewSpeedChart': 'Voir graphique vitesse',
+      'geofencesTitle': 'Zones géographiques',
+      'geofencesAdd': 'Ajouter une zone',
+      'geofenceEdit': 'Modifier la zone',
+      'geofenceDelete': 'Supprimer la zone',
+      'geofenceNameLabel': 'Nom de la zone',
+      'geofenceTypeLabel': 'Type de zone',
+      'geofenceTypeCircle': 'Cercle',
+      'geofenceTypePolygon': 'Polygone',
+      'geofenceRadius': 'Rayon',
+      'geofenceLinkedVehicles': 'Véhicules associés',
+      'geofenceAlertSectionTitle': 'Alertes d’entrée/sortie',
+      'geofenceZoneEntry': 'Entrée zone',
+      'geofenceZoneExit': 'Sortie zone',
+      'geofenceShowOnMap': 'Afficher les zones',
+      'geofenceTapMapCenter': 'Appuyez sur la carte pour définir le centre',
+      'geofencePolygonMinPoints': 'Ajoutez au moins 3 points',
+      'geofenceCreated': 'Zone créée avec succès',
+      'geofenceUpdated': 'Zone mise à jour',
+      'geofenceDeleted': 'Zone supprimée',
+      'geofenceLoadError': 'Erreur lors du chargement des zones',
+      'geofenceAlertStatusOn': 'Alertes actives',
+      'geofenceAlertStatusOff': 'Pas d’alertes',
+      'geofenceSearchHint': 'Rechercher par nom',
+      'geofenceFilterAllTypes': 'Tous les types',
+      'geofenceDeleteTitle': 'Supprimer la zone',
+      'geofenceDeleteMessage': 'La zone sera définitivement supprimée.',
+      'geofenceDeleteWarningWithVehicles':
+          'Cette zone est liée à {n} véhicule(s). Elle sera tout de même supprimée.',
+      'geofencesEmptyTitle': 'Aucune zone',
+      'geofencesEmptyMessage': 'Ajoutez une zone pour la voir sur la carte et recevoir des alertes.',
+      'geofenceColorLabel': 'Couleur',
+      'geofenceTapMapCenterHint': 'Appuyez sur la carte pour définir le centre',
+      'geofencePolygonTapHint': 'Appuyez sur la carte pour ajouter des points',
+      'geofencePolygonUndoLast': 'Annuler le dernier point',
+      'geofenceNotifyEnter': 'Créer une alerte d’entrée',
+      'geofenceNotifyExit': 'Créer une alerte de sortie',
+      'geofenceNotifyBoth': 'Créer les deux',
+      'geofenceNoVehiclesLinked': 'Aucun véhicule sélectionné',
+      'geofenceVehiclesSelectedCount': '{n} véhicule(s) sélectionné(s)',
+      'geofenceVehiclesClear': 'Effacer',
+      'geofenceDetailsTitle': 'Détails de la zone',
+      'geofenceNotFound': 'Zone introuvable',
+      'driversTitle': 'Conducteurs',
+      'driversAdd': 'Ajouter conducteur',
+      'driversEdit': 'Modifier conducteur',
+      'driversDelete': 'Supprimer conducteur',
+      'driversSearchHint': 'Rechercher par nom ou code',
+      'driversEmptyTitle': 'Aucun conducteur',
+      'driversEmptyMessage': 'Créez un conducteur pour l’associer à vos véhicules.',
+      'driverDetailTitle': 'Conducteur — détails',
+      'driverNameLabel': 'Nom du conducteur',
+      'driverCodeLabel': 'Code conducteur',
+      'driverPhoneLabel': 'Téléphone',
+      'drivingLicenseLabel': 'Permis de conduire',
+      'licenseExpiryLabel': 'Date d’expiration du permis',
+      'driversLinkedVehicles': 'Véhicules associés',
+      'driverNotesLabel': 'Remarques',
+      'driversSave': 'Enregistrer',
+      'driversDeleteConfirmTitle': 'Supprimer ce conducteur',
+      'driversDeleteConfirmBody':
+          'Cette action efface définitivement ce conducteur.',
+      'driversLoadError': 'Chargement des conducteurs impossible',
+      'driversSelectVehiclesHint': 'Choisir des véhicules de votre flotte.',
+      'licenseStatusUnknown': 'Statut inconnu',
+      'licenseStatusValid': 'Licence valide',
+      'licenseStatusSoon': 'Licence bientôt expirée',
+      'licenseStatusExpired': 'Licence expirée',
+      'maintenanceTitle': 'Maintenance',
+      'maintenanceAdd': 'Ajouter maintenance',
+      'maintenanceEdit': 'Modifier maintenance',
+      'maintenanceDelete': 'Supprimer maintenance',
+      'maintenanceDetailTitle': 'Détail de la maintenance',
+      'maintenanceSearchHint': 'Rechercher une maintenance',
+      'maintenanceFilterAll': 'Tous les véhicules',
+      'maintenanceFilterVehicle': 'Filtrer par véhicule',
+      'maintenanceLoadError': 'Chargement de la maintenance impossible',
+      'maintenanceEmptyTitle': 'Aucune maintenance',
+      'maintenanceEmptyMessage':
+          'Planifiez les entretiens pour suivre échéances et kilométrages.',
+      'maintenanceTypeLabelField': 'Type de maintenance',
+      'maintenanceDueDateLabel': 'Date d’échéance',
+      'maintenanceDueOdometerLabel': 'Kilométrage d’échéance',
+      'maintenanceMarkCompletedHint': 'Marquer comme terminé',
+      'maintenanceDeleteConfirmTitle': 'Supprimer la maintenance',
+      'maintenanceDeleteConfirmBody':
+          'Supprimer cet enregistrement de façon définitive ?',
+      'maintStatusUnknown': 'Inconnu',
+      'maintStatusCompleted': 'Terminé',
+      'maintStatusUpcoming': 'À venir',
+      'maintStatusSoon': 'Bientôt',
+      'maintStatusOverdue': 'En retard',
+      'maintType_oil_change': 'Changement d’huile',
+      'maintType_oil_filter': 'Filtre à huile',
+      'maintType_air_filter': 'Filtre à air',
+      'maintType_tires': 'Pneus',
+      'maintType_brakes': 'Freins',
+      'maintType_battery': 'Batterie',
+      'maintType_draining': 'Vidange',
+      'maintType_general_revision': 'Révision générale',
+      'maintType_insurance': 'Assurance',
+      'maintType_technical_inspection': 'Visite technique',
+      'maintType_vignette': 'Vignette',
+      'maintType_other': 'Autre',
+      'fleetCardNoDriver': 'Conducteur non assigné',
+      'fleetCardDriverAssigned': 'Conducteur {name}',
+      'fleetCardNoMaintenance': 'Aucune maintenance',
+      'fleetCardMaintenanceSnippet': 'Maintenance • {snippet}',
+      'fleetSectionDocuments': 'Documents',
+      'fleetDocInsuranceLabel': 'Assurance',
+      'fleetDocInspectionLabel': 'Visite technique',
+      'fleetAlertMaintSoonTitle': 'Maintenance bientôt due',
+      'fleetAlertMaintSoonDesc': '{vehicle} : « {task} » approche.',
+      'fleetAlertMaintOverdueTitle': 'Maintenance en retard',
+      'fleetAlertMaintOverdueDesc': '{vehicle} : « {task} » est en retard.',
+      'fleetAlertInsuranceSoonTitle': 'Assurance bientôt expirée',
+      'fleetAlertInsuranceSoonDesc': '{vehicle} : la validité assurance approche.',
+      'fleetAlertInsuranceExpiredTitle': 'Assurance expirée',
+      'fleetAlertInsuranceExpiredDesc': '{vehicle} : assurance expirée.',
+      'fleetAlertTechSoonTitle': 'Visite technique bientôt expirée',
+      'fleetAlertTechSoonDesc': '{vehicle} : la VT approche.',
+      'fleetAlertTechExpiredTitle': 'Visite technique expirée',
+      'fleetAlertTechExpiredDesc': '{vehicle} : VT expirée.',
+      'fleetAlertLicenseSoonTitle': 'Permis conducteur bientôt expiré',
+      'fleetAlertLicenseSoonDesc': '{name} : expiration du permis proche.',
+      'fleetAlertLicenseExpiredTitle': 'Permis conducteur expiré',
+      'fleetAlertLicenseExpiredDesc': '{name} : permis expiré.',
+      'reportFleetMaintenanceSoon':
+          'Rapport Maintenance — Disponible prochainement',
+      'reportFleetDriversSoon':
+          'Rapport Conducteurs — Disponible prochainement',
+      'validationRequired': 'Champ obligatoire',
       // PDF / Partage
       'exportPdfLabel': 'Exporter PDF',
       'shareReportLabel': 'Partager le rapport',
@@ -1669,6 +2219,134 @@ class AppLocalizations {
       'speedChartGpsPoints': 'Puntos GPS',
       'noSpeedData': 'No hay datos de velocidad disponibles.',
       'viewSpeedChart': 'Ver gráfico de velocidad',
+      'geofencesTitle': 'Zonas geográficas',
+      'geofencesAdd': 'Añadir zona',
+      'geofenceEdit': 'Editar zona',
+      'geofenceDelete': 'Eliminar zona',
+      'geofenceNameLabel': 'Nombre de la zona',
+      'geofenceTypeLabel': 'Tipo de zona',
+      'geofenceTypeCircle': 'Círculo',
+      'geofenceTypePolygon': 'Polígono',
+      'geofenceRadius': 'Radio',
+      'geofenceLinkedVehicles': 'Vehículos asociados',
+      'geofenceAlertSectionTitle': 'Alertas de entrada/salida',
+      'geofenceZoneEntry': 'Entrada a zona',
+      'geofenceZoneExit': 'Salida de zona',
+      'geofenceShowOnMap': 'Mostrar zonas',
+      'geofenceTapMapCenter': 'Toque el mapa para definir el centro',
+      'geofencePolygonMinPoints': 'Añada al menos 3 puntos',
+      'geofenceCreated': 'Zona creada correctamente',
+      'geofenceUpdated': 'Zona actualizada',
+      'geofenceDeleted': 'Zona eliminada',
+      'geofenceLoadError': 'Error al cargar zonas',
+      'geofenceAlertStatusOn': 'Alertas activas',
+      'geofenceAlertStatusOff': 'Sin alertas',
+      'geofenceSearchHint': 'Buscar por nombre',
+      'geofenceFilterAllTypes': 'Todos los tipos',
+      'geofenceDeleteTitle': 'Eliminar zona',
+      'geofenceDeleteMessage': 'La zona se eliminará de forma permanente.',
+      'geofenceDeleteWarningWithVehicles':
+          'Esta zona está vinculada a {n} vehículo(s). Se eliminará de todas formas.',
+      'geofencesEmptyTitle': 'Sin zonas',
+      'geofencesEmptyMessage': 'Añada una zona para verla en el mapa y recibir alertas.',
+      'geofenceColorLabel': 'Color',
+      'geofenceTapMapCenterHint': 'Toque el mapa para definir el centro',
+      'geofencePolygonTapHint': 'Toque el mapa para añadir vértices',
+      'geofencePolygonUndoLast': 'Quitar último punto',
+      'geofenceNotifyEnter': 'Crear alerta de entrada',
+      'geofenceNotifyExit': 'Crear alerta de salida',
+      'geofenceNotifyBoth': 'Crear ambas',
+      'geofenceNoVehiclesLinked': 'Ningún vehículo seleccionado',
+      'geofenceVehiclesSelectedCount': '{n} vehículo(s) seleccionado(s)',
+      'geofenceVehiclesClear': 'Limpiar',
+      'geofenceDetailsTitle': 'Detalles de la zona',
+      'geofenceNotFound': 'Zona no encontrada',
+      'driversTitle': 'Conductores',
+      'driversAdd': 'Añadir conductor',
+      'driversEdit': 'Editar conductor',
+      'driversDelete': 'Eliminar conductor',
+      'driversSearchHint': 'Buscar por nombre o código',
+      'driversEmptyTitle': 'Sin conductores',
+      'driversEmptyMessage': 'Agregue conductores para enlazarlos a vehículos.',
+      'driverDetailTitle': 'Detalle del conductor',
+      'driverNameLabel': 'Nombre del conductor',
+      'driverCodeLabel': 'Código del conductor',
+      'driverPhoneLabel': 'Teléfono',
+      'drivingLicenseLabel': 'Licencia de conducir',
+      'licenseExpiryLabel': 'Fecha de vencimiento de la licencia',
+      'driversLinkedVehicles': 'Vehículos asociados',
+      'driverNotesLabel': 'Notas',
+      'driversSave': 'Guardar',
+      'driversDeleteConfirmTitle': 'Eliminar conductor',
+      'driversDeleteConfirmBody': 'Este conductor se eliminará de forma permanente.',
+      'driversLoadError': 'No se pueden cargar conductores',
+      'driversSelectVehiclesHint': 'Seleccionar vehículos de la flota.',
+      'licenseStatusUnknown': 'Estado desconocido',
+      'licenseStatusValid': 'Licencia válida',
+      'licenseStatusSoon': 'Licencia por vencer',
+      'licenseStatusExpired': 'Licencia vencida',
+      'maintenanceTitle': 'Mantenimiento',
+      'maintenanceAdd': 'Añadir mantenimiento',
+      'maintenanceEdit': 'Editar mantenimiento',
+      'maintenanceDelete': 'Eliminar mantenimiento',
+      'maintenanceDetailTitle': 'Detalle de mantenimiento',
+      'maintenanceSearchHint': 'Buscar mantenimiento',
+      'maintenanceFilterAll': 'Todos los vehículos',
+      'maintenanceFilterVehicle': 'Filtrar por vehículo',
+      'maintenanceLoadError': 'No se pueden cargar mantenimientos',
+      'maintenanceEmptyTitle': 'Sin mantenimiento',
+      'maintenanceEmptyMessage': 'Planifique trabajos y fechas aquí mismo.',
+      'maintenanceTypeLabelField': 'Tipo de mantenimiento',
+      'maintenanceDueDateLabel': 'Fecha de vencimiento',
+      'maintenanceDueOdometerLabel': 'Kilometraje de vencimiento',
+      'maintenanceMarkCompletedHint': 'Marcar terminado',
+      'maintenanceDeleteConfirmTitle': 'Eliminar mantenimiento',
+      'maintenanceDeleteConfirmBody': '¿Eliminar esta ficha?',
+      'maintStatusUnknown': 'Desconocido',
+      'maintStatusCompleted': 'Completado',
+      'maintStatusUpcoming': 'Próximo',
+      'maintStatusSoon': 'Pronto',
+      'maintStatusOverdue': 'Vencido',
+      'maintType_oil_change': 'Cambio de aceite',
+      'maintType_oil_filter': 'Filtro de aceite',
+      'maintType_air_filter': 'Filtro de aire',
+      'maintType_tires': 'Neumáticos',
+      'maintType_brakes': 'Frenos',
+      'maintType_battery': 'Batería',
+      'maintType_draining': 'Drenaje/aceites',
+      'maintType_general_revision': 'Servicio integral',
+      'maintType_insurance': 'Seguro',
+      'maintType_technical_inspection': 'Inspección técnica',
+      'maintType_vignette': 'Vignete / impuesto vial',
+      'maintType_other': 'Otros',
+      'fleetCardNoDriver': 'Sin conductor asignado',
+      'fleetCardDriverAssigned': 'Conductor {name}',
+      'fleetCardNoMaintenance': 'Sin mantenimiento',
+      'fleetCardMaintenanceSnippet': 'Mantenimiento • {snippet}',
+      'fleetSectionDocuments': 'Documentos',
+      'fleetDocInsuranceLabel': 'Seguro',
+      'fleetDocInspectionLabel': 'Inspección técnica',
+      'fleetAlertMaintSoonTitle': 'Mantenimiento próximo',
+      'fleetAlertMaintSoonDesc': '{vehicle}: "{task}" vence pronto.',
+      'fleetAlertMaintOverdueTitle': 'Mantenimiento vencido',
+      'fleetAlertMaintOverdueDesc': '{vehicle}: "{task}" atrasado.',
+      'fleetAlertInsuranceSoonTitle': 'Seguro por vencer',
+      'fleetAlertInsuranceSoonDesc': '{vehicle}: el contrato llega su plazo.',
+      'fleetAlertInsuranceExpiredTitle': 'Seguro caducado',
+      'fleetAlertInsuranceExpiredDesc': '{vehicle}: seguro vencido.',
+      'fleetAlertTechSoonTitle': 'Inspección técnica cercana',
+      'fleetAlertTechSoonDesc': '{vehicle}: ITV próximo vencimiento.',
+      'fleetAlertTechExpiredTitle': 'Inspección técnica vencida',
+      'fleetAlertTechExpiredDesc': '{vehicle}: ITV vencida.',
+      'fleetAlertLicenseSoonTitle': 'Licencia cercana al vencimiento',
+      'fleetAlertLicenseSoonDesc': '{name}: revise la caducidad de la licencia.',
+      'fleetAlertLicenseExpiredTitle': 'Licencia vencida',
+      'fleetAlertLicenseExpiredDesc': '{name}: licencia expirada.',
+      'reportFleetMaintenanceSoon':
+          'Informe de mantenimiento — Disponible próximamente',
+      'reportFleetDriversSoon':
+          'Informe de conductores — Disponible próximamente',
+      'validationRequired': 'Campo obligatorio',
       // PDF / Compartir
       'exportPdfLabel': 'Exportar PDF',
       'shareReportLabel': 'Compartir informe',

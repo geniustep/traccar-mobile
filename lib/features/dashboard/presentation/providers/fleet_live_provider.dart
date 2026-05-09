@@ -179,6 +179,8 @@ AlertEntity _eventToAlert(TraccarEvent e, String deviceName) => AlertEntity(
       latitude: null,
       longitude: null,
       attributes: e.attributes,
+      geofenceId:
+          (e.geofenceId != null && e.geofenceId! > 0) ? e.geofenceId : null,
     );
 
 String _evtSeverity(String type, Map<String, dynamic> attrs) =>

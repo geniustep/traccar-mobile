@@ -12,6 +12,7 @@ class AlertEntity {
     required this.latitude,
     required this.longitude,
     required this.attributes,
+    this.geofenceId,
   });
 
   final String id;
@@ -26,6 +27,7 @@ class AlertEntity {
   final double? latitude;
   final double? longitude;
   final Map<String, dynamic> attributes;
+  final int? geofenceId;
 
   bool get isCritical => severity == 'critical';
   bool get hasLocation => latitude != null && longitude != null;
@@ -44,6 +46,7 @@ class AlertEntity {
       latitude: latitude,
       longitude: longitude,
       attributes: attributes,
+      geofenceId: geofenceId,
     );
   }
 }

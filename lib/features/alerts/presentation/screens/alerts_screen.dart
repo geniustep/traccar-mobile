@@ -12,6 +12,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../providers/alerts_provider.dart';
 import '../../domain/entities/alert.dart';
+import '../../../geofences/presentation/providers/geofences_providers.dart';
 
 final smartAlertsProvider = FutureProvider.autoDispose<List<AlertEntity>>((ref) {
   return ref.read(alertsRepositoryProvider).getSmartAlerts();
@@ -187,34 +188,76 @@ class _SmartAlertsList extends ConsumerWidget {
   }
 }
 
-class AlertCard extends StatelessWidget {
+class AlertCard extends ConsumerWidget {
   const AlertCard({super.key, required this.alert, this.onTap});
 
   final AlertEntity alert;
   final VoidCallback? onTap;
 
-  static Color _severityColor(String s) => switch (s.toLowerCase()) {
-        'critical' => AppColors.severityCritical,
-        'high' => AppColors.severityHigh,
-        'medium' => AppColors.severityMedium,
-        'low' => AppColors.severityLow,
-        _ => AppColors.accent,
-      };
+  static Color _severityColor(
+    AlertEntity alert,
+    String severity,
+  ) {
+    if (alert.type == 'geofenceEnter') {
+      return const Color(0xFF1E88E5);
+    }
+    if (alert.type == 'geofenceExit') {
+      return const Color(0xFFFF9800);
+    }
+    return switch (severity.toLowerCase()) {
+      'critical' => AppColors.severityCritical,
+      'high' => AppColors.severityHigh,
+      'medium' => AppColors.severityMedium,
+      'low' => AppColors.severityLow,
+      _ => AppColors.accent,
+    };
+  }
 
   static IconData _typeIcon(String type) => switch (type.toLowerCase()) {
-        'overspeed' => Icons.speed_rounded,
-        'geofence' => Icons.fence_rounded,
+        'overspeed' || 'deviceoverspeed' => Icons.speed_rounded,
+        'geofenceenter' || 'geofenceexit' || 'geofence' => Icons.fence_rounded,
         'idle' => Icons.timer_rounded,
         'maintenance' => Icons.build_rounded,
         'battery' => Icons.battery_alert_rounded,
-        'offline' => Icons.signal_wifi_off_rounded,
+        'offline' || 'deviceoffline' => Icons.signal_wifi_off_rounded,
         _ => Icons.warning_amber_rounded,
       };
 
+  String _title(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+    final names = ref.watch(geofenceNameMapProvider);
+    switch (alert.type) {
+      case 'geofenceEnter':
+        final zn = alert.geofenceId != null ? names[alert.geofenceId!] : null;
+        if (zn != null) return '${l10n.geofenceZoneEntry} · $zn';
+        return l10n.geofenceZoneEntry;
+      case 'geofenceExit':
+        final zn = alert.geofenceId != null ? names[alert.geofenceId!] : null;
+        if (zn != null) return '${l10n.geofenceZoneExit} · $zn';
+        return l10n.geofenceZoneExit;
+      default:
+        return alert.title;
+    }
+  }
+
+  String _description(AppLocalizations l10n) {
+    switch (alert.type) {
+      case 'geofenceEnter':
+      case 'geofenceExit':
+        return alert.vehicleName.isNotEmpty
+            ? alert.vehicleName
+            : l10n.vehicleLabel;
+      default:
+        return alert.description;
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    final color = _severityColor(alert.severity);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final color = _severityColor(alert, alert.severity);
     final icon = _typeIcon(alert.type);
+    final title = _title(context, ref, l10n);
+    final desc = _description(l10n);
 
     return GestureDetector(
       onTap: onTap,
@@ -244,15 +287,17 @@ class AlertCard extends StatelessWidget {
                   child: Icon(icon, color: color, size: 20),
                 ),
                 if (!alert.isRead)
-                  Positioned(
+                  const Positioned(
                     top: 0,
                     right: 0,
-                    child: Container(
+                    child: SizedBox(
                       width: 10,
                       height: 10,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF4757),
-                        shape: BoxShape.circle,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFFF4757),
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                   ),
@@ -267,7 +312,7 @@ class AlertCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          alert.title,
+                          title,
                           style: AppTextStyles.labelLarge,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -277,7 +322,7 @@ class AlertCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    alert.description,
+                    desc,
                     style: AppTextStyles.bodySmall,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

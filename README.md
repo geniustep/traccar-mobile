@@ -288,6 +288,170 @@ mapVehiclesProvider               →  يدمج الاثنين تلقائياً 
 
 ---
 
+## Geofence Notifications QA
+
+قسم لاختبار **إشعارات السياج** (`geofenceEnter` / `geofenceExit`) على **خادم Traccar حقيقي** (مثل إنتاج ELMOGPS) قبل اعتبار ميزة *Smart Notifications* مكتملة. لا تُلحَق أي اعتمادات بالمستودع؛ القيم تُمرَّر عبر **متغيرات البيئة** فقط.
+
+**ملخّص تشغيلي:** راجع **القرار الرسمي للجاهزية**، **جداول Traccar 6.6**، و**فصل عنوان OsmAnd** عن REST؛ كثير من الأعطال السابقة كانت **بيئيةً** (ترحيل قاعدة البيانات، منفذ OsmAnd، إعدادات الاختبار) لا خللاً في تطبيق Flutter.
+
+### قرار رسمي — جاهزية الميزات (بيئة مُختبَرة)
+
+| المسار | الحالة |
+|--------|--------|
+| **Geofences CRUD** | جاهز |
+| **ربط الجهاز بالسياج** (Device ↔ Geofence) | جاهز |
+| **الإشعارات الذكية** (Smart Notifications — ربط الإشعار بالمستخدم والسياج والجهاز) | جاهز |
+| **تدفق اختبار OsmAnd** (حقن مواقع) | جاهز |
+| **تقرير الأحداث** (`/reports/events` — التحقق من `geofenceEnter` / `geofenceExit`) | مؤكَّد |
+
+### Traccar 6.6 في بيئة ELMOGPS — جداول الربط في قاعدة البيانات
+
+يجب التأكد من أن **ترحيل قاعدة البيانات مكتمل** وأن الجدولين التاليين **موجودان**؛ لأن مسار **`/api/permissions`** (وما يعادله خلف الوكيل العكسي) يستعملهما عند ربط **`notificationId`** بـ **`geofenceId`** أو **`deviceId`**:
+
+- **`tc_notification_geofence`**
+- **`tc_notification_device`**
+
+غياب أحدهما يُظهر خطأ SQL (مثل «الجدول غير موجود») عند **`POST /permissions`**، وهذا **أمر خادم وترحيل** وليس خللاً في تطبيق Flutter أو في سكربت الاختبار.
+
+### بروتوكول OsmAnd و`TRACCAR_OSMAND_URL`
+
+**اختبار حقن المواقع عبر OsmAnd لا يستخدم `TRACCAR_URL`** الخاص بـ REST (مثل `https://api.elmogps.com`). البروتوكول يستمع عادةً على **مضيف ومنفذ منفصلين** (غالباً **5055**)، وليس على مسار واجهة REST العمومية، فيُعرَّف:
+
+```text
+TRACCAR_OSMAND_URL=http://SERVER_IP:5055
+```
+
+**مثال من البيئة الحالية لـ ELMOGPS** (يُحدَّث إن تغيّر العنوان أو المنفذ):
+
+```text
+TRACCAR_OSMAND_URL=http://167.99.36.153:5055
+```
+
+### دروس مُستخلَصة من التشغيل
+
+1. **نقص جدولَي** `tc_notification_geofence` و`tc_notification_device` أعاق **`/permissions`** حتى أُكمل الترحيل على الخادم.
+2. **OsmAnd** لا يُستهدَف عبر **`api.elmogps.com`** للحقن؛ بل عبر **منفذ البروتوكول** (مثل **5055**).
+3. سكربت **`tool/traccar_geofence_notifications_qa.dart`** يعتمد على **انتظار كافٍ** و**عدة نقاط** و**نافذة `from`/`to` أوسع** في التقرير لرصد **`geofenceEnter` / `geofenceExit`** بثبات؛ يُستحسن **`GEONOTIF_DEBUG=1`** عند التشخيص.
+
+### عنوان `TRACCAR_URL` حسب النشر
+
+| نشر | قيمة `TRACCAR_URL` | ملاحظة |
+|-----|-------------------|--------|
+| **ELMOGPS** (`api.elmogps.com`) | `https://api.elmogps.com` | **من دون** لاحقة `/api`. الواجهة العمومية تعيد كتابة المسارات؛ إن أضفت `/api` قد تحصل على **404** أو مسار مضاعف. يطابق `ApiConfig.baseUrl` في بيئات staging/production. |
+| **Traccar مباشر** (مثال منفذ 8082) | `http://HOST:8082/api` | غالباً يلزم `/api` في المسار كما في تعيين Traccar الافتراضي. |
+
+### المتغيرات المطلوبة
+
+| المتغير | الوصف |
+|--------|--------|
+| `TRACCAR_URL` | جذر REST كما في الجدول أعلاه (لا تخلط نمط ELMO مع نمط `/api` إلا إن كان خادمك يتطلبه فعلاً). |
+| `TRACCAR_EMAIL` | البريد أو اسم المستخدم المعتمد على الخادم. |
+| `TRACCAR_PASSWORD` | كلمة المرور. |
+| `TEST_DEVICE_ID` | **id** الداخلي في Traccar أو **uniqueId** (مثل IMEI). يُجرى أولاً `GET /devices/{id}` عندما تكون القيمة رقماً؛ عند **404** يُحمَّل `GET /devices` وتُطابِق القيمة مع `uniqueId` أو `id` في القائمة المعادة للمستخدم. |
+
+### متغير اختياري
+
+| المتغير | الوصف |
+|--------|--------|
+| `TRACCAR_OSMAND_URL` | **لا يُعادل `TRACCAR_URL`.** عنوان استقبال **OsmAnd** (غالباً `http://SERVER_IP:5055`). في **ELMOGPS** غالباً **لا يكفي** الاشتقاق من `TRACCAR_URL` خلف nginx؛ عيِّن القيمة صراحةً. مثال بيئي: `http://167.99.36.153:5055`. |
+| `GEONOTIF_DEBUG` | عيِّن `1` لطباعة تفصيلية (المنطقة، النقاط، الأحداث والمواضع الخام، الحساب المحلي داخل/خارج السياج). |
+| `GEONOTIF_SKIP_NOTIFICATIONS` | عيِّن `1` لتجربة أحداث المحرّك دون إنشاء إشعارات Traccar. |
+
+### التشغيل
+
+**PowerShell (ويندوز):**
+
+```powershell
+$env:TRACCAR_URL="https://api.elmogps.com"
+$env:TRACCAR_EMAIL="compte@example.com"
+$env:TRACCAR_PASSWORD="********"
+$env:TEST_DEVICE_ID="42"
+$env:TRACCAR_OSMAND_URL="http://167.99.36.153:5055"
+# أو وفق خادمكم: http://SERVER_IP:5055
+# للتصحيح المفصّل:
+# $env:GEONOTIF_DEBUG="1"
+
+dart run tool/traccar_geofence_notifications_qa.dart
+```
+
+**Bash (Linux / macOS):**
+
+```bash
+export TRACCAR_URL="https://api.elmogps.com"
+export TRACCAR_EMAIL="compte@example.com"
+export TRACCAR_PASSWORD="********"
+export TEST_DEVICE_ID="42"
+export TRACCAR_OSMAND_URL="http://167.99.36.153:5055"
+# export GEONOTIF_DEBUG=1
+
+dart run tool/traccar_geofence_notifications_qa.dart
+```
+
+### السلوك والرموز الخارجة
+
+- السكربت يُنشئ سياج دائرة مؤقتاً، يربطه بالجهاز، يُنشئ إشعاري دخول/خروج، يحاول إرسال مواقع عبر **OsmAnd**، يقرأ `GET /reports/events`، ثم **يحذف** ما أنشأه.
+- إن فشل **ربط الإشعار** وظهر خطأ يشير إلى **`tc_notification_geofence`** أو **`tc_notification_device`**، فالمشكلة **ترحيل قاعدة بيانات** على الخادم (انظر القسم «Traccar 6.6 في بيئة ELMOGPS» أعلاه)، وليست خللاً في تطبيق Flutter.
+- رموز الخروج: `0` نجاح كامل مع ظهور الحدثين؛ `1` خطأ عام أو فشل بعد خطأ؛ `2` فشل ربط الإشعار بالسياج (خادم)؛ `3` الربط نجح لكن إرسال المواقع لم يُؤكَّد؛ `4` لم تُلاحظ الأحداث في التقرير خلال الفترة.
+
+### الملف
+
+`tool/traccar_geofence_notifications_qa.dart`
+
+### سكربت اختبار API إضافي (اختياري)
+
+لتجربة سريعة ضد خادم يعرض `.../api` صراحة (مثل بعض نسخ التجريب)، يمكن استخدام `tool/traccar_qa_smoke.dart` بتمرير **عنوان القاعدة الكامل** كمعامل موضعي؛ راجع تعليقات الملف داخل `tool/`.
+
+---
+
+## Phase 5 — اختبار السائقين والصيانة (QA شبه آلي)
+
+### توثيق التحقق — خادم ELMOGPS الحقيقي
+
+**Phase 5 — Drivers + Maintenance** تم التحقق منها بنجاح على خادم **ELMOGPS** الإنتاجي (`https://api.elmogps.com`) بواسطة سكربت **`tool/traccar_phase5_qa.dart`** مع بيانات اعتماد صالحة وجهاز اختبار (مثل `TEST_DEVICE_ID=5`).
+
+تم التحقق من:
+
+- إنشاء السائقين وتعديل بياناتهم وحذفهم.
+- ربط السائق بالمركبة عبر **Traccar permissions** (`POST` / `DELETE` على `/permissions`).
+- حالات رخصة السياقة منطقيًّا وفق الخصائص الموسّعة: **قريبة الانتهاء** و**منتهية** (حدّ 30 يوماً، مقارنة يوم UTC).
+- إنشاء سجلات صيانة مرتبطة بالمركبة عبر **`elmoDeviceId`** وباقي حقول **`attributes`** المتفق عليها.
+- حالات الصيانة بحسب **`elmoDueDate`**: **قادمة** / **قريبة** / **متأخرة**.
+- **تنظيف بيانات الاختبار** بعد التشغيل (حذف السائقين المؤقتين، سجلات الصيانة، وصلاحيات الربط حيث تُطبَّق).
+
+> لا يُلغي هذا التحقق الحاجة إلى مراجعة **واجهة التطبيق** (بطاقات المركبات، حواري التأكيد، Replay، أوامر الأجهزة) عند الحاجة.
+
+سكربت **`tool/traccar_phase5_qa.dart`** يتحقق من **واجهات REST** المتعلقة بالمرحلة الخامسة على خادم حقيقي، بذات أسلوب **`traccar_geofence_notifications_qa.dart`** (متغيرات بيئة، بلا اعتمادات في الكود):
+
+- إنشاء وتعديل سائق، حقول `elmoPhone` / `elmoLicenseNumber` / `elmoLicenseExpiryDate`.
+- احتساب حالة الرخصة منطقياً (منتهية / قريبة خلال 30 يوماً، UTC).
+- ربط سائق ↔ مركبة عبر **`POST /permissions`** وحذف الرابط بـ **`DELETE /permissions`** مع جسم JSON.
+- ثلاثة سجلات صيانة بتصنيف **قادمة / قريبة / متأخرة** حسب **`elmoDueDate`** فقط.
+- فحوص انحدار خفيفة: **`GET /geofences`**, **`GET /devices`**, **`GET /reports/route`** (يوم واحد).
+
+**`TRACCAR_URL`:** استخدم **نفس القاعدة التي تستعملونها لسكربت السياج** (لـ ELMOGPS عادة `https://api.elmogps.com` **من دون** إجبار `/api` على العنوان؛ إن كان خادمكم يتطلب المسار الصريح `…/api` فمرِّره كما هو).
+
+| المتغير | الوصف |
+|--------|--------|
+| `TRACCAR_URL` | جذر REST (مثل الجدول أعلاه أو في قسم Geofence). |
+| `TRACCAR_EMAIL` | اسم المستخدم أو البريد. |
+| `TRACCAR_PASSWORD` | كلمة المرور. |
+| `TEST_DEVICE_ID` | معرف الجهاز الداخلي أو **uniqueId**. |
+
+**تشغيل (PowerShell):**
+
+```powershell
+$env:TRACCAR_URL="https://api.elmogps.com"
+$env:TRACCAR_EMAIL="compte@example.com"
+$env:TRACCAR_PASSWORD="********"
+$env:TEST_DEVICE_ID="5"
+dart run tool/traccar_phase5_qa.dart
+```
+
+**رموز الخروج:** `0` نجاح الفحوص الشبكية؛ `1` فشل جزء من التحقق؛ `2` نقص متغيرات البيئة؛ `3` خطأ مع استثناء (مع محاولة تنظيف الموارد).
+
+لا يغني السكربت عن **اختبار واجهة التطبيق** (بطاقة المركبة، التأكيد قبل الحذف، Replay، أوامر الأجهزة).
+
+---
 ## متطلبات التشغيل
 
 - **Flutter** ≥ 3.22 (Dart ≥ 3.3)
@@ -314,7 +478,8 @@ flutter pub get
 | `staging` | `https://api.elmogps.com` | `wss://api.elmogps.com/socket` |
 | `production` | `https://api.elmogps.com` | `wss://api.elmogps.com/socket` |
 
-> **ملاحظة**: `10.0.2.2` يُمثل `localhost` على المحاكي Android.
+> **ملاحظة**: `10.0.2.2` يُمثل `localhost` على المحاكي Android.  
+> **ELMOGPS**: عناوين `api.elmogps.com` في التطبيق **بدون** لاحقة `/api` في `baseUrl` (انظر `lib/core/api/api_environment.dart`). سكربت `traccar_geofence_notifications_qa.dart` يجب أن يستخدم نفس النمط.
 
 ### 3. تشغيل التطبيق
 
@@ -423,11 +588,20 @@ flutter build appbundle --release --dart-define=ENV=production
 
 ## المرحلة القادمة (اختياري)
 
-| الميزة | الوضع |
-|--------|-------|
-| **تحسينات Replay** | استيفاء بين النقاط، مزيد ضبط الأداء على مسارات ضخمة جداً |
-| **Fuel Chart** | يحتاج أجهزة مع attribute وقود موثوق |
-| **Geofences** | endpoints معرّفة في TraccarEndpoints |
+### Phase 6 — Admin Dashboard + Fleet Intelligence  
+(لوحة إدارة للأسطول + ذكاء تشغيلي)
+
+- **Driver & Maintenance Reports** — تقارير تفاعلية للسائقين وللصيانة (جدولة، تصدير، فلترة).
+- **Fuel Chart** — رسوم استهلاك الوقود عند توفُّر قراءات موثوقة من المركبات.
+- **Company / Distributor Management** — هيكلة شركات أو موزّعين وصلاحيات مرتبطة.
+- **Fleet KPIs** — مؤشرات مجمّعة للأسطول على لوحة واحدة.
+- **Driver ranking** — تصنيف السائقين حسب معايير تشغيلية قابلة للتعريف.
+- **Vehicle utilization** — قياس استغلال المركبات (زمن التشغيل، المسافة، التوقف، إلخ).
+- **Maintenance overdue dashboard** — لوحة مركزة للصيانة المتأخرة والقريبة مع تنبيهات.
+
+### تحسينات موازية
+
+- **Replay** — استيفاء بين نقاط المسار وضبط أد أفضل للمسارات ذات الكثافة العالية جداً.
 
 ---
 

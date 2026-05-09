@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/l10n/app_localizations.dart';
 import '../features/alerts/presentation/providers/alerts_provider.dart';
+import '../features/geofences/presentation/providers/geofences_providers.dart';
+import '../features/drivers/presentation/providers/drivers_providers.dart';
+import '../features/maintenance/presentation/providers/maintenance_providers.dart';
 
 class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.child});
@@ -43,6 +46,9 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(geofencesListProvider);
+    ref.watch(driversListProvider);
+    ref.watch(maintenanceListProvider);
     final location = GoRouterState.of(context).matchedLocation;
     final currentIndex = _locationToIndex(location);
     final unreadAlerts = ref.watch(unreadAlertsCountProvider);

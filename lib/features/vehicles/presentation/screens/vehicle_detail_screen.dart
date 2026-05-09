@@ -19,8 +19,21 @@ import '../../../trips/presentation/providers/trips_provider.dart';
 import '../../../trips/domain/entities/trip.dart';
 import '../../../alerts/presentation/providers/alerts_provider.dart';
 import '../../../alerts/domain/entities/alert.dart';
+import '../../../fleet/presentation/fleet_vehicle_brief_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../providers/vehicles_provider.dart';
+
+/// سطر تعريفي للسائق في شاشة تفاصيل المركبة.
+String vehicleDetailFleetDriverLine(
+  AppLocalizations l10n,
+  VehicleEntity vehicle,
+  FleetVehicleBrief? brief,
+) {
+  if (brief != null) return brief.driverLine;
+  final n = vehicle.driverName?.trim();
+  if (n != null && n.isNotEmpty) return l10n.fleetCardDriverAssigned(n);
+  return l10n.fleetCardNoDriver;
+}
 
 class VehicleDetailScreen extends ConsumerWidget {
   const VehicleDetailScreen({super.key, required this.vehicleId});
@@ -35,11 +48,13 @@ class VehicleDetailScreen extends ConsumerWidget {
     final alertsAsync = ref.watch(vehicleAlertsProvider(vehicleId));
     final livePositions = ref.watch(livePositionsProvider);
     final liveDevices = ref.watch(liveDevicesProvider);
+    final fleetBriefMap = ref.watch(fleetVehicleBriefMapProvider);
 
     return Scaffold(
       body: vehicleAsync.when(
         data: (vehicle) {
           final deviceId = int.tryParse(vehicle.id);
+          final brief = fleetBriefMap[vehicleId];
           final livePos = deviceId != null ? livePositions[deviceId] : null;
           final device = deviceId != null ? liveDevices[deviceId] : null;
           final status = StatusBadge.fromString(vehicle.status);
@@ -168,6 +183,99 @@ class VehicleDetailScreen extends ConsumerWidget {
                                     vehicle.batteryVoltage,
                                 hardBrake: livePos?.hardBrake ?? false,
                               ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpacing.md),
+
+                        ElmoCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.emerald,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    l10n.sectionFleet,
+                                    style:
+                                        AppTextStyles.labelSmall.copyWith(
+                                      color:
+                                          AppColors.textMutedOf(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              _FleetBriefLine(
+                                icon: Icons.person_outline_rounded,
+                                text: vehicleDetailFleetDriverLine(
+                                    l10n, vehicle, brief),
+                              ),
+                              const SizedBox(height: 6),
+                              _FleetBriefLine(
+                                icon: Icons.build_circle_outlined,
+                                text: brief?.maintenanceLine ??
+                                    l10n.fleetCardNoMaintenance,
+                              ),
+                              if (brief?.hasMaintenanceOverdue == true) ...[
+                                const SizedBox(height: AppSpacing.sm),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        AppColors.error.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.warning_rounded,
+                                          color: AppColors.error, size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.maintStatusOverdue,
+                                          style: const TextStyle(
+                                            color: AppColors.error,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (brief?.insuranceLine.isNotEmpty == true)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: AppSpacing.sm),
+                                  child: _FleetBriefLine(
+                                    icon:
+                                        Icons.verified_user_outlined,
+                                    text: brief!.insuranceLine,
+                                  ),
+                                ),
+                              if (brief?.techLine.isNotEmpty == true)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 6),
+                                  child: _FleetBriefLine(
+                                    icon: Icons.fact_check_outlined,
+                                    text: brief!.techLine,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -837,6 +945,34 @@ class _TripTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Fleet brief rows (Phase 5) ────────────────────────────────────────────────
+
+class _FleetBriefLine extends StatelessWidget {
+  const _FleetBriefLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon,
+            size: 18,
+            color: AppColors.accent.withValues(alpha: 0.85)),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.bodySmall.copyWith(height: 1.35),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -21,6 +21,14 @@ import '../features/reports/presentation/screens/route_report_map_screen.dart';
 import '../features/reports/presentation/screens/replay_report_screen.dart';
 import '../features/reports/presentation/screens/charts_report_screen.dart';
 import '../features/reports/presentation/providers/reports_providers.dart';
+import '../features/geofences/presentation/screens/geofence_details_screen.dart';
+import '../features/geofences/presentation/screens/geofence_editor_screen.dart';
+import '../features/geofences/presentation/screens/geofences_screen.dart';
+import '../features/drivers/presentation/screens/drivers_screen.dart';
+import '../features/drivers/presentation/screens/driver_details_screen.dart';
+import '../features/drivers/presentation/screens/driver_editor_screen.dart';
+import '../features/maintenance/presentation/screens/maintenance_screen.dart';
+import '../features/maintenance/presentation/screens/maintenance_editor_screen.dart';
 import 'main_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -144,6 +152,64 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // ── Geofences ────────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/geofences',
+        builder: (context, state) => const GeofencesScreen(),
+      ),
+      GoRoute(
+        path: '/geofences/:id/edit',
+        builder: (context, state) => GeofenceEditorScreen(
+          geofenceId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/geofences/:id',
+        builder: (context, state) => GeofenceDetailsScreen(
+          geofenceId: state.pathParameters['id']!,
+        ),
+      ),
+
+      // ── Fleet: drivers ────────────────────────────────────────────────────────
+      GoRoute(
+        path: '/drivers',
+        builder: (context, state) => const DriversScreen(),
+      ),
+      GoRoute(
+        path: '/drivers/new/edit',
+        builder: (context, state) =>
+            const DriverEditorScreen(driverId: 'new'),
+      ),
+      GoRoute(
+        path: '/drivers/:id/edit',
+        builder: (context, state) => DriverEditorScreen(
+          driverId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/drivers/:id',
+        builder: (context, state) => DriverDetailsScreen(
+          driverId: state.pathParameters['id']!,
+        ),
+      ),
+
+      // ── Fleet: maintenance ─────────────────────────────────────────────────────
+      GoRoute(
+        path: '/maintenance',
+        builder: (context, state) => const MaintenanceScreen(),
+      ),
+      GoRoute(
+        path: '/maintenance/new/edit',
+        builder: (context, state) =>
+            const MaintenanceEditorScreen(recordId: 'new'),
+      ),
+      GoRoute(
+        path: '/maintenance/:id/edit',
+        builder: (context, state) => MaintenanceEditorScreen(
+          recordId: state.pathParameters['id']!,
+        ),
       ),
 
       // ── Reports sub-routes ──────────────────────────────────────────────────
