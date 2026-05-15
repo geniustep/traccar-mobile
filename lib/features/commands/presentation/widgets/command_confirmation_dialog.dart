@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/device_command.dart';
@@ -8,7 +9,7 @@ import '../../domain/entities/resolved_device_command.dart';
 /// Shows a risk-appropriate confirmation dialog before executing a command.
 ///
 /// - [CommandRiskLevel.medium]: simple confirm/cancel dialog.
-/// - [CommandRiskLevel.high]: full warning dialog with text input "CONFIRMER".
+/// - [CommandRiskLevel.high]: full warning dialog with text input confirmation.
 ///
 /// Returns `true` if the user confirmed, `false` otherwise.
 Future<bool> showCommandConfirmationDialog(
@@ -16,6 +17,7 @@ Future<bool> showCommandConfirmationDialog(
   required ResolvedDeviceCommand resolved,
   required String deviceName,
 }) async {
+  final l10n = AppLocalizations.of(context);
   final riskLevel = resolved.command.riskLevel;
 
   if (riskLevel == CommandRiskLevel.high) {
@@ -25,6 +27,8 @@ Future<bool> showCommandConfirmationDialog(
           builder: (_) => _HighRiskDialog(
             resolved: resolved,
             deviceName: deviceName,
+            requiredWord: l10n.cmdConfirmWord,
+            l10n: l10n,
           ),
         ) ??
         false;
@@ -36,6 +40,7 @@ Future<bool> showCommandConfirmationDialog(
         builder: (_) => _MediumRiskDialog(
           resolved: resolved,
           deviceName: deviceName,
+          l10n: l10n,
         ),
       ) ??
       false;
@@ -47,10 +52,12 @@ class _MediumRiskDialog extends StatelessWidget {
   const _MediumRiskDialog({
     required this.resolved,
     required this.deviceName,
+    required this.l10n,
   });
 
   final ResolvedDeviceCommand resolved;
   final String deviceName;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -65,17 +72,18 @@ class _MediumRiskDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _DialogIcon(icon: Icons.info_outline_rounded, color: color),
+            const _DialogIcon(icon: Icons.info_outline_rounded, color: color),
             const SizedBox(height: 16),
             Text(
-              'Confirmation requise',
+              l10n.cmdConfirmRequired,
               style: AppTextStyles.headlineSmall.copyWith(color: color),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Vous êtes sur le point d\'envoyer\n"${cmd.labelFr}"\n'
-              'au véhicule $deviceName.',
+              '${l10n.cmdConfirmSendMessage}\n'
+              '"${cmd.label(l10n.locale)}"\n'
+              '${l10n.vehicle} $deviceName.',
               style: AppTextStyles.bodyMedium
                   .copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
@@ -86,8 +94,8 @@ class _MediumRiskDialog extends StatelessWidget {
             ],
             const SizedBox(height: 24),
             _DialogButtons(
-              cancelLabel: 'Annuler',
-              confirmLabel: 'Confirmer',
+              cancelLabel: l10n.cancel,
+              confirmLabel: l10n.confirm,
               confirmColor: color,
               onCancel: () => Navigator.of(context).pop(false),
               onConfirm: () => Navigator.of(context).pop(true),
@@ -105,10 +113,14 @@ class _HighRiskDialog extends StatefulWidget {
   const _HighRiskDialog({
     required this.resolved,
     required this.deviceName,
+    required this.requiredWord,
+    required this.l10n,
   });
 
   final ResolvedDeviceCommand resolved;
   final String deviceName;
+  final String requiredWord;
+  final AppLocalizations l10n;
 
   @override
   State<_HighRiskDialog> createState() => _HighRiskDialogState();
@@ -118,13 +130,12 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
   final _ctrl = TextEditingController();
   bool _canConfirm = false;
 
-  static const _requiredWord = 'CONFIRMER';
-
   @override
   void initState() {
     super.initState();
     _ctrl.addListener(() {
-      final ok = _ctrl.text.trim() == _requiredWord;
+      final ok = _ctrl.text.trim().toUpperCase() ==
+          widget.requiredWord.toUpperCase();
       if (ok != _canConfirm) setState(() => _canConfirm = ok);
     });
   }
@@ -137,6 +148,8 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+    final requiredWord = widget.requiredWord;
     const color = AppColors.error;
     final cmd = widget.resolved.command;
 
@@ -148,18 +161,19 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _DialogIcon(
+            const _DialogIcon(
                 icon: Icons.warning_amber_rounded, color: color, size: 36),
             const SizedBox(height: 16),
             Text(
-              'Action critique',
+              l10n.cmdCriticalAction,
               style: AppTextStyles.headlineSmall.copyWith(color: color),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Vous êtes sur le point d\'envoyer\n"${cmd.labelFr}"\n'
-              'au véhicule ${widget.deviceName}.',
+              '${l10n.cmdConfirmSendMessage}\n'
+              '"${cmd.label(l10n.locale)}"\n'
+              '${l10n.vehicle} ${widget.deviceName}.',
               style: AppTextStyles.bodyMedium
                   .copyWith(color: AppColors.textSecondary),
               textAlign: TextAlign.center,
@@ -168,9 +182,8 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
 
             // Risk warning box
             _WarningBox(
-              message: cmd.warningMessage ??
-                  'Cette action peut affecter la sécurité du véhicule et '
-                      'du conducteur. Assurez-vous que l\'exécution est sûre.',
+              message:
+                  cmd.warningMessage ?? l10n.cmdCriticalWarningDefault,
               color: color,
             ),
 
@@ -180,16 +193,16 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.05),
+                color: color.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: color.withOpacity(0.2), width: 0.5),
+                border:
+                    Border.all(color: color.withValues(alpha: 0.2), width: 0.5),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pour confirmer, saisissez : $_requiredWord',
+                    '${l10n.cmdTypeToConfirm} $requiredWord',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -204,7 +217,7 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
                       letterSpacing: 1.5,
                     ),
                     decoration: InputDecoration(
-                      hintText: _requiredWord,
+                      hintText: requiredWord,
                       hintStyle: AppTextStyles.bodySmall
                           .copyWith(color: AppColors.textMuted),
                       contentPadding: const EdgeInsets.symmetric(
@@ -212,17 +225,16 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                            color: color.withOpacity(0.3), width: 0.5),
+                            color: color.withValues(alpha: 0.3), width: 0.5),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            BorderSide(color: color, width: 1),
+                        borderSide: BorderSide(color: color, width: 1),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                            color: AppColors.border, width: 0.5),
+                        borderSide:
+                            BorderSide(color: AppColors.border, width: 0.5),
                       ),
                     ),
                   ),
@@ -232,13 +244,12 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
 
             const SizedBox(height: 20),
             _DialogButtons(
-              cancelLabel: 'Annuler',
-              confirmLabel: 'Exécuter la commande',
+              cancelLabel: l10n.cancel,
+              confirmLabel: l10n.cmdExecuteCommand,
               confirmColor: color,
               onCancel: () => Navigator.of(context).pop(false),
-              onConfirm: _canConfirm
-                  ? () => Navigator.of(context).pop(true)
-                  : null,
+              onConfirm:
+                  _canConfirm ? () => Navigator.of(context).pop(true) : null,
             ),
           ],
         ),
@@ -265,9 +276,9 @@ class _DialogIcon extends StatelessWidget {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Icon(icon, color: color, size: size),
     );
@@ -284,9 +295,9 @@ class _WarningBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,7 +338,7 @@ class _DialogButtons extends StatelessWidget {
           child: OutlinedButton(
             onPressed: onCancel,
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AppColors.border, width: 0.5),
+              side: const BorderSide(color: AppColors.border, width: 0.5),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),

@@ -1,36 +1,28 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../api/api_config.dart';
+import '../connection/app_connection_monitor.dart';
 import '../error/app_exception.dart';
 import '../response/api_response.dart';
 import '../response/result.dart';
 import '../storage/secure_storage_service.dart';
 import 'interceptors/auth_interceptor.dart';
+import 'interceptors/connection_status_interceptor.dart';
 import 'interceptors/connectivity_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 
-/// Main HTTP client for all Traccar REST API communication.
+/// Main HTTP client for all REST API communication.
 ///
 /// All methods return [Result<T, AppException>] — callers never deal
 /// with raw exceptions; they pattern-match on Success / Failure.
-///
-/// Usage:
-/// ```dart
-/// final result = await traccarClient.get<List<TraccarDevice>>(
-///   TraccarEndpoints.devices,
-///   fromJson: (data) => (data as List).map(TraccarDevice.fromJson).toList(),
-/// );
-/// result.when(
-///   success: (devices) { /* use devices */ },
-///   failure: (ex) { /* show error */ },
-/// );
-/// ```
 class TraccarClient {
   TraccarClient({
     required SecureStorageService storage,
     required Connectivity connectivity,
-  }) : _dio = _buildDio(storage, connectivity);
+    AppConnectionMonitor? connectionMonitor,
+  }) : _dio = _buildDio(storage, connectivity, connectionMonitor);
 
   final Dio _dio;
 
@@ -42,6 +34,7 @@ class TraccarClient {
   static Dio _buildDio(
     SecureStorageService storage,
     Connectivity connectivity,
+    AppConnectionMonitor? connectionMonitor,
   ) {
     final dio = Dio(
       BaseOptions(
@@ -49,7 +42,6 @@ class TraccarClient {
         connectTimeout: ApiConfig.connectTimeout,
         receiveTimeout: ApiConfig.receiveTimeout,
         headers: ApiConfig.defaultHeaders,
-        // Only 2xx is a genuine success; 4xx/5xx go through ErrorInterceptor.
         validateStatus: (status) => status != null && status >= 200 && status < 300,
       ),
     );
@@ -57,8 +49,10 @@ class TraccarClient {
     dio.interceptors.addAll([
       ConnectivityInterceptor(connectivity),
       AuthInterceptor(storage, dio),
+      if (connectionMonitor != null)
+        ConnectionStatusInterceptor(connectionMonitor),
       ErrorInterceptor(),
-      LoggingInterceptor(enabled: ApiConfig.loggingEnabled),
+      LoggingInterceptor(enabled: kDebugMode && ApiConfig.loggingEnabled),
     ]);
 
     return dio;

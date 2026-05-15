@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/traccar_client.dart';
 import '../../../../core/api/traccar_endpoints.dart';
 import '../models/user_model.dart';
@@ -18,8 +19,10 @@ class AuthRemoteDataSource {
 
   final TraccarClient _client;
 
-  /// Login → user + optional JSESSIONID from `Set-Cookie` (for WebSocket).
+  /// Login via POST /session with form-urlencoded body.
+  /// Returns user + optional JSESSIONID from `Set-Cookie` (for WebSocket).
   Future<TraccarLoginResult> login(String email, String password) async {
+    AppLogger.auth('POST /session (form-urlencoded)');
     final response = await _client.dio.post<dynamic>(
       TraccarEndpoints.sessionCreate,
       data: 'email=${Uri.encodeComponent(email)}'
@@ -31,10 +34,12 @@ class AuthRemoteDataSource {
     );
     final data = response.data;
     if (data is! Map<String, dynamic>) {
-      throw const FormatException('Unexpected Traccar session response');
+      throw const FormatException('Unexpected session response');
     }
     final user = UserModel.fromJson(data);
     final jsessionId = _parseJsessionId(response);
+    AppLogger.auth('Session created successfully');
+    AppLogger.auth('JSESSIONID stored: ${jsessionId != null ? 'yes' : 'no'}');
     return (user: user, jsessionId: jsessionId);
   }
 
@@ -53,10 +58,15 @@ class AuthRemoteDataSource {
   }
 
   /// Verify stored credentials by fetching the current session.
+  ///
+  /// Traccar GET /session returns the current user when a valid session or
+  /// Basic Auth header is present. We override Content-Type to avoid 415
+  /// on servers that reject `application/json` for this endpoint.
   Future<UserModel> getSession() async {
     final result = await _client.get<Map<String, dynamic>>(
       TraccarEndpoints.sessionGet,
       fromJson: (json) => json as Map<String, dynamic>,
+      options: Options(contentType: null),
     );
     return UserModel.fromJson(result.getOrThrow());
   }

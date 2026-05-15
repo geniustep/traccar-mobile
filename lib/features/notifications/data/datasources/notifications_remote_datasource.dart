@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/traccar_client.dart';
 import '../../../../core/api/traccar_endpoints.dart';
 import '../models/notification_model.dart';
@@ -56,7 +57,34 @@ class NotificationsRemoteDataSource {
   /// No-op for Traccar.
   Future<void> markAllAsRead() async {}
 
-  /// FCM token registration is not part of Traccar core API.
-  /// Implement via a custom backend endpoint if available.
-  Future<void> registerFcmToken(String token) async {}
+  /// Registers the FCM push token with the custom backend endpoint.
+  ///
+  /// Endpoint:  POST /fcm/register-token
+  /// Payload:
+  ///   { "token": "...", "platform": "android", "appVersion": "1.0.0" }
+  ///
+  /// Returns normally on success (2xx).
+  /// Logs the error and returns normally on failure so the caller is never
+  /// interrupted — push token registration is best-effort.
+  Future<void> registerFcmToken(String token) async {
+    debugPrint('[FCM] POST /fcm/register-token → sending token to backend…');
+
+    final result = await _client.post<dynamic>(
+      '/fcm/register-token',
+      data: {
+        'token': token,
+        'platform': 'android',
+        'appVersion': '1.0.0',
+      },
+    );
+
+    result.when(
+      success: (_) {
+        debugPrint('[FCM] POST /fcm/register-token ✓ token registered successfully.');
+      },
+      failure: (ex) {
+        debugPrint('[FCM] POST /fcm/register-token ✗ failed: ${ex.message}');
+      },
+    );
+  }
 }

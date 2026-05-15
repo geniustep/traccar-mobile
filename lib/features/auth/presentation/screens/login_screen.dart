@@ -125,9 +125,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 28),
                             _LogoSection(isDark: isDark),
-                            const SizedBox(height: 44),
+                            const SizedBox(height: 40),
                             _WelcomeHeader(isDark: isDark, l10n: l10n),
                             const SizedBox(height: 36),
                             _FormSection(
@@ -195,31 +195,31 @@ class _Background extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: isDark
                 ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF080C18), Color(0xFF0B1220)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF060D1A), Color(0xFF091424), Color(0xFF0B1A30)],
+                    stops: [0.0, 0.45, 1.0],
                   )
                 : const LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFFFFFF), Color(0xFFEDF2F8)],
+                    colors: [Color(0xFFFFFFFF), Color(0xFFF0F5FA)],
                   ),
           ),
         ),
 
-        // Orb 1 — top right (cyan)
+        // Orb 1 — top right (electric blue)
         Positioned(
-          top: -80,
-          right: -80,
+          top: -90,
+          right: -70,
           child: Container(
-            width: 280,
-            height: 280,
+            width: 300,
+            height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.accent.withValues(
-                      alpha: isDark ? 0.12 : 0.07),
+                  AppColors.accent.withValues(alpha: isDark ? 0.10 : 0.06),
                   Colors.transparent,
                 ],
               ),
@@ -232,14 +232,13 @@ class _Background extends StatelessWidget {
           bottom: -100,
           left: -60,
           child: Container(
-            width: 300,
-            height: 300,
+            width: 320,
+            height: 320,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.purple.withValues(
-                      alpha: isDark ? 0.10 : 0.05),
+                  AppColors.purple.withValues(alpha: isDark ? 0.08 : 0.04),
                   Colors.transparent,
                 ],
               ),
@@ -250,18 +249,18 @@ class _Background extends StatelessWidget {
         // Orb 3 — center subtle glow (dark only)
         if (isDark)
           Positioned(
-            top: 200,
+            top: 160,
             left: 0,
             right: 0,
             child: Center(
               child: Container(
-                width: 200,
-                height: 200,
+                width: 220,
+                height: 220,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.accent.withValues(alpha: 0.05),
+                      AppColors.accent.withValues(alpha: 0.04),
                       Colors.transparent,
                     ],
                   ),
@@ -406,60 +405,25 @@ class _LogoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Icon container with glow
-        Container(
-          width: 62,
-          height: 62,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.accent, AppColors.accentDark],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withValues(alpha: isDark ? 0.35 : 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
-              ),
-            ],
+    return Center(
+      child: Column(
+        children: [
+          Image.asset(
+            isDark ? 'assets/images/elmo-02.png' : 'assets/images/elmogps.png',
+            width: 220,
+            fit: BoxFit.contain,
           ),
-          child: const Icon(Icons.route_rounded, color: Colors.white, size: 28),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ShaderMask(
-              shaderCallback: (bounds) =>
-                  AppColors.accentGradient.createShader(bounds),
-              child: const Text(
-                'ELMO',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 2.5,
-                ),
-              ),
+          const SizedBox(height: 10),
+          Container(
+            width: 32,
+            height: 2,
+            decoration: BoxDecoration(
+              gradient: AppColors.accentGradient,
+              borderRadius: BorderRadius.circular(1),
             ),
-            Text(
-              'Fleet Intelligence',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.8,
-                color: isDark
-                    ? AppColors.textMuted
-                    : AppColors.lightTextMuted,
-              ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -669,18 +633,19 @@ class _SignInButton extends StatelessWidget {
               ? const LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [AppColors.accent, AppColors.accentDark],
+                  colors: [Color(0xFF0096FF), Color(0xFF0070CC)],
                 )
               : null,
           color: onPressed == null
-              ? AppColors.textMuted.withValues(alpha: 0.3)
+              ? AppColors.textMuted.withValues(alpha: 0.25)
               : null,
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius + 2),
           boxShadow: onPressed != null
               ? [
                   BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.3),
-                    blurRadius: 16,
+                    color: AppColors.accent.withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    spreadRadius: 0,
                     offset: const Offset(0, 6),
                   ),
                 ]
@@ -729,28 +694,40 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Divider(
-          color: isDark
-              ? AppColors.divider.withValues(alpha: 0.5)
-              : AppColors.lightDivider,
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                isDark
+                    ? AppColors.divider.withValues(alpha: 0.6)
+                    : AppColors.lightDivider,
+                Colors.transparent,
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                gradient: AppColors.accentGradient,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.route_rounded,
-                  color: Colors.white, size: 11),
+            Image.asset(
+              isDark ? 'assets/images/elmo-02.png' : 'assets/images/elmogps.png',
+              height: 22,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
+            Container(
+              width: 1,
+              height: 14,
+              color: isDark
+                  ? AppColors.border.withValues(alpha: 0.5)
+                  : AppColors.lightBorder,
+            ),
+            const SizedBox(width: 10),
             Text(
-              'ELMO Fleet Intelligence  ·  v1.0.0',
+              'v1.0.0',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,

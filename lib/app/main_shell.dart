@@ -38,6 +38,7 @@ class MainShell extends ConsumerWidget {
   ];
 
   int _locationToIndex(String location) {
+    if (location.startsWith('/fleet-intelligence')) return 0;
     for (var i = 0; i < _paths.length; i++) {
       if (location.startsWith(_paths[i])) return i;
     }

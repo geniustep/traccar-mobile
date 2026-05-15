@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/maps/map_config.dart';
 import '../../../../core/maps/map_helper.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -15,9 +14,23 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
-import '../../../../core/utils/route_decimator.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../map/data/datasources/route_datasource.dart';
+import '../../../map/core/map_zoom_policy.dart';
+import '../../../map/core/route_event_analyzer.dart';
+import '../../../map/core/route_event_models.dart';
+import '../../../map/core/route_event_timeline_models.dart';
+import '../../../map/core/route_event_ui.dart';
+import '../../../map/core/route_intelligence_thresholds.dart';
+import '../../../map/core/route_polyline_builder.dart';
+import '../../core/replay_route_gap.dart';
+import '../widgets/replay_gaps_sheet.dart';
+import '../../../map/core/route_stop_address_enrichment.dart';
+import '../../../map/presentation/widgets/route_event_details_sheet.dart';
+import '../../../map/presentation/widgets/route_event_timeline.dart';
+import '../../../map/core/vehicle_marker_factory.dart';
+import '../../../map/presentation/providers/route_intelligence_thresholds_provider.dart';
+import '../../../map/presentation/providers/route_stop_address_providers.dart';
 import '../providers/replay_controller.dart';
 import '../providers/reports_providers.dart';
 import '../widgets/speed_chart.dart';
@@ -46,6 +59,8 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
   bool _hasFitted = false;
   bool _mapReady = false;
 
+  double _cameraZoom = MapConfig.defaultZoom;
+
   // UI state — managed locally, no provider needed.
   bool _followVehicle = true;
   bool _showMiniChart = false;
@@ -53,11 +68,28 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
   // Fixed markers (start / end) — computed once.
   Set<Marker> _baseMarkers = {};
 
+  /// Route intelligence (stops / overspeed / ignition) — rebuilt on zoom only;
+  /// analysis memo: length + first/last fix + [RouteIntelligenceThresholds.cacheKey].
+  String _replayIntelKey = '';
+  RouteEventAnalysisResult? _replayIntel;
+  Set<Marker> _intelMarkers = {};
+
+  /// Phase 7C: shared highlight for timeline row + intelligence marker.
+  String? _selectedRouteEventKey;
+
+  /// Phase 7E: timeline filter (display only).
+  RouteEventTimelineFilter _replayTimelineFilter = RouteEventTimelineFilter.all;
+
   // Vehicle marker — cheaply updated on each tick.
   Marker? _vehicleMarker;
 
   // Polylines — decimated, computed once.
   Set<Polyline> _polylines = {};
+
+  /// Phase R1 — gaps on full route (not replay subsample).
+  List<ReplayRouteGap> _replayGaps = [];
+  List<RouteEventTimelineItem> _replayGapTimelineItems = [];
+  Set<Marker> _gapMarkers = {};
 
   // All raw route points — kept for chart stats + start/end markers.
   List<RoutePoint> _allPoints = [];
@@ -94,6 +126,118 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant ReplayReportScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.params != widget.params) {
+      ref.read(replayControllerProvider.notifier).pause();
+      _initStarted = false;
+      _hasFitted = false;
+      _replayIntelKey = '';
+      _replayIntel = null;
+      _intelMarkers = {};
+      _baseMarkers = {};
+      _polylines = {};
+      _replayGaps = [];
+      _replayGapTimelineItems = [];
+      _gapMarkers = {};
+      _vehicleMarker = null;
+      _allPoints = [];
+      _cameraZoom = MapConfig.defaultZoom;
+      _selectedRouteEventKey = null;
+      _replayTimelineFilter = RouteEventTimelineFilter.all;
+    }
+  }
+
+  /// Memoized route intelligence — full [RoutePoint] list from report (not replay subsample).
+  /// Returns true if analysis result changed (need intel marker rebuild outside full init).
+  bool _syncReplayIntel(List<RoutePoint> pts, RouteIntelligenceThresholds th) {
+    final key = pts.length < 2
+        ? '0'
+        : '${pts.length}_${pts.first.fixTime.millisecondsSinceEpoch}_${pts.last.fixTime.millisecondsSinceEpoch}_${th.cacheKey}';
+    if (key == _replayIntelKey) return false;
+    _selectedRouteEventKey = null;
+    _replayTimelineFilter = RouteEventTimelineFilter.all;
+    _replayIntelKey = key;
+    final raw = pts.length < 2
+        ? null
+        : RouteEventAnalyzer.analyze(pts, thresholds: th);
+    _replayIntel =
+        raw == null ? null : enrichRouteIntelStopsFromRoutePoints(raw, pts);
+    return true;
+  }
+
+  void _rebuildReplayIntelMarkers() {
+    final intel = _replayIntel;
+    if (intel == null) {
+      _intelMarkers = {};
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    _intelMarkers = RoutePolylineBuilder.buildRouteIntelligenceMarkers(
+      analysis: intel,
+      l10n: l10n,
+      policy: MapZoomPolicy.at(_cameraZoom),
+      reportStyle: true,
+      vehicleId: widget.params.vehicleId,
+      onMarkerTap: _onReplayRouteIntelMarkerTap,
+      selectedEventKey: _selectedRouteEventKey,
+    );
+  }
+
+  void _scheduleReplayStopAddressPrefetch() {
+    final k = _replayIntelKey;
+    final cur = _replayIntel;
+    if (cur == null || cur.stops.isEmpty) return;
+    final resolver = ref.read(routeStopAddressResolverProvider);
+    prefetchStopAddressesSequential(
+      resolver: resolver,
+      intel: cur,
+      isStale: () => !mounted || _replayIntelKey != k,
+      apply: (u) {
+        if (!mounted || _replayIntelKey != k) return;
+        setState(() {
+          _replayIntel = u;
+          _rebuildReplayIntelMarkers();
+        });
+      },
+    );
+  }
+
+  void _applyReplayResolvedStopAddress(String selectionKey, String address) {
+    final intel = _replayIntel;
+    if (intel == null) return;
+    RouteStopEvent? target;
+    for (final s in intel.stops) {
+      if (routeStopSelectionKey(s) == selectionKey) {
+        target = s;
+        break;
+      }
+    }
+    if (target == null) return;
+    final existing = target.address?.trim();
+    if (existing != null && existing.isNotEmpty) return;
+    setState(() {
+      _replayIntel = intel.withStops(
+        replaceStopAddressOnList(intel.stops, target!, address),
+      );
+      _rebuildReplayIntelMarkers();
+    });
+  }
+
+  /// Rebuild intelligence markers only (same analysis; zoom / policy changed).
+  void _onResolvedMapZoom(double z) {
+    if (!mounted) return;
+    final prev = _cameraZoom;
+    _cameraZoom = z;
+    if (_replayIntel == null) return;
+    if ((z - prev).abs() <= 0.02) return;
+
+    setState(() {
+      _rebuildReplayIntelMarkers();
+    });
+  }
+
   // ── Route init (runs exactly once) ──────────────────────────────────────────
 
   /// Entry point called whenever route data arrives (cache or network).
@@ -104,67 +248,32 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 
     ref.read(replayControllerProvider.notifier).loadPoints(pts);
     final replayPts = ref.read(replayControllerProvider).points;
-    _initMapData(pts, replayPts);
+    final th = ref.read(
+      routeIntelligenceThresholdsForVehicleProvider(widget.params.vehicleId),
+    );
+    _initMapData(pts, replayPts, th);
   }
 
   // ── Custom marker icons ──────────────────────────────────────────────────────
 
   Future<void> _loadIcons() async {
     final results = await Future.wait([
-      _buildCarIcon(const Color(0xFF9E9E9E)),
-      _buildCarIcon(const Color(0xFF4CAF50)),
-      _buildCarIcon(const Color(0xFFFF9800)),
-      _buildCarIcon(const Color(0xFFF44336)),
+      VehicleMarkerFactory.topDownCarNorthUpForReplaySpeed(2, size: 56),
+      VehicleMarkerFactory.topDownCarNorthUpForReplaySpeed(25, size: 56),
+      VehicleMarkerFactory.topDownCarNorthUpForReplaySpeed(55, size: 56),
+      VehicleMarkerFactory.topDownCarNorthUpForReplaySpeed(95, size: 56),
     ]);
     if (!mounted) return;
     setState(() {
-      _iconSlow  = results[0];
+      _iconSlow = results[0];
       _iconUrban = results[1];
-      _iconRoad  = results[2];
-      _iconFast  = results[3];
+      _iconRoad = results[2];
+      _iconFast = results[3];
       _iconsReady = true;
       // Refresh the vehicle marker with the proper icon now that it is ready.
       final idx = ref.read(replayControllerProvider).currentIndex;
       _refreshVehicleMarker(idx);
     });
-  }
-
-  /// Draws a speed-coloured circle + direction arrow using dart:ui Canvas.
-  static Future<BitmapDescriptor> _buildCarIcon(Color color) async {
-    const double size = 44.0;
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
-
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      size / 2,
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill,
-    );
-
-    canvas.drawCircle(
-      const Offset(size / 2, size / 2),
-      size / 2 - 3.5,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.fill,
-    );
-
-    // Direction arrow (points north; Marker.rotation rotates it to course).
-    final arrowPath = Path()
-      ..moveTo(size / 2, 8)
-      ..lineTo(size / 2 - 7, size - 9)
-      ..lineTo(size / 2, size - 15)
-      ..lineTo(size / 2 + 7, size - 9)
-      ..close();
-
-    canvas.drawPath(arrowPath, Paint()..color = Colors.white);
-
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(size.toInt(), size.toInt());
-    final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
   }
 
   BitmapDescriptor _iconForSpeed(double speedKmh) {
@@ -233,40 +342,58 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
     return m;
   }
 
-  /// BUG FIX: polylines use DECIMATED points (≤ 800 segments).
-  /// Using all raw points (5 000+) created thousands of platform objects
-  /// that caused severe lag on Android mid-range devices.
-  Set<Polyline> _buildPolylines(List<RoutePoint> pts) {
-    if (pts.length < 2) return {};
-    final draw = RoutePointDecimator.decimateForMap(pts);
-    return {
-      for (var i = 0; i < draw.length - 1; i++)
-        Polyline(
-          polylineId: PolylineId('rpl_$i'),
-          points: [draw[i].position, draw[i + 1].position],
-          color: MapHelper.routeColorForSpeed(
-              (draw[i].speed + draw[i + 1].speed) / 2),
-          width: 5,
-          geodesic: true,
-          startCap: Cap.roundCap,
-          endCap: Cap.roundCap,
-          jointType: JointType.round,
-        ),
-    };
+  void _rebuildReplayGapMarkers() {
+    if (_replayGaps.isEmpty) {
+      _gapMarkers = {};
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    _gapMarkers = RoutePolylineBuilder.buildReplayGapMarkers(
+      gaps: _replayGaps,
+      l10n: l10n,
+      vehicleId: widget.params.vehicleId,
+      onMarkerTap: _onReplayTimelineTap,
+      selectedEventKey: _selectedRouteEventKey,
+    );
   }
 
-  void _initMapData(List<RoutePoint> allPts, List<RoutePoint> replayPts) {
+  void _initMapData(
+    List<RoutePoint> allPts,
+    List<RoutePoint> replayPts,
+    RouteIntelligenceThresholds th,
+  ) {
     if (!mounted) return;
-    final base  = _buildBaseMarkers(allPts);
-    final polys = _buildPolylines(allPts);   // decimation is applied inside
-    final vm    = replayPts.isNotEmpty ? _makeVehicleMarker(replayPts.first) : null;
+    _syncReplayIntel(allPts, th);
+
+    final gaps = ReplayRouteGapDetector.detectGaps(allPts);
+    final maxGap = ReplayRouteGapDetector.maxGapDuration(gaps);
+    AppLogger.replay(
+      'replay_route_loaded points=${allPts.length} gaps=${gaps.length} '
+      'maxGapMin=${maxGap.inMinutes} thresholdMin=${replayGapThreshold.inMinutes}',
+    );
+
+    final l10n = AppLocalizations.of(context);
+    final gapTimeline = buildReplayGapTimelineItems(gaps, l10n);
+
+    final base = _buildBaseMarkers(allPts);
+    final polys = RoutePolylineBuilder.buildReplaySpeedColoredPolylinesRespectingGaps(
+      allPoints: allPts,
+      gaps: gaps,
+    );
+    final vm = replayPts.isNotEmpty ? _makeVehicleMarker(replayPts.first) : null;
 
     setState(() {
       _allPoints = allPts;
+      _replayGaps = gaps;
+      _replayGapTimelineItems = gapTimeline;
       _baseMarkers = base;
       _polylines = polys;
       _vehicleMarker = vm;
+      _rebuildReplayIntelMarkers();
+      _rebuildReplayGapMarkers();
     });
+
+    _scheduleReplayStopAddressPrefetch();
 
     if (!_hasFitted && _mapReady) {
       WidgetsBinding.instance
@@ -289,8 +416,96 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
     }
   }
 
+  /// Zoom + seek replay to timeline event; disables vehicle follow until re-enabled.
+  void _onReplayTimelineTap(RouteEventTimelineItem item) {
+    if (!routeEventTimelineValidPosition(item.position)) return;
+    setState(() {
+      _followVehicle = false;
+      _selectedRouteEventKey = item.selectionKey;
+      _rebuildReplayIntelMarkers();
+      _rebuildReplayGapMarkers();
+    });
+
+    final pts = ref.read(replayControllerProvider).points;
+    if (pts.isNotEmpty) {
+      final seekTime = item.kind == RouteTimelineEntryKind.dataGap &&
+              item.stopEndTime != null
+          ? item.stopEndTime!
+          : item.sortTime;
+      var bestI = 0;
+      var bestDelta =
+          (pts[0].fixTime.difference(seekTime)).inMilliseconds.abs();
+      for (var i = 1; i < pts.length; i++) {
+        final d = (pts[i].fixTime.difference(seekTime)).inMilliseconds.abs();
+        if (d < bestDelta) {
+          bestDelta = d;
+          bestI = i;
+        }
+      }
+      ref.read(replayControllerProvider.notifier).seekTo(bestI);
+    }
+
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(item.position, RouteEventTimeline.focusZoomHint),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      RouteEventDetailsSheet.show(
+        context,
+        item: item,
+        onRecenter: () {
+          _mapController?.animateCamera(
+            CameraUpdate.newLatLngZoom(
+              item.position,
+              RouteEventTimeline.focusZoomHint,
+            ),
+          );
+        },
+        resolver: ref.read(routeStopAddressResolverProvider),
+        onStopAddressCommitted: _applyReplayResolvedStopAddress,
+      );
+    });
+  }
+
+  /// Route Intelligence marker on map: show details only; does not seek or pause replay.
+  void _onReplayRouteIntelMarkerTap(RouteEventTimelineItem item) {
+    if (!mounted) return;
+    setState(() => _selectedRouteEventKey = item.selectionKey);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      RouteEventDetailsSheet.show(
+        context,
+        item: item,
+        onRecenter: () {
+          setState(() => _followVehicle = false);
+          _mapController?.animateCamera(
+            CameraUpdate.newLatLngZoom(
+              item.position,
+              RouteEventTimeline.focusZoomHint,
+            ),
+          );
+        },
+        resolver: ref.read(routeStopAddressResolverProvider),
+        onStopAddressCommitted: _applyReplayResolvedStopAddress,
+      );
+    });
+  }
+
+  void _showReplayGapsSheet() {
+    if (_replayGaps.isEmpty) return;
+    ReplayGapsSheet.show(
+      context,
+      gaps: _replayGaps,
+      timelineItems: _replayGapTimelineItems,
+      onGapTap: _onReplayTimelineTap,
+    );
+  }
+
   Set<Marker> get _allMarkers => {
         ..._baseMarkers,
+        ..._intelMarkers,
+        ..._gapMarkers,
         if (_vehicleMarker != null) _vehicleMarker!,
       };
 
@@ -312,11 +527,24 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
       reportRouteProvider(widget.params),
       (_, next) {
         next.whenData((pts) {
-          if (pts.isNotEmpty && !_initStarted) {
+          if (pts.isEmpty) {
+            AppLogger.navigation(
+                'ReplayScreen: route data empty for '
+                'vehicleId=${widget.params.vehicleId}');
+          } else if (!_initStarted) {
+            AppLogger.navigation(
+                'ReplayScreen: route loaded ${pts.length} points for '
+                'vehicleId=${widget.params.vehicleId}');
             WidgetsBinding.instance
                 .addPostFrameCallback((_) => _initRoute(pts));
           }
         });
+        next.whenOrNull(
+          error: (e, _) => AppLogger.error(
+              'ReplayScreen',
+              'route load failed for vehicleId=${widget.params.vehicleId}',
+              e),
+        );
       },
     );
 
@@ -327,7 +555,25 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
       (_, idx) => _refreshVehicleMarker(idx),
     );
 
+    ref.listen<RouteIntelligenceThresholds>(
+      routeIntelligenceThresholdsForVehicleProvider(widget.params.vehicleId),
+      (prev, next) {
+        if (!_initStarted || _allPoints.length < 2) return;
+        if (prev == next) return;
+        if (!_syncReplayIntel(_allPoints, next)) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _rebuildReplayIntelMarkers();
+          });
+          _scheduleReplayStopAddressPrefetch();
+        });
+      },
+    );
+
     final navBottom = MediaQuery.paddingOf(context).bottom;
+    final routeIntelSummary =
+        formatRouteIntelSummaryLine(_replayIntel, context.l10n);
 
     return Scaffold(
       body: Stack(
@@ -358,10 +604,20 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
               onMapCreated: (c) {
                 _mapController = c;
                 _mapReady = true;
+                c.getZoomLevel().then((z) {
+                  if (!mounted) return;
+                  _onResolvedMapZoom(z);
+                });
                 if (_allPoints.isNotEmpty && !_hasFitted) {
                   WidgetsBinding.instance
                       .addPostFrameCallback((_) => _fitRoute(_allPoints));
                 }
+              },
+              onCameraIdle: () {
+                _mapController?.getZoomLevel().then((z) {
+                  if (!mounted) return;
+                  _onResolvedMapZoom(z);
+                });
               },
             ),
           ),
@@ -382,6 +638,15 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
               ),
             ),
           ),
+
+          // ── Empty state overlay ────────────────────────────────────────────
+          if (routeAsync.hasValue && routeAsync.value!.isEmpty)
+            Center(
+              child: _EmptyRouteBody(
+                message: context.l10n.noReplayDataForPeriod,
+                onBack: () => context.pop(),
+              ),
+            ),
 
           // ── Speed legend ─────────────────────────────────────────────────────
           if (_polylines.isNotEmpty)
@@ -428,6 +693,17 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
               followVehicle: _followVehicle,
               showMiniChart: _showMiniChart,
               allPoints: _allPoints,
+              replayGapCount: _replayGaps.length,
+              onReplayGapsTap: _showReplayGapsSheet,
+              routeIntelSummary: routeIntelSummary,
+              routeIntelKey: _replayIntelKey,
+              routeIntel: _replayIntel,
+              replayGapTimelineItems: _replayGapTimelineItems,
+              selectedTimelineItemKey: _selectedRouteEventKey,
+              timelineFilter: _replayTimelineFilter,
+              onTimelineFilterChanged: (f) =>
+                  setState(() => _replayTimelineFilter = f),
+              onTimelineItemTap: _onReplayTimelineTap,
               onFollowToggle: () =>
                   setState(() => _followVehicle = !_followVehicle),
               onChartToggle: () =>
@@ -441,7 +717,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 }
 
 // Heights used to position overlay elements above the bottom panel.
-const double _basePanelHeight   = 190;
+const double _basePanelHeight = 336;
 const double _chartPanelHeight  = 180;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -455,6 +731,16 @@ class _ReplayControls extends ConsumerWidget {
     required this.followVehicle,
     required this.showMiniChart,
     required this.allPoints,
+    required this.replayGapCount,
+    required this.onReplayGapsTap,
+    this.routeIntelSummary,
+    required this.routeIntelKey,
+    this.routeIntel,
+    this.replayGapTimelineItems = const [],
+    this.selectedTimelineItemKey,
+    required this.timelineFilter,
+    required this.onTimelineFilterChanged,
+    required this.onTimelineItemTap,
     required this.onFollowToggle,
     required this.onChartToggle,
   });
@@ -463,6 +749,16 @@ class _ReplayControls extends ConsumerWidget {
   final bool followVehicle;
   final bool showMiniChart;
   final List<RoutePoint> allPoints;
+  final int replayGapCount;
+  final VoidCallback onReplayGapsTap;
+  final String? routeIntelSummary;
+  final String routeIntelKey;
+  final RouteEventAnalysisResult? routeIntel;
+  final List<RouteEventTimelineItem> replayGapTimelineItems;
+  final String? selectedTimelineItemKey;
+  final RouteEventTimelineFilter timelineFilter;
+  final ValueChanged<RouteEventTimelineFilter> onTimelineFilterChanged;
+  final ValueChanged<RouteEventTimelineItem> onTimelineItemTap;
   final VoidCallback onFollowToggle;
   final VoidCallback onChartToggle;
 
@@ -553,6 +849,81 @@ class _ReplayControls extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
+
+                if (routeIntelSummary != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      routeIntelSummary!,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 10,
+                        color: AppColors.textSecondaryOf(context),
+                      ),
+                    ),
+                  ),
+
+                if (replayGapCount > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Align(
+                      child: Material(
+                        color: AppColors.surfaceElevatedOf(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: InkWell(
+                          onTap: onReplayGapsTap,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.signal_cellular_connected_no_internet_0_bar_rounded,
+                                  size: 14,
+                                  color: AppColors.textSecondaryOf(context),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  l10n.replayGapsDetected(replayGapCount),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondaryOf(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                if (allPoints.length >= 2) ...[
+                  const SizedBox(height: 6),
+                  RepaintBoundary(
+                    child: RouteEventTimeline(
+                      analysisKey: routeIntelKey,
+                      analysis: routeIntel,
+                      supplementalTimelineItems: replayGapTimelineItems,
+                      compact: true,
+                      reportStyle: true,
+                      showEmptyState: true,
+                      collapsedItemLimit: 4,
+                      listHeightOverride: 120,
+                      selectedItemKey: selectedTimelineItemKey,
+                      filter: timelineFilter,
+                      onFilterChanged: onTimelineFilterChanged,
+                      onItemTap: onTimelineItemTap,
+                    ),
+                  ),
+                ],
 
                 // ── Completion banner ────────────────────────────────────────
                 if (state.isCompleted)
@@ -1014,6 +1385,61 @@ class _SpeedLegend extends StatelessWidget {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _EmptyRouteBody
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EmptyRouteBody extends StatelessWidget {
+  const _EmptyRouteBody({
+    required this.message,
+    required this.onBack,
+  });
+
+  final String message;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceOf(context).withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderOf(context)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.route_outlined,
+                    size: 44, color: AppColors.purple),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondaryOf(context),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: onBack,
+                  icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                  label: Text(context.l10n.cancel),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -141,6 +141,59 @@ class DeviceInstallationProfile {
         _ => 'مكوّن مطلوب غير متوفر في هذه المركبة.',
       };
 
+  /// Human-readable English reason for a missing installation flag.
+  static String missingFlagReasonEn(String flag) => switch (flag) {
+        'hasEngineControl' =>
+          'This command requires a relay or immobilizer installed and wired to the vehicle.',
+        'hasRelay' =>
+          'This command requires a relay installed and wired to the vehicle.',
+        'hasImmobilizer' =>
+          'This command requires an immobilizer installed and wired.',
+        'hasDoorInput' =>
+          'This command requires an installed door sensor.',
+        'hasSosButton' => 'This command requires an installed SOS button.',
+        'hasOutput1' =>
+          'This command requires output 1 installed and wired.',
+        'hasOutput2' =>
+          'This command requires output 2 installed and wired.',
+        'hasFuelSensor' =>
+          'This command requires an installed fuel sensor.',
+        'hasTemperatureSensor' =>
+          'This command requires an installed temperature sensor.',
+        _ => 'A required piece of equipment is not installed.',
+      };
+
+  /// Human-readable Spanish reason for a missing installation flag.
+  static String missingFlagReasonEs(String flag) => switch (flag) {
+        'hasEngineControl' =>
+          'Este comando requiere un relé o inmovilizador instalado y conectado al vehículo.',
+        'hasRelay' =>
+          'Este comando requiere un relé instalado y conectado al vehículo.',
+        'hasImmobilizer' =>
+          'Este comando requiere un inmovilizador instalado y conectado.',
+        'hasDoorInput' =>
+          'Este comando requiere un sensor de puerta instalado.',
+        'hasSosButton' => 'Este comando requiere un botón SOS instalado.',
+        'hasOutput1' =>
+          'Este comando requiere la salida 1 instalada y conectada.',
+        'hasOutput2' =>
+          'Este comando requiere la salida 2 instalada y conectada.',
+        'hasFuelSensor' =>
+          'Este comando requiere un sensor de combustible instalado.',
+        'hasTemperatureSensor' =>
+          'Este comando requiere un sensor de temperatura instalado.',
+        _ => 'Un equipo requerido no está instalado.',
+      };
+
+  /// Returns a localized missing-flag reason based on [languageCode].
+  static String missingFlagReason(String flag, String languageCode) =>
+      switch (languageCode) {
+        'ar' => missingFlagReasonAr(flag),
+        'fr' => missingFlagReasonFr(flag),
+        'es' => missingFlagReasonEs(flag),
+        _ => missingFlagReasonEn(flag),
+      };
+
   // ── Default / factory ─────────────────────────────────────────────────────
 
   /// Returns a safe default profile with everything disabled.

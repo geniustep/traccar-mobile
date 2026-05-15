@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../shared/providers/core_providers.dart';
 import '../../../../shared/providers/traccar_providers.dart';
-// Hide sharedPreferencesProvider — it's already exported by core_providers.dart.
-import '../../../auth/presentation/providers/auth_provider.dart'
-    hide sharedPreferencesProvider;
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/datasources/commands_remote_datasource.dart';
 import '../../data/repositories/commands_repository_impl.dart';
 import '../../domain/catalog/command_catalog.dart';
@@ -169,6 +168,7 @@ Future<CommandResult> dispatchResolvedCommand({
   bool userConfirmed = false,
   Map<String, dynamic>? providedParams,
 }) async {
+  AppLogger.commands('Command dispatch started: key=${resolved.commandKey} deviceId=$deviceId');
   ref.read(dispatchingCommandProvider(deviceId).notifier).state =
       resolved.commandKey;
 
@@ -195,10 +195,15 @@ Future<CommandResult> dispatchResolvedCommand({
       installation: installation,
     );
 
+    AppLogger.commands('Command dispatch result: key=${resolved.commandKey} type=${result.runtimeType} deviceId=$deviceId');
+
     // Refresh logs so new entry appears in CommandLogsScreen.
     ref.read(commandLogsProvider(deviceId).notifier).refresh();
 
     return result;
+  } catch (e) {
+    AppLogger.commandsError('Command dispatch error: key=${resolved.commandKey} deviceId=$deviceId error=$e');
+    rethrow;
   } finally {
     ref.read(dispatchingCommandProvider(deviceId).notifier).state = null;
   }

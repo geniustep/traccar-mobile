@@ -13,6 +13,7 @@ class StorageKeys {
   static const String userId       = 'elmo_user_id';
 
   // ── Shared preferences ────────────────────────────────────────────────────
+  // Route-intel optional keys: RouteIntelligenceLocalPreferenceKeys (`elmo.local.route.*`).
   static const String isDarkMode           = 'is_dark_mode';
   static const String language             = 'language';
   static const String fcmToken             = 'fcm_token';

@@ -15,14 +15,23 @@ class VehicleEntity {
     required this.fuelLevel,
     required this.driverName,
     required this.groupId,
+    this.uniqueId,
+    this.course,
     this.insuranceExpiry,
     this.technicalInspectionExpiry,
     this.latestOdometerKm,
+    this.deviceAttributes = const {},
   });
 
   final String id;
   final String name;
   final String plateNumber;
+
+  /// Traccar `uniqueId` (IMEI / hardware id) when present — used for search / display.
+  final String? uniqueId;
+
+  /// Latest heading in degrees (0–360) when known (REST position or live socket).
+  final double? course;
   final String type;
   final String status; // moving | stopped | idle | offline
   final double speed;
@@ -42,6 +51,10 @@ class VehicleEntity {
 
   /// تقدير عداد المسافة بكيلومترات عندما تُتاح بيانات الموضع.
   final double? latestOdometerKm;
+
+  /// Traccar `device.attributes` as returned by `GET /devices` — used for
+  /// fleet extensions (Route Intelligence thresholds, expiry fields, …).
+  final Map<String, dynamic> deviceAttributes;
 
   bool get isMoving => status == 'moving';
   bool get isStopped => status == 'stopped';
@@ -65,9 +78,12 @@ class VehicleEntity {
     double? fuelLevel,
     String? driverName,
     String? groupId,
+    String? uniqueId,
+    double? course,
     DateTime? insuranceExpiry,
     DateTime? technicalInspectionExpiry,
     double? latestOdometerKm,
+    Map<String, dynamic>? deviceAttributes,
   }) {
     return VehicleEntity(
       id: id ?? this.id,
@@ -85,10 +101,13 @@ class VehicleEntity {
       fuelLevel: fuelLevel ?? this.fuelLevel,
       driverName: driverName ?? this.driverName,
       groupId: groupId ?? this.groupId,
+      uniqueId: uniqueId ?? this.uniqueId,
+      course: course ?? this.course,
       insuranceExpiry: insuranceExpiry ?? this.insuranceExpiry,
       technicalInspectionExpiry:
           technicalInspectionExpiry ?? this.technicalInspectionExpiry,
       latestOdometerKm: latestOdometerKm ?? this.latestOdometerKm,
+      deviceAttributes: deviceAttributes ?? this.deviceAttributes,
     );
   }
 }

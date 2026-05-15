@@ -56,14 +56,15 @@ class CommandValidationService {
     required DeviceInstallationProfile installation,
     required bool userConfirmed,
     Map<String, dynamic>? providedParams,
+    String languageCode = 'fr',
   }) {
     final cmd = resolved.command;
 
     // 1. Permission
     if (!cmd.canBeUsedBy(userRole)) {
-      return const ValidationFailed(
+      return ValidationFailed(
         status: CommandCapabilityStatus.permissionDenied,
-        reason: 'Vous n\'avez pas les droits pour cette commande.',
+        reason: _permissionDeniedReason(languageCode),
       );
     }
 
@@ -72,7 +73,8 @@ class CommandValidationService {
     if (missing != null) {
       return ValidationFailed(
         status: CommandCapabilityStatus.notInstalled,
-        reason: DeviceInstallationProfile.missingFlagReasonFr(missing),
+        reason:
+            DeviceInstallationProfile.missingFlagReason(missing, languageCode),
       );
     }
 
@@ -80,26 +82,22 @@ class CommandValidationService {
     if (!deviceOnline && cmd.requiresOnline && !cmd.supportsQueue) {
       return ValidationFailed(
         status: CommandCapabilityStatus.offlineBlocked,
-        reason:
-            'L\'appareil est hors ligne. Cette commande critique nécessite '
-            'une connexion active pour être exécutée.',
+        reason: _offlineCriticalReason(languageCode),
       );
     }
 
     // 4. Required parameters
     if (cmd.requiredParameters.isNotEmpty) {
-      final missing = cmd.requiredParameters
+      final missingParams = cmd.requiredParameters
           .where((p) =>
               providedParams == null ||
               !providedParams.containsKey(p) ||
               (providedParams[p]?.toString().isEmpty ?? true))
           .toList();
-      if (missing.isNotEmpty) {
+      if (missingParams.isNotEmpty) {
         return ValidationFailed(
           status: CommandCapabilityStatus.missingParameters,
-          reason:
-              'Paramètre(s) manquant(s): ${missing.join(', ')}. '
-              'Veuillez remplir tous les champs requis.',
+          reason: _missingParamsReason(languageCode, missingParams),
         );
       }
     }
@@ -108,10 +106,8 @@ class CommandValidationService {
     if (cmd.requiresSpeedCheck && currentSpeedKmh > cmd.maxAllowedSpeedKmh) {
       return ValidationFailed(
         status: CommandCapabilityStatus.blockedBySpeed,
-        reason:
-            'Le véhicule roule à ${currentSpeedKmh.toStringAsFixed(0)} km/h. '
-            'Cette commande est bloquée au-dessus de '
-            '${cmd.maxAllowedSpeedKmh.toStringAsFixed(0)} km/h.',
+        reason: _speedBlockedReason(
+            languageCode, currentSpeedKmh, cmd.maxAllowedSpeedKmh),
       );
     }
 
@@ -127,4 +123,47 @@ class CommandValidationService {
     final willBeQueued = !deviceOnline && cmd.supportsQueue;
     return ValidationPassed(willBeQueued: willBeQueued);
   }
+
+  // ── Locale-aware reason helpers ─────────────────────────────────────────────
+
+  static String _permissionDeniedReason(String lang) => switch (lang) {
+        'ar' => 'ليس لديك صلاحية لهذا الأمر.',
+        'fr' => 'Vous n\'avez pas les droits pour cette commande.',
+        'es' => 'No tiene permisos para este comando.',
+        _ => 'You do not have permission for this command.',
+      };
+
+  static String _offlineCriticalReason(String lang) => switch (lang) {
+        'ar' => 'الجهاز غير متصل. هذا الأمر الحرج يتطلب اتصالاً نشطاً.',
+        'fr' =>
+          'L\'appareil est hors ligne. Cette commande critique nécessite une connexion active pour être exécutée.',
+        'es' =>
+          'El dispositivo está desconectado. Este comando crítico requiere una conexión activa.',
+        _ => 'Device is offline. This critical command requires an active connection.',
+      };
+
+  static String _missingParamsReason(String lang, List<String> missing) =>
+      switch (lang) {
+        'ar' =>
+          'معلمات مفقودة: ${missing.join(', ')}. يرجى ملء جميع الحقول المطلوبة.',
+        'fr' =>
+          'Paramètre(s) manquant(s): ${missing.join(', ')}. Veuillez remplir tous les champs requis.',
+        'es' =>
+          'Parámetro(s) faltante(s): ${missing.join(', ')}. Complete todos los campos requeridos.',
+        _ =>
+          'Missing parameter(s): ${missing.join(', ')}. Please fill in all required fields.',
+      };
+
+  static String _speedBlockedReason(
+          String lang, double currentSpeed, double maxSpeed) =>
+      switch (lang) {
+        'ar' =>
+          'المركبة تسير بسرعة ${currentSpeed.toStringAsFixed(0)} كم/س. هذا الأمر محظور فوق ${maxSpeed.toStringAsFixed(0)} كم/س.',
+        'fr' =>
+          'Le véhicule roule à ${currentSpeed.toStringAsFixed(0)} km/h. Cette commande est bloquée au-dessus de ${maxSpeed.toStringAsFixed(0)} km/h.',
+        'es' =>
+          'El vehículo circula a ${currentSpeed.toStringAsFixed(0)} km/h. Este comando está bloqueado por encima de ${maxSpeed.toStringAsFixed(0)} km/h.',
+        _ =>
+          'Vehicle is moving at ${currentSpeed.toStringAsFixed(0)} km/h. This command is blocked above ${maxSpeed.toStringAsFixed(0)} km/h.',
+      };
 }

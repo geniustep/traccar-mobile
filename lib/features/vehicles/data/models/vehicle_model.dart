@@ -1,4 +1,5 @@
 import '../../../../core/constants/elmo_fleet_attribute_keys.dart';
+import '../../../map/core/vehicle_status_resolver.dart';
 import '../../../fleet_domain/vehicle_odometer_reader.dart';
 import '../../domain/entities/vehicle.dart';
 
@@ -8,6 +9,8 @@ class VehicleModel {
     required this.id,
     required this.name,
     required this.plateNumber,
+    this.uniqueId,
+    this.course,
     required this.type,
     required this.status,
     required this.speed,
@@ -23,11 +26,14 @@ class VehicleModel {
     this.insuranceExpiry,
     this.technicalInspectionExpiry,
     this.latestOdometerKm,
+    this.deviceAttributes = const {},
   });
 
   final String id;
   final String name;
   final String plateNumber;
+  final String? uniqueId;
+  final double? course;
   final String type;
   final String status;
   final double speed;
@@ -43,6 +49,9 @@ class VehicleModel {
   final DateTime? insuranceExpiry;
   final DateTime? technicalInspectionExpiry;
   final double? latestOdometerKm;
+
+  /// Copy of Traccar `device.attributes` (device row only — excludes position attrs).
+  final Map<String, dynamic> deviceAttributes;
 
   /// Build from a Traccar device JSON merged with its latest position JSON.
   ///
@@ -63,14 +72,18 @@ class VehicleModel {
     final speedKnots = (position?['speed'] as num?)?.toDouble() ?? 0;
     final speedKmh = speedKnots * 1.852;
     final ignition = posAttrs['ignition'] as bool? ?? false;
+    final course = (position?['course'] as num?)?.toDouble();
 
     final status = _deriveStatus(deviceStatus, speedKmh, ignition);
+
+    final uid = device['uniqueId'] as String?;
 
     return VehicleModel(
       id: (device['id'] as int).toString(),
       name: device['name'] as String? ?? '',
-      plateNumber: attrs['plate'] as String? ??
-          device['uniqueId'] as String? ?? '',
+      plateNumber: attrs['plate'] as String? ?? uid ?? '',
+      uniqueId: uid,
+      course: course,
       type: device['category'] as String? ?? 'car',
       status: status,
       speed: speedKmh,
@@ -95,6 +108,7 @@ class VehicleModel {
       ),
       latestOdometerKm:
           VehicleOdometerReader.odometerKmFromPositionAttrs(posAttrs),
+      deviceAttributes: Map<String, dynamic>.from(attrs),
     );
   }
 
@@ -103,10 +117,11 @@ class VehicleModel {
     double speedKmh,
     bool ignition,
   ) {
-    if (deviceStatus == 'offline' || deviceStatus == 'unknown') return 'offline';
-    if (speedKmh > 2.0) return 'moving';
-    if (ignition) return 'idle';
-    return 'stopped';
+    return VehicleStatusResolver.fromDeviceAndTelemetry(
+      deviceStatus: deviceStatus,
+      speedKmh: speedKmh,
+      ignitionOn: ignition,
+    );
   }
 
   static DateTime? _parseDate(String? s) {
@@ -126,6 +141,8 @@ class VehicleModel {
         id: id,
         name: name,
         plateNumber: plateNumber,
+        uniqueId: uniqueId,
+        course: course,
         type: type,
         status: status,
         speed: speed,
@@ -141,5 +158,7 @@ class VehicleModel {
         insuranceExpiry: insuranceExpiry,
         technicalInspectionExpiry: technicalInspectionExpiry,
         latestOdometerKm: latestOdometerKm,
+        deviceAttributes:
+            Map<String, dynamic>.from(deviceAttributes),
       );
 }

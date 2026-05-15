@@ -67,7 +67,11 @@ final filteredVehiclesProvider =
     return list.where((v) {
       final matchQuery = filter.query.isEmpty ||
           v.name.toLowerCase().contains(filter.query.toLowerCase()) ||
-          v.plateNumber.toLowerCase().contains(filter.query.toLowerCase());
+          v.plateNumber.toLowerCase().contains(filter.query.toLowerCase()) ||
+          (v.uniqueId != null &&
+              v.uniqueId!.toLowerCase().contains(filter.query.toLowerCase())) ||
+          (v.driverName != null &&
+              v.driverName!.toLowerCase().contains(filter.query.toLowerCase()));
       final matchStatus = filter.statusFilter == null ||
           v.status == filter.statusFilter;
       return matchQuery && matchStatus;

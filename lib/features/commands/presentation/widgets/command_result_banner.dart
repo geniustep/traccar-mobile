@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/services/command_execution_service.dart';
@@ -9,6 +10,7 @@ void showCommandResultBanner(
   BuildContext context,
   CommandResult result,
 ) {
+  final l10n = AppLocalizations.of(context);
   final messenger = ScaffoldMessenger.of(context);
   messenger.clearSnackBars();
 
@@ -16,7 +18,7 @@ void showCommandResultBanner(
     case CommandSuccess(:final entry):
       messenger.showSnackBar(
         _buildSnackBar(
-          message: '✓  "${entry.labelFr}" envoyée avec succès.',
+          message: '✓  "${entry.labelFr}" ${l10n.cmdSentSuccess}',
           color: AppColors.success,
           icon: Icons.check_circle_rounded,
         ),
@@ -71,9 +73,9 @@ SnackBar _buildSnackBar({
     content: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
       ),
       child: Row(
         children: [

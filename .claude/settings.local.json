@@ -6,7 +6,10 @@
       "Bash(flutter build *)",
       "Bash(grep -E \"\\\\.dart$\")",
       "Bash(python3 -c ' *)",
-      "Bash(Get-ChildItem -Path lib/ -Directory)"
+      "Bash(Get-ChildItem -Path lib/ -Directory)",
+      "Bash(dart analyze *)",
+      "Bash(Get-ChildItem -Path \"d:\\\\flutter\\\\app\\\\elmogps\\\\lib\" -Filter \"*main*\" -Recurse)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }

@@ -6,6 +6,7 @@ import '../../../vehicles/data/datasources/vehicle_remote_datasource.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../data/datasources/route_datasource.dart';
 import '../../../../core/socket/socket_provider.dart';
+import '../../core/vehicle_live_merger.dart';
 
 // ── RouteQuery ────────────────────────────────────────────────────────────────
 
@@ -116,23 +117,16 @@ final liveVehicleProvider =
     final livePos = ref.watch(livePositionsProvider)[deviceId];
     if (livePos == null) return vehicle;
 
-    final speedKmh = livePos.speed * 1.852;
-    final status = speedKmh > 2.0
-        ? 'moving'
-        : (livePos.ignitionOn ? 'idle' : 'stopped');
-
-    return vehicle.copyWith(
-      latitude: livePos.latitude,
-      longitude: livePos.longitude,
-      speed: speedKmh,
-      status: status,
-      lastUpdate: livePos.fixTime,
-      ignition: livePos.ignitionOn,
-      batteryVoltage: livePos.batteryVoltage,
-      fuelLevel: livePos.fuelLevel,
-    );
+    return VehicleLiveMerger.mergeSocket(vehicle, livePos);
   });
 });
+
+/// After [PUT] `/devices/{id}` (e.g. Route Intelligence `attributes`), invalidates
+/// cached REST vehicle rows so [liveVehicleProvider] reflects new `deviceAttributes`.
+void invalidateVehicleLiveMetadata(WidgetRef ref, String vehicleId) {
+  ref.invalidate(_baseVehicleProvider(vehicleId));
+  ref.invalidate(liveVehicleProvider(vehicleId));
+}
 
 /// Today's route points for a vehicle as LatLng list.
 /// Kept for backwards-compatibility with any caller outside tracking screen.

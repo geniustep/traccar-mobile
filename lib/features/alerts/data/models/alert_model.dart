@@ -1,12 +1,14 @@
 import '../../domain/entities/alert.dart';
 
-/// Maps a Traccar event row from `GET /reports/events`.
+/// Maps either a Traccar event row (`GET /reports/events`) or a
+/// Backend alert row (`GET /alerts/`).
 ///
-/// Traccar event structure:
+/// Backend alert JSON example:
 /// ```json
-/// { "id": 1, "type": "deviceOverspeed", "deviceId": 5,
-///   "eventTime": "...", "positionId": 123,
-///   "geofenceId": 0, "attributes": {} }
+/// { "id": 1201, "deviceId": 5, "type": "overspeed", "severity": "warning",
+///   "title": "Excès de vitesse", "message": "Le véhicule a dépassé la limite",
+///   "eventTime": "2026-05-11T20:30:00.000Z", "isRead": false,
+///   "readAt": null, "metadata": {} }
 /// ```
 class AlertModel {
   const AlertModel({
@@ -19,6 +21,7 @@ class AlertModel {
     required this.vehicleName,
     required this.createdAt,
     required this.isRead,
+    this.readAt,
     this.latitude,
     this.longitude,
     required this.attributes,
@@ -34,12 +37,49 @@ class AlertModel {
   final String vehicleName;
   final DateTime createdAt;
   final bool isRead;
+  final DateTime? readAt;
   final double? latitude;
   final double? longitude;
   final Map<String, dynamic> attributes;
   final int? geofenceId;
 
-  /// Creates an AlertModel from a Traccar event JSON.
+  /// Creates an AlertModel from the Backend `/alerts/` JSON.
+  ///
+  /// [json]        — object from `GET /alerts/` or `GET /alerts/:id`
+  /// [deviceName]  — optional vehicle name (looked up externally if available)
+  factory AlertModel.fromBackendJson(
+    Map<String, dynamic> json, {
+    String deviceName = '',
+  }) {
+    final metadata = Map<String, dynamic>.from(
+      json['metadata'] as Map? ?? {},
+    );
+    final vehicleName = metadata['vehicleName'] as String? ??
+        metadata['deviceName'] as String? ??
+        deviceName;
+    return AlertModel(
+      id: json['id']?.toString() ?? '',
+      type: json['type'] as String? ?? '',
+      severity: json['severity'] as String? ?? 'info',
+      title: json['title'] as String? ?? '',
+      description: json['message'] as String? ?? '',
+      vehicleId: json['deviceId']?.toString() ?? '',
+      vehicleName: vehicleName,
+      createdAt:
+          DateTime.tryParse(json['eventTime'] as String? ?? '')?.toLocal() ??
+              DateTime.now(),
+      isRead: json['isRead'] as bool? ?? false,
+      readAt: json['readAt'] != null
+          ? DateTime.tryParse(json['readAt'] as String)?.toLocal()
+          : null,
+      latitude: null,
+      longitude: null,
+      attributes: metadata,
+      geofenceId: null,
+    );
+  }
+
+  /// Creates an AlertModel from a Traccar event JSON (legacy, kept for backward compat).
   ///
   /// [event]       — row from `GET /reports/events`
   /// [deviceName]  — looked-up from the devices cache (event only has deviceId)
@@ -183,6 +223,7 @@ class AlertModel {
         vehicleName: vehicleName,
         createdAt: createdAt,
         isRead: isRead,
+        readAt: readAt,
         latitude: latitude,
         longitude: longitude,
         attributes: attributes,

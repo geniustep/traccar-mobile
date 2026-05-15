@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -22,6 +23,7 @@ class CommandStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isMoving = currentSpeedKmh > 0.5;
     final statusColor = isOnline ? AppColors.success : AppColors.error;
 
@@ -29,9 +31,10 @@ class CommandStatusBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.07),
+        color: statusColor.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.2), width: 0.5),
+        border:
+            Border.all(color: statusColor.withValues(alpha: 0.2), width: 0.5),
       ),
       child: Row(
         children: [
@@ -43,7 +46,7 @@ class CommandStatusBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isOnline ? 'Appareil en ligne' : 'Appareil hors ligne',
+                  isOnline ? l10n.cmdDeviceOnline : l10n.cmdDeviceOffline,
                   style: AppTextStyles.labelLarge.copyWith(
                     color: statusColor,
                     fontSize: 12,
@@ -51,7 +54,7 @@ class CommandStatusBanner extends StatelessWidget {
                 ),
                 if (lastUpdate != null)
                   Text(
-                    'Dernière MAJ : ${DateFormatter.toDateTime(lastUpdate!)}',
+                    '${l10n.cmdLastUpdate} ${DateFormatter.toDateTime(lastUpdate!)}',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textMuted,
                       fontSize: 10,
@@ -65,10 +68,11 @@ class CommandStatusBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.12),
+                color: AppColors.warning.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: AppColors.warning.withOpacity(0.3), width: 0.5),
+                    color: AppColors.warning.withValues(alpha: 0.3),
+                    width: 0.5),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -92,7 +96,7 @@ class CommandStatusBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -102,7 +106,7 @@ class CommandStatusBanner extends StatelessWidget {
                       size: 12, color: AppColors.success),
                   const SizedBox(width: 4),
                   Text(
-                    'Arrêté',
+                    l10n.cmdVehicleStopped,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.success,
                       fontWeight: FontWeight.w600,
@@ -163,12 +167,12 @@ class _PulseDotState extends State<_PulseDot>
         width: 10,
         height: 10,
         decoration: BoxDecoration(
-          color: widget.color.withOpacity(_anim.value),
+          color: widget.color.withValues(alpha: _anim.value),
           shape: BoxShape.circle,
           boxShadow: widget.isOnline
               ? [
                   BoxShadow(
-                    color: widget.color.withOpacity(0.4 * _anim.value),
+                    color: widget.color.withValues(alpha: 0.4 * _anim.value),
                     blurRadius: 6,
                     spreadRadius: 1,
                   ),

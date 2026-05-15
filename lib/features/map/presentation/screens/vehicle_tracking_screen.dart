@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,13 +16,44 @@ import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/route_decimator.dart';
-import '../../../../core/utils/vehicle_category_utils.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/socket/socket_provider.dart';
+import '../../../../core/socket/socket_state.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
+import '../../../vehicles/presentation/widgets/report_entry_sheet.dart';
+import '../../../vehicles/presentation/widgets/replay_entry_sheet.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
+import '../../core/map_camera_follow_controller.dart';
+import '../../core/map_zoom_policy.dart';
+import '../../core/route_event_analyzer.dart';
+import '../../core/route_event_models.dart';
+import '../../core/route_event_timeline_models.dart';
+import '../../core/route_event_ui.dart';
+import '../../core/route_intelligence_thresholds.dart';
+import '../../core/route_polyline_builder.dart';
+import '../../core/vehicle_marker_factory.dart';
+import '../../core/vehicle_marker_style.dart';
+import '../../core/route_stop_address_enrichment.dart';
+import '../../core/trip_segment_models.dart';
+import '../../core/trip_segment_summary.dart';
+import '../../core/trip_segmenter.dart';
+import '../../core/daily_behavior_score_calculator.dart';
+import '../../core/daily_behavior_score_models.dart';
+import '../../core/driver_behavior_score_models.dart';
+import '../../core/driver_behavior_score_calculator.dart';
 import '../../data/datasources/route_datasource.dart';
+import '../providers/route_intelligence_thresholds_provider.dart';
+import '../providers/route_stop_address_providers.dart';
 import '../providers/tracking_provider.dart';
+import '../utils/trip_formatters.dart';
+import '../widgets/daily_behavior_score_details_sheet.dart';
+import '../widgets/daily_vehicle_behavior_score_card.dart';
+import '../widgets/route_event_details_sheet.dart';
+import '../widgets/route_event_timeline.dart';
+import '../widgets/trips_list.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -38,19 +68,22 @@ class VehicleTrackingScreen extends ConsumerStatefulWidget {
 }
 
 class _VehicleTrackingScreenState
-    extends ConsumerState<VehicleTrackingScreen> {
+    extends ConsumerState<VehicleTrackingScreen>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   GoogleMapController? _controller;
   Timer? _liveTimer;
 
-  bool _followMode = true;
-  bool _showInfoPanel = true;
+  double _cameraZoom = MapConfig.defaultZoom;
+
+  final _followCamera = MapCameraFollowController(
+    MapCameraFollowMode.singleVehicle,
+  );
+
+  final _sheetController = DraggableScrollableController();
 
   /// Route time range (local datetimes). Default: today 00:00 → now.
   late DateTime _from;
   late DateTime _to;
-
-  /// Prevents the first programmatic camera move from disabling follow mode.
-  int _ignoreCameraMoveStartedEvents = 0;
 
   /// Set when the range changes so the camera fits the new route on load.
   bool _pendingRouteFit = false;
@@ -59,24 +92,151 @@ class _VehicleTrackingScreenState
   final _markerCache = <String, BitmapDescriptor>{};
   final _pendingKeys  = <String>{};
 
+  /// Memo key for [RouteEventAnalyzer] on full route points.
+  String _routeIntelKey = '';
+  RouteEventAnalysisResult? _routeIntel;
+
+  /// Phase 7C: shared highlight for timeline row + intelligence marker ([RouteEventTimelineItem.selectionKey]).
+  String? _selectedRouteEventKey;
+
+  /// Phase 7E: timeline filter (display only).
+  RouteEventTimelineFilter _routeTimelineFilter = RouteEventTimelineFilter.all;
+
+  /// Phase 8: memoized trip segmentation for the tracking window.
+  String _tripsMemoKey = '';
+  List<TripSegment> _tripSegments = const [];
+  /// Phase 9B: memoized beside [_tripSegments] (same memo key).
+  Map<String, DriverBehaviorScore> _tripBehaviorScores = const {};
+  DailyVehicleBehaviorScore _dailyVehicleBehaviorScore =
+      DailyVehicleBehaviorScoreCalculator.calculateDailyVehicleBehaviorScore(
+    trips: const [],
+  );
   static const _refreshInterval = Duration(seconds: 10);
+
+  bool _didLogFirstPosition = false;
+
+  // ── M4: connection-aware tracking status ──────────────────────────────────
+  _TrackingLiveStatus? _lastLoggedStatus;
+
+  // ── M2: map type toggle ───────────────────────────────────────────────────
+  static const _mapTypes = [MapType.normal, MapType.satellite, MapType.terrain];
+  MapType _mapType = MapType.normal;
+
+  // ── M2: smooth marker interpolation ────────────────────────────────────────
+  AnimationController? _markerMotion;
+  LatLng _smoothPos = const LatLng(0, 0);
+  double _smoothCourse = 0;
+  LatLng? _animStartPos;
+  LatLng? _animEndPos;
+  double _courseAnimStart = 0;
+  double _courseAnimEnd = 0;
+  static const _maxInstantJumpMeters = 50000.0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    AppLogger.map('VehicleTrackingScreen opened: vehicleId=${widget.vehicleId}');
     final now = DateTime.now();
     _from = DateTime(now.year, now.month, now.day); // today midnight
     _to   = now;
+    _startLiveTimer();
+    _followCamera.followEnabled = true;
+    _markerMotion = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    )..addListener(_onMarkerMotionTick);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _liveTimer?.cancel();
+    _markerMotion?.dispose();
+    _controller?.dispose();
+    _sheetController.dispose();
+    super.dispose();
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _liveTimer?.cancel();
+      _liveTimer = null;
+      AppLogger.map(
+        'VehicleTracking: lifecycle paused, timer stopped '
+        'for vehicleId=${widget.vehicleId}',
+      );
+    } else if (state == AppLifecycleState.resumed) {
+      _startLiveTimer();
+      ref.invalidate(liveVehicleProvider(widget.vehicleId));
+      ref.invalidate(routeDetailProvider(_routeQuery));
+      AppLogger.map(
+        'VehicleTracking: lifecycle resumed, timer restarted '
+        'for vehicleId=${widget.vehicleId}',
+      );
+    }
+  }
+
+  void _startLiveTimer() {
+    _liveTimer?.cancel();
     _liveTimer = Timer.periodic(_refreshInterval, (_) {
       ref.invalidate(liveVehicleProvider(widget.vehicleId));
     });
   }
 
-  @override
-  void dispose() {
-    _liveTimer?.cancel();
-    _controller?.dispose();
-    super.dispose();
+  // ── M2: smooth marker interpolation tick ──────────────────────────────────
+
+  void _onMarkerMotionTick() {
+    final a = _animStartPos;
+    final b = _animEndPos;
+    if (a == null || b == null || !mounted) return;
+    final t = Curves.easeOut.transform(_markerMotion!.value);
+    setState(() {
+      _smoothPos = LatLng(
+        a.latitude + (b.latitude - a.latitude) * t,
+        a.longitude + (b.longitude - a.longitude) * t,
+      );
+      var dc = _courseAnimEnd - _courseAnimStart;
+      if (dc.abs() > 180) dc -= 360 * dc.sign;
+      _smoothCourse = _courseAnimStart + dc * t;
+    });
+  }
+
+  void _applyLivePosition(VehicleEntity v) {
+    final target = LatLng(v.latitude, v.longitude);
+    final course = v.course ?? 0;
+
+    if (_animEndPos == null) {
+      _smoothPos = target;
+      _smoothCourse = course;
+      _animStartPos = target;
+      _animEndPos = target;
+      return;
+    }
+
+    final dist = MapHelper.distanceMeters(_smoothPos, target);
+    if (dist > _maxInstantJumpMeters) {
+      AppLogger.map(
+        'Marker jump too large (${(dist / 1000).toStringAsFixed(1)} km) '
+        'for vehicleId=${widget.vehicleId}, skipping animation',
+      );
+      _smoothPos = target;
+      _smoothCourse = course;
+      _animStartPos = target;
+      _animEndPos = target;
+      setState(() {});
+      return;
+    }
+
+    _animStartPos = _smoothPos;
+    _animEndPos = target;
+    _courseAnimStart = _smoothCourse;
+    _courseAnimEnd = course;
+    _markerMotion?.forward(from: 0);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -88,270 +248,247 @@ class _VehicleTrackingScreenState
 
   // ── Camera ─────────────────────────────────────────────────────────────────
 
-  void _beginProgrammaticCameraMove() => _ignoreCameraMoveStartedEvents++;
-
   void _moveTo(LatLng target) {
-    _beginProgrammaticCameraMove();
-    _controller?.animateCamera(
+    _followCamera.beginProgrammaticMove();
+    _controller
+        ?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: target, zoom: 16, tilt: 30),
       ),
-    );
+    )
+        .then((_) => _followCamera.endProgrammaticMoveSoon());
   }
 
   void _fitRoute(List<LatLng> points, LatLng? current) {
     final all = [...points, if (current != null) current];
     final update = MapHelper.fitPoints(all, padding: 80);
     if (update != null) {
-      _beginProgrammaticCameraMove();
-      _controller?.animateCamera(update);
+      _followCamera.beginProgrammaticMove();
+      _controller
+          ?.animateCamera(update)
+          .then((_) => _followCamera.endProgrammaticMoveSoon());
     }
   }
 
   void _fitRoutePoints(List<RoutePoint> pts, LatLng? current) =>
       _fitRoute(pts.map((p) => p.position).toList(), current);
 
-  // ── Vehicle marker ─────────────────────────────────────────────────────────
-
-  static int _iconCodePoint(String? type) =>
-      vehicleCategoryIcon(type).codePoint;
-
-  static Color _markerColor(String status) => switch (status) {
-        'moving'  => AppColors.statusMoving,
-        'idle'    => AppColors.statusIdle,
-        'stopped' => AppColors.statusStopped,
-        _         => AppColors.statusOffline,
-      };
-
-  static BitmapDescriptor _fallbackIcon(String status) => switch (status) {
-        'moving'  => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        'idle'    => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        'stopped' => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-        _         => BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-      };
-
-  static Future<BitmapDescriptor> _paintVehicleMarker(VehicleEntity v) async {
-    const double w = 56, circleR = 22, totalH = 68;
-    const double cx = w / 2, cy = circleR + 2;
-    final color = _markerColor(v.status);
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, w, totalH));
-
-    canvas.drawCircle(Offset(cx, cy + 3), circleR,
-        Paint()
-          ..color = Colors.black.withOpacity(0.3)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(cx - 8, cy + circleR - 5)
-        ..lineTo(cx, totalH)
-        ..lineTo(cx + 8, cy + circleR - 5)
-        ..close(),
-      Paint()
-        ..color = Colors.black.withOpacity(0.2)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
-
-    canvas.drawCircle(Offset(cx, cy), circleR, Paint()..color = color);
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(cx - 8, cy + circleR - 5)
-        ..lineTo(cx, totalH - 2)
-        ..lineTo(cx + 8, cy + circleR - 5)
-        ..close(),
-      Paint()..color = color,
-    );
-
-    canvas.drawCircle(Offset(cx, cy), circleR - 0.5,
-        Paint()
-          ..color = Colors.white.withOpacity(0.28)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5);
-
-    final iconPainter = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(_iconCodePoint(v.type)),
-        style: const TextStyle(
-          fontSize: 22, color: Colors.white, fontFamily: 'MaterialIcons'),
+  void _animateCameraToRouteEvent(RouteEventTimelineItem item) {
+    final c = _controller;
+    if (c == null || !routeEventTimelineValidPosition(item.position)) return;
+    _followCamera.followEnabled = false;
+    _followCamera.beginProgrammaticMove();
+    c.animateCamera(
+      CameraUpdate.newLatLngZoom(
+        item.position,
+        RouteEventTimeline.focusZoomHint,
       ),
-      textDirection: ui.TextDirection.ltr,
-    )..layout();
-
-    iconPainter.paint(canvas,
-        Offset(cx - iconPainter.width / 2, cy - iconPainter.height / 2));
-
-    final picture = recorder.endRecording();
-    final image   = await picture.toImage(w.toInt(), totalH.toInt());
-    final bytes   = await image.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
+    ).then((_) {
+      if (mounted) _followCamera.endProgrammaticMoveSoon();
+    });
+    setState(() {});
   }
 
+  void _focusRouteTimelineEvent(RouteEventTimelineItem item) {
+    if (!routeEventTimelineValidPosition(item.position)) return;
+    setState(() => _selectedRouteEventKey = item.selectionKey);
+    _animateCameraToRouteEvent(item);
+    if (!mounted) return;
+    RouteEventDetailsSheet.show(
+      context,
+      item: item,
+      onRecenter: () => _animateCameraToRouteEvent(item),
+      resolver: ref.read(routeStopAddressResolverProvider),
+      onStopAddressCommitted: _applyResolvedStopAddress,
+    );
+  }
+
+  /// Map pin tap (Route Intelligence) — details only; does not toggle follow mode.
+  void _onRouteIntelMarkerTap(RouteEventTimelineItem item) {
+    if (!mounted) return;
+    setState(() => _selectedRouteEventKey = item.selectionKey);
+    RouteEventDetailsSheet.show(
+      context,
+      item: item,
+      onRecenter: () => _animateCameraToRouteEvent(item),
+      resolver: ref.read(routeStopAddressResolverProvider),
+      onStopAddressCommitted: _applyResolvedStopAddress,
+    );
+  }
+
+  void _syncRouteIntel(List<RoutePoint> pts, RouteIntelligenceThresholds th) {
+    final key = pts.length < 2
+        ? '0'
+        : '${pts.length}_${pts.first.fixTime.millisecondsSinceEpoch}_${pts.last.fixTime.millisecondsSinceEpoch}_${th.cacheKey}';
+    if (key == _routeIntelKey) return;
+    _selectedRouteEventKey = null;
+    _routeTimelineFilter = RouteEventTimelineFilter.all;
+    _routeIntelKey = key;
+    final raw = pts.length < 2
+        ? null
+        : RouteEventAnalyzer.analyze(pts, thresholds: th);
+    _routeIntel = raw == null
+        ? null
+        : enrichRouteIntelStopsFromRoutePoints(raw, pts);
+    if (_routeIntel != null && pts.length >= 2) {
+      _scheduleStopAddressPrefetch();
+    }
+  }
+
+  void _syncTripSegments(List<RoutePoint> pts, RouteIntelligenceThresholds th) {
+    const cfg = TripSegmentationConfig.defaults;
+    final key = pts.isEmpty
+        ? '0'
+        : 't_${pts.length}_${pts.first.fixTime.millisecondsSinceEpoch}_${pts.last.fixTime.millisecondsSinceEpoch}_${th.cacheKey}_${cfg.cacheKey}';
+    if (key == _tripsMemoKey) return;
+    _tripsMemoKey = key;
+    _tripSegments = TripSegmenter.build(
+      vehicleId: widget.vehicleId,
+      points: pts,
+      thresholds: th,
+      config: cfg,
+    );
+    _tripBehaviorScores = {
+      for (final t in _tripSegments)
+        t.selectionKey: DriverBehaviorScoreCalculator.calculateTripScore(t),
+    };
+    _dailyVehicleBehaviorScore =
+        DailyVehicleBehaviorScoreCalculator.calculateDailyVehicleBehaviorScore(
+      trips: _tripSegments,
+    );
+  }
+
+  void _openTripDetailMap(TripSegment t) {
+    final snap = ref.read(liveVehicleProvider(widget.vehicleId));
+    final name = snap.valueOrNull?.name ?? '';
+    final params = reportFilterParamsForTrip(
+      vehicleId: widget.vehicleId,
+      startTime: t.startTime,
+      endTime: t.endTime,
+    );
+    final subtitle = TripUiFormatters.tripTitle(context.l10n, t.index);
+    if (!mounted) return;
+    context.push(
+      '/vehicles/${widget.vehicleId}/trip-map',
+      extra: <String, dynamic>{
+        'params': params,
+        'vehicleName': name,
+        'tripSubtitle': subtitle,
+      },
+    );
+  }
+
+  void _openTripReplay(TripSegment t) {
+    final snap = ref.read(liveVehicleProvider(widget.vehicleId));
+    final name = snap.valueOrNull?.name ?? '';
+    final params = reportFilterParamsForTrip(
+      vehicleId: widget.vehicleId,
+      startTime: t.startTime,
+      endTime: t.endTime,
+    );
+    if (!mounted) return;
+    context.push(
+      '/reports/replay',
+      extra: <String, dynamic>{
+        'params': params,
+        'vehicleName': name,
+      },
+    );
+  }
+
+  /// Phase **9F** — period behavior score breakdown (does not mutate Core calculators).
+  void _openDailyBehaviorScoreDetails() {
+    if (!mounted) return;
+    DailyBehaviorScoreDetailsSheet.show(
+      context,
+      dailyScore: _dailyVehicleBehaviorScore,
+    );
+  }
+  void _scheduleStopAddressPrefetch() {
+    final k = _routeIntelKey;
+    final cur = _routeIntel;
+    if (cur == null || cur.stops.isEmpty) return;
+    final resolver = ref.read(routeStopAddressResolverProvider);
+    prefetchStopAddressesSequential(
+      resolver: resolver,
+      intel: cur,
+      isStale: () => !mounted || _routeIntelKey != k,
+      apply: (u) {
+        if (!mounted || _routeIntelKey != k) return;
+        setState(() => _routeIntel = u);
+      },
+    );
+  }
+
+  void _applyResolvedStopAddress(String selectionKey, String address) {
+    final intel = _routeIntel;
+    if (intel == null) return;
+    RouteStopEvent? target;
+    for (final s in intel.stops) {
+      if (routeStopSelectionKey(s) == selectionKey) {
+        target = s;
+        break;
+      }
+    }
+    if (target == null) return;
+    final existing = target.address?.trim();
+    if (existing != null && existing.isNotEmpty) return;
+    setState(() {
+      _routeIntel = intel.withStops(
+        replaceStopAddressOnList(intel.stops, target!, address),
+      );
+    });
+  }
+
+  // ── Vehicle marker ─────────────────────────────────────────────────────────
+
   BitmapDescriptor _iconForVehicle(VehicleEntity v) {
-    final key = '${v.status}_${v.type}';
+    final body = VehicleMarkerFactory.pinBodyColor(
+      v: v,
+      alertVehicleIds: const <String>{},
+      style: VehicleMarkerStyle.tracking,
+    );
+    final policy = MapZoomPolicy.at(_cameraZoom);
+    final scale = policy.markerScale(style: VehicleMarkerStyle.tracking);
+    final sizePx = (76 * scale).round();
+    final key = VehicleMarkerFactory.northUpCarCacheKey(body, sizePx);
     if (_markerCache.containsKey(key)) return _markerCache[key]!;
     if (!_pendingKeys.contains(key)) {
       _pendingKeys.add(key);
-      _paintVehicleMarker(v).then((icon) {
-        if (mounted) setState(() {
-          _markerCache[key] = icon;
-          _pendingKeys.remove(key);
-        });
+      VehicleMarkerFactory.topDownCarNorthUp(
+        bodyColor: body,
+        size: sizePx.toDouble(),
+      ).then((icon) {
+        if (mounted) {
+          setState(() {
+            _markerCache[key] = icon;
+            _pendingKeys.remove(key);
+          });
+        }
       });
     }
-    return _fallbackIcon(v.status);
+    return VehicleMarkerFactory.fallbackPinHue(v.status);
   }
 
-  Marker _buildVehicleMarker(VehicleEntity v) => Marker(
-        markerId: const MarkerId('vehicle'),
-        position: LatLng(v.latitude, v.longitude),
-        icon: _iconForVehicle(v),
-        anchor: const Offset(0.5, 1.0),
-        infoWindow: InfoWindow(
-          title: v.name,
-          snippet: FormatUtils.speed(v.speed),
-        ),
-        zIndexInt: 3,
-      );
+  Marker _buildVehicleMarker(VehicleEntity v) {
+    final useSmooth = _animEndPos != null &&
+        (_smoothPos.latitude != 0 || _smoothPos.longitude != 0);
+    final pos = useSmooth ? _smoothPos : LatLng(v.latitude, v.longitude);
+    final course = useSmooth ? _smoothCourse : (v.course ?? 0);
 
-  // ── Route markers ──────────────────────────────────────────────────────────
-
-  static String _fmtTime(DateTime dt) =>
-      DateFormat('HH:mm').format(dt.toLocal());
-
-  Set<Marker> _buildRouteMarkers(List<RoutePoint> pts, AppLocalizations l10n) {
-    if (pts.isEmpty) return {};
-
-    final markers = <Marker>{};
-
-    // Start
-    final start = pts.first;
-    markers.add(Marker(
-      markerId: const MarkerId('route_start'),
-      position: start.position,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      anchor: const Offset(0.5, 1.0),
-      zIndexInt: 2,
+    return Marker(
+      markerId: const MarkerId('vehicle'),
+      position: pos,
+      icon: _iconForVehicle(v),
+      anchor: const Offset(0.5, 0.5),
+      flat: true,
+      rotation: course,
       infoWindow: InfoWindow(
-        title: l10n.routeDeparture,
-        snippet:
-            '${_fmtTime(start.fixTime)} · ${FormatUtils.speed(start.speed)}'
-            ' · ${start.ignition ? l10n.ignitionOnLabel : l10n.ignitionOffLabel}',
+        title: v.name,
+        snippet: FormatUtils.speed(v.speed),
       ),
-    ));
-
-    // End (only if different from start)
-    if (pts.length > 1) {
-      final end = pts.last;
-      markers.add(Marker(
-        markerId: const MarkerId('route_end'),
-        position: end.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        anchor: const Offset(0.5, 1.0),
-        zIndexInt: 2,
-        infoWindow: InfoWindow(
-          title: l10n.routeArrival,
-          snippet:
-              '${_fmtTime(end.fixTime)} · ${FormatUtils.speed(end.speed)}'
-              ' · ${end.ignition ? l10n.ignitionOnLabel : l10n.ignitionOffLabel}',
-        ),
-      ));
-    }
-
-    // Max speed point
-    if (pts.length > 1) {
-      final maxPt = pts.reduce((a, b) => a.speed > b.speed ? a : b);
-      if (maxPt.speed > 5) {
-        markers.add(Marker(
-          markerId: const MarkerId('route_maxspeed'),
-          position: maxPt.position,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueOrange),
-          anchor: const Offset(0.5, 1.0),
-          zIndexInt: 1,
-          infoWindow: InfoWindow(
-            title: l10n.routeMaxSpeedPoint,
-            snippet:
-                '${FormatUtils.speed(maxPt.speed)} · ${_fmtTime(maxPt.fixTime)}',
-          ),
-        ));
-      }
-    }
-
-    return markers;
-  }
-
-  // ── Hourly time waypoint markers ───────────────────────────────────────────
-
-  /// Adds a small cyan marker at each full hour along the route so the user
-  /// can read "at what time was the vehicle here" by tapping the dot.
-  Set<Marker> _buildTimeWaypoints(List<RoutePoint> pts) {
-    if (pts.length < 2) return {};
-    final startLocal = pts.first.fixTime.toLocal();
-    final endLocal   = pts.last.fixTime.toLocal();
-    if (endLocal.difference(startLocal).inMinutes < 30) return {};
-
-    final markers = <Marker>{};
-    int count = 0;
-
-    // Walk through every full hour inside the route window.
-    var target = DateTime(
-      startLocal.year, startLocal.month, startLocal.day,
-      startLocal.hour + 1,
+      zIndexInt: 3,
     );
-
-    while (target.isBefore(endLocal) && count < 24) {
-      // Find the route point closest to this hour mark.
-      RoutePoint? closest;
-      var minDiff = const Duration(minutes: 40); // tolerance
-      for (final pt in pts) {
-        final diff = pt.fixTime.toLocal().difference(target).abs();
-        if (diff < minDiff) { minDiff = diff; closest = pt; }
-      }
-
-      if (closest != null) {
-        final label = DateFormat('HH:mm').format(target);
-        final dayLabel = DateFormat('dd MMM').format(target);
-        markers.add(Marker(
-          markerId: MarkerId('twp_${target.toIso8601String()}'),
-          position: closest.position,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
-          anchor: const Offset(0.5, 0.5),
-          zIndexInt: 1,
-          alpha: 0.9,
-          infoWindow: InfoWindow(
-            title: '$label · $dayLabel',
-            snippet: FormatUtils.speed(closest.speed),
-          ),
-        ));
-        count++;
-      }
-      target = target.add(const Duration(hours: 1));
-    }
-
-    return markers;
-  }
-
-  // ── Speed-coloured polylines ───────────────────────────────────────────────
-
-  static List<Polyline> _buildSpeedPolylines(
-      String vehicleId, List<RoutePoint> pts) {
-    if (pts.length < 2) return const [];
-    return List.generate(pts.length - 1, (i) {
-      final avg = (pts[i].speed + pts[i + 1].speed) / 2;
-      return Polyline(
-        polylineId: PolylineId('route_${vehicleId}_$i'),
-        points: [pts[i].position, pts[i + 1].position],
-        color: MapHelper.routeColorForSpeed(avg),
-        width: 5,
-        geodesic: true,
-        startCap: Cap.roundCap,
-        endCap: Cap.roundCap,
-        jointType: JointType.round,
-      );
-    });
   }
 
   // ── Date picker ────────────────────────────────────────────────────────────
@@ -378,10 +515,13 @@ class _VehicleTrackingScreenState
     if (picked == null) return;
     setState(() {
       _from = picked;
-      // Ensure to is never before from.
       if (_to.isBefore(_from)) _to = _from.add(const Duration(hours: 1));
       _pendingRouteFit = true;
     });
+    AppLogger.map(
+      'Date range changed for vehicleId=${widget.vehicleId}: '
+      'from=$_from to=$_to',
+    );
     ref.invalidate(routeDetailProvider(_routeQuery));
   }
 
@@ -390,10 +530,13 @@ class _VehicleTrackingScreenState
     if (picked == null) return;
     setState(() {
       _to = picked;
-      // Ensure from is never after to.
       if (_from.isAfter(_to)) _from = _to.subtract(const Duration(hours: 1));
       _pendingRouteFit = true;
     });
+    AppLogger.map(
+      'Date range changed for vehicleId=${widget.vehicleId}: '
+      'from=$_from to=$_to',
+    );
     ref.invalidate(routeDetailProvider(_routeQuery));
   }
 
@@ -404,6 +547,7 @@ class _VehicleTrackingScreenState
     final l10n       = context.l10n;
     final liveAsync  = ref.watch(liveVehicleProvider(widget.vehicleId));
     final routeAsync = ref.watch(routeDetailProvider(_routeQuery));
+    final socketAsync = ref.watch(socketStateProvider);
 
     final themeMode = ref.watch(themeProvider);
     final isDark = themeMode == ThemeMode.dark ||
@@ -414,45 +558,116 @@ class _VehicleTrackingScreenState
     final vehicle     = liveAsync.valueOrNull;
     final routePoints = routeAsync.valueOrNull ?? [];
     final navBottom   = MediaQuery.paddingOf(context).bottom;
+    final riThresholds =
+        ref.watch(routeIntelligenceThresholdsForVehicleProvider(widget.vehicleId));
 
-    // Follow mode: animate to vehicle position on each update
-    ref.listen(liveVehicleProvider(widget.vehicleId), (_, next) {
-      if (!_followMode) return;
-      next.whenOrNull(data: (v) {
-        if (v.latitude != 0 || v.longitude != 0) {
+    _syncRouteIntel(routePoints, riThresholds);
+    _syncTripSegments(routePoints, riThresholds);
+
+    // Follow mode: smooth-interpolate vehicle marker + camera follow
+    ref.listen(liveVehicleProvider(widget.vehicleId), (prev, next) {
+      next.whenOrNull(
+        data: (v) {
+          final hasPos = v.latitude != 0 || v.longitude != 0;
+          if (!_didLogFirstPosition && hasPos) {
+            _didLogFirstPosition = true;
+            AppLogger.map(
+              'First live position for vehicleId=${widget.vehicleId}: '
+              '${v.latitude.toStringAsFixed(5)},${v.longitude.toStringAsFixed(5)} '
+              'speed=${v.speed}',
+            );
+          }
+          if (!hasPos && prev?.valueOrNull != null) {
+            AppLogger.map('No valid position for vehicleId=${widget.vehicleId}');
+          }
+          if (hasPos) _applyLivePosition(v);
+          if (!_followCamera.canApplyLiveCamera || !hasPos) return;
           _moveTo(LatLng(v.latitude, v.longitude));
-        }
-      });
+        },
+        error: (e, _) {
+          AppLogger.error(
+            'VehicleTracking',
+            'Live data failed for vehicleId=${widget.vehicleId}',
+            e,
+          );
+        },
+      );
     });
 
     // Fit route when a new date is picked and data arrives
     ref.listen(routeDetailProvider(_routeQuery), (_, next) {
-      if (!_pendingRouteFit) return;
-      next.whenOrNull(data: (pts) {
-        if (pts.isNotEmpty) {
-          _pendingRouteFit = false;
-          final cur = vehicle != null && vehicle.latitude != 0
-              ? LatLng(vehicle.latitude, vehicle.longitude)
-              : null;
-          WidgetsBinding.instance.addPostFrameCallback(
-              (_) => _fitRoutePoints(pts, cur));
-        }
-      });
+      next.whenOrNull(
+        data: (pts) {
+          AppLogger.map(
+            'Route loaded for vehicleId=${widget.vehicleId}: '
+            '${pts.length} points',
+          );
+          if (_pendingRouteFit && pts.isNotEmpty) {
+            _pendingRouteFit = false;
+            final cur = vehicle != null && vehicle.latitude != 0
+                ? LatLng(vehicle.latitude, vehicle.longitude)
+                : null;
+            WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _fitRoutePoints(pts, cur));
+          }
+        },
+        error: (e, _) {
+          AppLogger.error(
+            'VehicleTracking',
+            'Route load failed for vehicleId=${widget.vehicleId}',
+            e,
+          );
+        },
+      );
     });
 
+    final screenH = MediaQuery.sizeOf(context).height;
+    final controlsBottom = screenH * 0.32 + navBottom;
+
+    final zoomPolicy = MapZoomPolicy.at(_cameraZoom);
+
     // Decimated points for rendering
-    final drawPts = RoutePointDecimator.decimateForMap(routePoints);
+    final drawPts = RoutePointDecimator.decimateForMap(
+      routePoints,
+      maxPoints: zoomPolicy.maxVisibleRoutePointsForDecimation(),
+    );
 
     // Build map layers
     final Set<Marker> markers = {
       if (vehicle != null && (vehicle.latitude != 0 || vehicle.longitude != 0))
         _buildVehicleMarker(vehicle),
-      ..._buildRouteMarkers(drawPts, l10n),
-      ..._buildTimeWaypoints(drawPts),
+      ...RoutePolylineBuilder.buildRouteMarkers(
+        drawPts,
+        l10n,
+        includeMaxSpeedMarker: zoomPolicy.showRouteMaxSpeedMarker(),
+        omitRouteEndMarker:
+            _isToday && vehicle != null && (vehicle.latitude != 0 || vehicle.longitude != 0),
+        livePositionForRouteEndDedup: !_isToday &&
+                vehicle != null &&
+                (vehicle.latitude != 0 || vehicle.longitude != 0)
+            ? LatLng(vehicle.latitude, vehicle.longitude)
+            : null,
+      ),
+      ...RoutePolylineBuilder.buildHourlyWaypoints(
+        drawPts,
+        enabled: zoomPolicy.showRouteHourlyMarkers(),
+      ),
+      ...RoutePolylineBuilder.buildRouteIntelligenceMarkers(
+        analysis: _routeIntel,
+        l10n: l10n,
+        policy: zoomPolicy,
+        reportStyle: false,
+        vehicleId: widget.vehicleId,
+        onMarkerTap: _onRouteIntelMarkerTap,
+        selectedEventKey: _selectedRouteEventKey,
+      ),
     };
 
     final polylines = <Polyline>{
-      ..._buildSpeedPolylines(widget.vehicleId, drawPts),
+      ...RoutePolylineBuilder.buildSpeedColoredPolylines(
+        vehicleId: widget.vehicleId,
+        pts: drawPts,
+      ),
     };
 
     return Scaffold(
@@ -461,13 +676,25 @@ class _VehicleTrackingScreenState
           // ── Map ──────────────────────────────────────────────────────────
           GoogleMap(
             initialCameraPosition: MapConfig.defaultCameraPosition,
+            mapType: _mapType,
             markers: markers,
             polylines: polylines,
             onMapCreated: (c) {
               _controller = c;
+              c.getZoomLevel().then((z) {
+                if (mounted) setState(() => _cameraZoom = z);
+              });
               if (vehicle != null && vehicle.latitude != 0) {
                 _moveTo(LatLng(vehicle.latitude, vehicle.longitude));
               }
+            },
+            onCameraIdle: () {
+              _controller?.getZoomLevel().then((z) {
+                if (!mounted) return;
+                if ((z - _cameraZoom).abs() > 0.02) {
+                  setState(() => _cameraZoom = z);
+                }
+              });
             },
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
@@ -476,11 +703,7 @@ class _VehicleTrackingScreenState
             buildingsEnabled: false,
             style: mapStyle,
             onCameraMoveStarted: () {
-              if (_ignoreCameraMoveStartedEvents > 0) {
-                _ignoreCameraMoveStartedEvents--;
-                return;
-              }
-              if (_followMode) setState(() => _followMode = false);
+              if (_followCamera.handleUserCameraMoveStarted()) setState(() {});
             },
           ),
 
@@ -491,14 +714,48 @@ class _VehicleTrackingScreenState
               child: LoadingView(message: l10n.loadingVehicleLocation),
             ),
 
+          // No live position banner (vehicle loaded but invalid coordinates)
+          if (vehicle != null &&
+              vehicle.latitude == 0 &&
+              vehicle.longitude == 0 &&
+              !liveAsync.isLoading)
+            Positioned(
+              top: 100,
+              left: AppSpacing.screenPadding,
+              right: AppSpacing.screenPadding,
+              child: _NoPositionBanner(message: l10n.noLivePosition),
+            ),
+
           // ── Top header ────────────────────────────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.screenPadding),
-              child: _TopBar(
-                vehicle: vehicle,
-                isLoading: liveAsync.isLoading,
-                onBack: () => context.pop(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _TopBar(
+                    vehicle: vehicle,
+                    isLoading: liveAsync.isLoading,
+                    onBack: () => context.pop(),
+                  ),
+                  const SizedBox(height: 6),
+                  _LiveTrackingChip(
+                    lastUpdate: vehicle?.lastUpdate,
+                    hasValidPosition: vehicle != null &&
+                        (vehicle.latitude != 0 || vehicle.longitude != 0),
+                    socketState: socketAsync.valueOrNull,
+                    onStatusChanged: (status) {
+                      if (status != _lastLoggedStatus) {
+                        _lastLoggedStatus = status;
+                        AppLogger.map(
+                          'Live status changed to ${status.name} '
+                          'for vehicleId=${widget.vehicleId}',
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
           ),
@@ -506,18 +763,27 @@ class _VehicleTrackingScreenState
           // ── Right-side controls ───────────────────────────────────────────
           Positioned(
             right: AppSpacing.screenPadding,
-            bottom: (_showInfoPanel ? 280 : 120) + navBottom,
+            bottom: controlsBottom,
             child: Column(
               children: [
                 _ControlBtn(
-                  icon: _followMode
+                  icon: _followCamera.followEnabled
                       ? Icons.gps_fixed_rounded
                       : Icons.gps_not_fixed_rounded,
-                  label: _followMode ? l10n.followLabel : l10n.freeLabel,
-                  isActive: _followMode,
+                  label: _followCamera.followEnabled
+                      ? l10n.followLabel
+                      : l10n.freeLabel,
+                  isActive: _followCamera.followEnabled,
                   onTap: () {
-                    setState(() => _followMode = !_followMode);
-                    if (_followMode && vehicle != null) {
+                    final newState = !_followCamera.followEnabled;
+                    setState(() {
+                      _followCamera.followEnabled = newState;
+                    });
+                    AppLogger.map(
+                      'Follow mode ${newState ? "enabled" : "disabled"} '
+                      'for vehicleId=${widget.vehicleId}',
+                    );
+                    if (newState && vehicle != null) {
                       _moveTo(LatLng(vehicle.latitude, vehicle.longitude));
                     }
                   },
@@ -527,50 +793,78 @@ class _VehicleTrackingScreenState
                   icon: Icons.fit_screen_rounded,
                   label: l10n.recentreRouteLabel,
                   onTap: () {
+                    AppLogger.map('Fit route tapped for vehicleId=${widget.vehicleId}');
                     final cur = vehicle != null && vehicle.latitude != 0
                         ? LatLng(vehicle.latitude, vehicle.longitude)
                         : null;
                     _fitRoutePoints(routePoints, cur);
-                    setState(() => _followMode = false);
+                    setState(() {
+                      _followCamera.followEnabled = false;
+                    });
                   },
                 ),
                 const SizedBox(height: 6),
                 _ControlBtn(
                   icon: Icons.add_rounded,
                   onTap: () {
-                    _beginProgrammaticCameraMove();
-                    _controller?.animateCamera(CameraUpdate.zoomIn());
+                    _followCamera.beginProgrammaticMove();
+                    _controller
+                        ?.animateCamera(CameraUpdate.zoomIn())
+                        .then((_) => _followCamera.endProgrammaticMoveSoon());
                   },
                 ),
                 const SizedBox(height: 4),
                 _ControlBtn(
                   icon: Icons.remove_rounded,
                   onTap: () {
-                    _beginProgrammaticCameraMove();
-                    _controller?.animateCamera(CameraUpdate.zoomOut());
+                    _followCamera.beginProgrammaticMove();
+                    _controller
+                        ?.animateCamera(CameraUpdate.zoomOut())
+                        .then((_) => _followCamera.endProgrammaticMoveSoon());
                   },
                 ),
                 const SizedBox(height: 6),
                 _ControlBtn(
                   icon: Icons.refresh_rounded,
                   onTap: () {
+                    AppLogger.map('Refresh tapped for vehicleId=${widget.vehicleId}');
                     ref.invalidate(liveVehicleProvider(widget.vehicleId));
                     ref.invalidate(routeDetailProvider(_routeQuery));
+                  },
+                ),
+                const SizedBox(height: 6),
+                _ControlBtn(
+                  icon: _mapType == MapType.satellite
+                      ? Icons.satellite_alt_rounded
+                      : _mapType == MapType.terrain
+                          ? Icons.terrain_rounded
+                          : Icons.map_rounded,
+                  onTap: () {
+                    final idx = (_mapTypes.indexOf(_mapType) + 1) %
+                        _mapTypes.length;
+                    setState(() => _mapType = _mapTypes[idx]);
+                    final name = _mapType.name;
+                    AppLogger.map(
+                      'Map type changed to $name '
+                      'for vehicleId=${widget.vehicleId}',
+                    );
                   },
                 ),
               ],
             ),
           ),
 
-          // ── Info panel toggle ─────────────────────────────────────────────
+          // ── Collapse sheet button ─────────────────────────────────────────
           Positioned(
             left: AppSpacing.screenPadding,
-            bottom: (_showInfoPanel ? 280 : 120) + navBottom,
+            bottom: controlsBottom,
             child: _ControlBtn(
-              icon: _showInfoPanel
-                  ? Icons.keyboard_arrow_down_rounded
-                  : Icons.keyboard_arrow_up_rounded,
-              onTap: () => setState(() => _showInfoPanel = !_showInfoPanel),
+              icon: Icons.keyboard_arrow_down_rounded,
+              onTap: () => _sheetController.animateTo(
+                0.13,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              ),
             ),
           ),
 
@@ -578,28 +872,109 @@ class _VehicleTrackingScreenState
           if (routePoints.isNotEmpty)
             Positioned(
               left: AppSpacing.screenPadding,
-              bottom: (_showInfoPanel ? 280 : 120) + navBottom + 54,
+              bottom: controlsBottom + 54,
               child: const _SpeedLegend(),
             ),
 
-          // ── Bottom info panel ─────────────────────────────────────────────
-          if (_showInfoPanel)
-            Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: _InfoPanel(
-                vehicle: vehicle,
-                routeAsync: routeAsync,
-                from: _from,
-                to: _to,
-                isToday: _isToday,
-                onPickFrom: _pickFrom,
-                onPickTo: _pickTo,
-                onViewDetails: () =>
-                    context.push('/vehicles/${widget.vehicleId}'),
-                onViewTrips: () =>
-                    context.push('/vehicles/${widget.vehicleId}/trips'),
-              ),
+          // ── Bottom draggable sheet ────────────────────────────────────────
+          DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: 0.30,
+            minChildSize: 0.13,
+            maxChildSize: 0.65,
+            snap: true,
+            snapSizes: const [0.13, 0.30, 0.65],
+            builder: (_, scrollController) => _InfoPanel(
+              scrollController: scrollController,
+              vehicle: vehicle,
+              routeAsync: routeAsync,
+              from: _from,
+              to: _to,
+              isToday: _isToday,
+              onPickFrom: _pickFrom,
+              onPickTo: _pickTo,
+              onViewDetails: () {
+                AppLogger.map(
+                  'Details tapped for vehicleId=${widget.vehicleId}',
+                );
+                context.push('/vehicles/${widget.vehicleId}');
+              },
+              onViewTrips: () {
+                AppLogger.map(
+                  'Trip History tapped for vehicleId=${widget.vehicleId}',
+                );
+                context.push('/vehicles/${widget.vehicleId}/trips');
+              },
+              onGenerateReport: () async {
+                AppLogger.map(
+                  'Generate Report tapped for vehicleId=${widget.vehicleId}',
+                );
+                final name = vehicle?.name ?? '';
+                final params = await showReportEntrySheet(
+                  context,
+                  vehicleId: widget.vehicleId,
+                  vehicleName: name,
+                );
+                if (params != null && context.mounted) {
+                  AppLogger.map(
+                    'Navigating to /reports vehicleId=${params.vehicleId} '
+                    'tab=${params.tabIndex} period=${params.period}',
+                  );
+                  context.push('/reports', extra: params);
+                }
+              },
+              onReplayRoute: () async {
+                AppLogger.map(
+                  'Replay Route tapped for vehicleId=${widget.vehicleId}',
+                );
+                final name = vehicle?.name ?? '';
+                final result = await showReplayEntrySheet(
+                  context,
+                  vehicleId: widget.vehicleId,
+                  vehicleName: name,
+                );
+                if (result != null && context.mounted) {
+                  AppLogger.map(
+                    'Navigating to /reports/replay vehicleId=${result.vehicleId} '
+                    'from=${result.from} to=${result.to}',
+                  );
+                  context.push(
+                    '/reports/replay',
+                    extra: <String, dynamic>{
+                      'params': ReportFilterParams(
+                        vehicleId: result.vehicleId,
+                        from: result.from.toUtc(),
+                        to: result.to.toUtc(),
+                      ),
+                      'vehicleName': result.vehicleName,
+                    },
+                  );
+                }
+              },
+              onCommands: () {
+                AppLogger.map(
+                  'Commands tapped for vehicleId=${widget.vehicleId}',
+                );
+                context.push(
+                  '/vehicles/${widget.vehicleId}/commands',
+                  extra: {'name': vehicle?.name ?? ''},
+                );
+              },
+              routeIntel: _routeIntel,
+              routeIntelMemoKey: _routeIntelKey,
+              selectedTimelineItemKey: _selectedRouteEventKey,
+              timelineFilter: _routeTimelineFilter,
+              onTimelineFilterChanged: (f) =>
+                  setState(() => _routeTimelineFilter = f),
+              onTimelineItemTap: _focusRouteTimelineEvent,
+              tripSegments: _tripSegments,
+              tripBehaviorScores: _tripBehaviorScores,
+              dailyVehicleBehaviorScore: _dailyVehicleBehaviorScore,
+              onTripOpenMap: _openTripDetailMap,
+              onTripOpenReplay: _openTripReplay,
+              onDailyScoreDetails: _openDailyBehaviorScoreDetails,
             ),
+          ),
 
           // Error banner
           if (liveAsync.hasError)
@@ -750,11 +1125,137 @@ class _TopBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Live tracking status chip (M4: connection-aware)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _TrackingLiveStatus { live, stale, reconnecting, offline, noPosition }
+
+class _LiveTrackingChip extends StatelessWidget {
+  const _LiveTrackingChip({
+    required this.lastUpdate,
+    required this.hasValidPosition,
+    this.socketState,
+    this.onStatusChanged,
+  });
+
+  final DateTime? lastUpdate;
+  final bool hasValidPosition;
+  final SocketState? socketState;
+  final ValueChanged<_TrackingLiveStatus>? onStatusChanged;
+
+  static const _staleThreshold = Duration(minutes: 15);
+
+  _TrackingLiveStatus _resolve() {
+    // A) Socket reconnecting → show Reconnecting
+    if (socketState is SocketReconnecting) return _TrackingLiveStatus.reconnecting;
+
+    // B) Socket disconnected or error → show Offline
+    if (socketState is SocketError || socketState is SocketDisconnected) {
+      return _TrackingLiveStatus.offline;
+    }
+
+    // C) No valid GPS coordinates → No live position
+    if (!hasValidPosition || lastUpdate == null) {
+      return _TrackingLiveStatus.noPosition;
+    }
+
+    // D) Valid position but old → Stale data
+    final age = DateTime.now().difference(lastUpdate!);
+    if (age >= _staleThreshold) return _TrackingLiveStatus.stale;
+
+    // E) Socket connected + valid recent position → Live
+    //    Also show Live when socket is still initializing (null / connecting)
+    //    because position data from REST is still fresh.
+    return _TrackingLiveStatus.live;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final status = _resolve();
+
+    if (onStatusChanged != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onStatusChanged!(status);
+      });
+    }
+
+    final String label;
+    final Color color;
+    final IconData icon;
+    final bool showSpinner;
+
+    switch (status) {
+      case _TrackingLiveStatus.live:
+        label = l10n.liveTrackingActive;
+        color = AppColors.success;
+        icon = Icons.sensors_rounded;
+        showSpinner = false;
+      case _TrackingLiveStatus.stale:
+        label = l10n.trackingDataStale;
+        color = AppColors.amber;
+        icon = Icons.access_time_rounded;
+        showSpinner = false;
+      case _TrackingLiveStatus.reconnecting:
+        label = l10n.trackingReconnecting;
+        color = AppColors.amber;
+        icon = Icons.sync_rounded;
+        showSpinner = true;
+      case _TrackingLiveStatus.offline:
+        label = l10n.trackingOffline;
+        color = AppColors.rose;
+        icon = Icons.cloud_off_rounded;
+        showSpinner = false;
+      case _TrackingLiveStatus.noPosition:
+        label = l10n.noLivePosition;
+        color = AppColors.textMutedOf(context);
+        icon = Icons.gps_off_rounded;
+        showSpinner = false;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showSpinner)
+            SizedBox(
+              width: 10,
+              height: 10,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: color,
+              ),
+            )
+          else
+            Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Bottom info panel
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _InfoPanel extends StatelessWidget {
   const _InfoPanel({
+    required this.scrollController,
     required this.vehicle,
     required this.routeAsync,
     required this.from,
@@ -764,8 +1265,24 @@ class _InfoPanel extends StatelessWidget {
     required this.onPickTo,
     required this.onViewDetails,
     required this.onViewTrips,
+    required this.onGenerateReport,
+    required this.onReplayRoute,
+    required this.onCommands,
+    this.routeIntel,
+    required this.routeIntelMemoKey,
+    this.selectedTimelineItemKey,
+    required this.timelineFilter,
+    required this.onTimelineFilterChanged,
+    required this.onTimelineItemTap,
+    required this.tripSegments,
+    required this.tripBehaviorScores,
+    required this.dailyVehicleBehaviorScore,
+    required this.onTripOpenMap,
+    required this.onTripOpenReplay,
+    required this.onDailyScoreDetails,
   });
 
+  final ScrollController                 scrollController;
   final VehicleEntity?                  vehicle;
   final AsyncValue<List<RoutePoint>>    routeAsync;
   final DateTime                        from;
@@ -775,10 +1292,24 @@ class _InfoPanel extends StatelessWidget {
   final VoidCallback                    onPickTo;
   final VoidCallback                    onViewDetails;
   final VoidCallback                    onViewTrips;
+  final VoidCallback                    onGenerateReport;
+  final VoidCallback                    onReplayRoute;
+  final VoidCallback                    onCommands;
+  final RouteEventAnalysisResult?       routeIntel;
+  final String                          routeIntelMemoKey;
+  final String?                         selectedTimelineItemKey;
+  final RouteEventTimelineFilter        timelineFilter;
+  final ValueChanged<RouteEventTimelineFilter> onTimelineFilterChanged;
+  final ValueChanged<RouteEventTimelineItem> onTimelineItemTap;
+  final List<TripSegment>                tripSegments;
+  final Map<String, DriverBehaviorScore> tripBehaviorScores;
+  final DailyVehicleBehaviorScore        dailyVehicleBehaviorScore;
+  final ValueChanged<TripSegment>        onTripOpenMap;
+  final ValueChanged<TripSegment>        onTripOpenReplay;
+  final VoidCallback                     onDailyScoreDetails;
 
   @override
   Widget build(BuildContext context) {
-    final l10n      = context.l10n;
     final navBottom = MediaQuery.paddingOf(context).bottom;
 
     return Container(
@@ -793,7 +1324,6 @@ class _InfoPanel extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           // Handle
           Container(
@@ -803,15 +1333,16 @@ class _InfoPanel extends StatelessWidget {
               color: AppColors.borderOf(context),
               borderRadius: BorderRadius.circular(2)),
           ),
+          const SizedBox(height: 2),
 
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.cardPadding, 10,
-              AppSpacing.cardPadding,
-              AppSpacing.cardPadding + navBottom,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: ListView(
+              controller: scrollController,
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.cardPadding, 8,
+                AppSpacing.cardPadding,
+                AppSpacing.cardPadding + navBottom,
+              ),
               children: [
                 // ── From / To range picker ───────────────────────────────────
                 _RangePickerBar(
@@ -825,46 +1356,48 @@ class _InfoPanel extends StatelessWidget {
                 const SizedBox(height: 10),
 
                 // ── Route stats ──────────────────────────────────────────────
-                _RouteStatsSection(routeAsync: routeAsync),
+                _RouteStatsSection(
+                  routeAsync: routeAsync,
+                  routeIntel: routeIntel,
+                  routeIntelMemoKey: routeIntelMemoKey,
+                  selectedTimelineItemKey: selectedTimelineItemKey,
+                  timelineFilter: timelineFilter,
+                  onTimelineFilterChanged: onTimelineFilterChanged,
+                  onTimelineItemTap: onTimelineItemTap,
+                  tripSegments: tripSegments,
+                  tripBehaviorScores: tripBehaviorScores,
+                  dailyVehicleBehaviorScore: dailyVehicleBehaviorScore,
+                  onTripOpenMap: onTripOpenMap,
+                  onTripOpenReplay: onTripOpenReplay,
+                  onDailyScoreDetails: onDailyScoreDetails,
+                ),
 
                 const SizedBox(height: 14),
 
                 // ── Live vehicle stats ───────────────────────────────────────
                 if (vehicle != null) _VehicleStatsRow(vehicle: vehicle!),
 
+                const SizedBox(height: 8),
+
+                // ── Address / position row ────────────────────────────────────
+                if (vehicle != null) _VehicleAddressRow(vehicle: vehicle!),
+
+                // ── Stale position warning ────────────────────────────────────
+                if (vehicle != null)
+                  _StalePositionWarning(lastUpdate: vehicle!.lastUpdate),
+
                 const SizedBox(height: 12),
 
-                // ── Action buttons ───────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onViewDetails,
-                        icon: const Icon(Icons.info_outline_rounded, size: 16),
-                        label: Text(l10n.vehicleDetails),
-                        style: OutlinedButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 10),
-                          side: BorderSide(
-                              color: AppColors.borderOf(context)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: onViewTrips,
-                        icon: const Icon(Icons.history_rounded, size: 16),
-                        label: Text(l10n.tripHistory),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ],
+                // ── Quick Actions ─────────────────────────────────────────────
+                _QuickActionsGrid(
+                  onViewDetails: onViewDetails,
+                  onGenerateReport: onGenerateReport,
+                  onReplayRoute: onReplayRoute,
+                  onViewTrips: onViewTrips,
+                  onCommands: onCommands,
                 ),
+
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -917,7 +1450,7 @@ class _RangePickerBar extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.access_time_rounded, size: 12, color: AppColors.accent),
+            const Icon(Icons.access_time_rounded, size: 12, color: AppColors.accent),
             const SizedBox(width: 5),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -930,14 +1463,14 @@ class _RangePickerBar extends StatelessWidget {
                         color: AppColors.accent.withValues(alpha: 0.7),
                         height: 1.1)),
                 Text(value,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accent)),
               ],
             ),
             const SizedBox(width: 4),
-            Icon(Icons.expand_more_rounded, size: 14, color: AppColors.accent),
+            const Icon(Icons.expand_more_rounded, size: 14, color: AppColors.accent),
           ],
         ),
       ),
@@ -991,9 +1524,35 @@ class _RangePickerBar extends StatelessWidget {
 // ── Route stats section ───────────────────────────────────────────────────────
 
 class _RouteStatsSection extends StatelessWidget {
-  const _RouteStatsSection({required this.routeAsync});
+  const _RouteStatsSection({
+    required this.routeAsync,
+    this.routeIntel,
+    required this.routeIntelMemoKey,
+    this.selectedTimelineItemKey,
+    required this.timelineFilter,
+    required this.onTimelineFilterChanged,
+    required this.onTimelineItemTap,
+    required this.tripSegments,
+    required this.tripBehaviorScores,
+    required this.dailyVehicleBehaviorScore,
+    required this.onTripOpenMap,
+    required this.onTripOpenReplay,
+    required this.onDailyScoreDetails,
+  });
 
   final AsyncValue<List<RoutePoint>> routeAsync;
+  final RouteEventAnalysisResult? routeIntel;
+  final String routeIntelMemoKey;
+  final String? selectedTimelineItemKey;
+  final RouteEventTimelineFilter timelineFilter;
+  final ValueChanged<RouteEventTimelineFilter> onTimelineFilterChanged;
+  final ValueChanged<RouteEventTimelineItem> onTimelineItemTap;
+  final List<TripSegment> tripSegments;
+  final Map<String, DriverBehaviorScore> tripBehaviorScores;
+  final DailyVehicleBehaviorScore dailyVehicleBehaviorScore;
+  final ValueChanged<TripSegment> onTripOpenMap;
+  final ValueChanged<TripSegment> onTripOpenReplay;
+  final VoidCallback onDailyScoreDetails;
 
   static double _totalKm(List<RoutePoint> pts) {
     if (pts.length < 2) return 0;
@@ -1049,39 +1608,89 @@ class _RouteStatsSection extends StatelessWidget {
         final dur = _duration(pts);
         final max = _maxSpeed(pts);
         final avg = _avgSpeed(pts);
+        final intelLine = formatRouteIntelSummaryLine(routeIntel, l10n);
 
-        return Row(
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _RouteStat(
-              icon: Icons.straighten_rounded,
-              value: '${km.toStringAsFixed(1)} km',
-              label: l10n.routeDistanceKm('').replaceAll(':', '').trim(),
-              color: AppColors.accent,
+            Row(
+              children: [
+                _RouteStat(
+                  icon: Icons.straighten_rounded,
+                  value: '${km.toStringAsFixed(1)} km',
+                  label: l10n.routeDistanceKm('').replaceAll(':', '').trim(),
+                  color: AppColors.accent,
+                ),
+                _RouteStat(
+                  icon: Icons.timer_outlined,
+                  value: _fmtDuration(dur),
+                  label: l10n.durationLabel,
+                  color: AppColors.purple,
+                ),
+                _RouteStat(
+                  icon: Icons.speed_rounded,
+                  value: FormatUtils.speed(max),
+                  label: l10n.maxSpeedLabel,
+                  color: AppColors.error,
+                ),
+                _RouteStat(
+                  icon: Icons.av_timer_rounded,
+                  value: FormatUtils.speed(avg),
+                  label: l10n.avgSpeedLabel,
+                  color: AppColors.success,
+                ),
+                _RouteStat(
+                  icon: Icons.location_on_outlined,
+                  value: '${pts.length}',
+                  label: 'pts',
+                  color: AppColors.textSecondaryOf(context),
+                ),
+              ],
             ),
-            _RouteStat(
-              icon: Icons.timer_outlined,
-              value: _fmtDuration(dur),
-              label: l10n.durationLabel,
-              color: AppColors.purple,
-            ),
-            _RouteStat(
-              icon: Icons.speed_rounded,
-              value: FormatUtils.speed(max),
-              label: l10n.maxSpeedLabel,
-              color: AppColors.error,
-            ),
-            _RouteStat(
-              icon: Icons.av_timer_rounded,
-              value: FormatUtils.speed(avg),
-              label: l10n.avgSpeedLabel,
-              color: AppColors.success,
-            ),
-            _RouteStat(
-              icon: Icons.location_on_outlined,
-              value: '${pts.length}',
-              label: 'pts',
-              color: AppColors.textSecondaryOf(context),
-            ),
+            if (intelLine != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                intelLine,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  height: 1.25,
+                  color: AppColors.textSecondaryOf(context),
+                ),
+              ),
+            ],
+            if (pts.length >= 2) ...[
+              const SizedBox(height: 10),
+              RouteEventTimeline(
+                analysisKey: routeIntelMemoKey,
+                analysis: routeIntel,
+                compact: true,
+                reportStyle: false,
+                showEmptyState: true,
+                collapsedItemLimit: 8,
+                selectedItemKey: selectedTimelineItemKey,
+                filter: timelineFilter,
+                onFilterChanged: onTimelineFilterChanged,
+                onItemTap: onTimelineItemTap,
+              ),
+            ],
+            if (pts.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              DailyVehicleBehaviorScoreCard(
+                dailyScore: dailyVehicleBehaviorScore,
+                onTap: onDailyScoreDetails,
+              ),
+              const SizedBox(height: 12),
+              TripsListSection(
+                trips: tripSegments,
+                scoresByTripKey: tripBehaviorScores,
+                onOpenMap: onTripOpenMap,
+                onOpenReplay: onTripOpenReplay,
+              ),
+            ],
           ],
         );
       },
@@ -1191,6 +1800,20 @@ class _VehicleStatsRow extends StatelessWidget {
         ? DateFormatter.toRelative(lastUpdate)
         : l10n.locationUnavailable;
 
+    final Color lastUpdateColor;
+    if (lastUpdate == null) {
+      lastUpdateColor = AppColors.textMutedOf(context);
+    } else {
+      final age = DateTime.now().difference(lastUpdate);
+      if (age >= const Duration(minutes: 60)) {
+        lastUpdateColor = AppColors.error;
+      } else if (age >= const Duration(minutes: 15)) {
+        lastUpdateColor = AppColors.amber;
+      } else {
+        lastUpdateColor = AppColors.textSecondaryOf(context);
+      }
+    }
+
     return Row(
       children: [
         Expanded(
@@ -1220,7 +1843,7 @@ class _VehicleStatsRow extends StatelessWidget {
             icon: Icons.update_rounded,
             value: timeStr,
             label: l10n.lastUpdateLabel,
-            color: AppColors.textSecondaryOf(context),
+            color: lastUpdateColor,
           ),
         ),
       ],
@@ -1374,6 +1997,334 @@ class _ErrorBanner extends StatelessWidget {
                     fontSize: 12, color: AppColors.accent)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// No position banner
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NoPositionBanner extends StatelessWidget {
+  const _NoPositionBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.gps_off_rounded,
+              size: 16, color: AppColors.amber),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message,
+                style: const TextStyle(fontSize: 12, color: AppColors.amber)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vehicle address row
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _VehicleAddressRow extends StatelessWidget {
+  const _VehicleAddressRow({required this.vehicle});
+  final VehicleEntity vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final address = vehicle.address?.trim();
+    final hasAddress = address != null && address.isNotEmpty;
+    final hasCoords = vehicle.latitude != 0 || vehicle.longitude != 0;
+
+    final String displayText;
+    final IconData icon;
+    final Color iconColor;
+
+    if (hasAddress) {
+      displayText = address;
+      icon = Icons.location_on_rounded;
+      iconColor = AppColors.accent;
+    } else if (hasCoords) {
+      displayText =
+          '${vehicle.latitude.toStringAsFixed(5)}, '
+          '${vehicle.longitude.toStringAsFixed(5)}';
+      icon = Icons.gps_fixed_rounded;
+      iconColor = AppColors.textSecondaryOf(context);
+    } else {
+      displayText = l10n.locationUnavailable;
+      icon = Icons.location_off_rounded;
+      iconColor = AppColors.textMutedOf(context);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: iconColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              displayText,
+              style: TextStyle(
+                fontSize: 11,
+                color: hasAddress
+                    ? AppColors.textPrimaryOf(context)
+                    : AppColors.textSecondaryOf(context),
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick Actions Grid
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _QuickActionsGrid extends StatelessWidget {
+  const _QuickActionsGrid({
+    required this.onViewDetails,
+    required this.onGenerateReport,
+    required this.onReplayRoute,
+    required this.onViewTrips,
+    required this.onCommands,
+  });
+
+  final VoidCallback onViewDetails;
+  final VoidCallback onGenerateReport;
+  final VoidCallback onReplayRoute;
+  final VoidCallback onViewTrips;
+  final VoidCallback onCommands;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    final actions = <_QuickActionDef>[
+      _QuickActionDef(
+        icon: Icons.info_outline_rounded,
+        label: l10n.vehicleDetails,
+        color: AppColors.accent,
+        onTap: onViewDetails,
+      ),
+      _QuickActionDef(
+        icon: Icons.summarize_outlined,
+        label: l10n.generateVehicleReport,
+        color: AppColors.emerald,
+        onTap: onGenerateReport,
+      ),
+      _QuickActionDef(
+        icon: Icons.replay_rounded,
+        label: l10n.replayRoute,
+        color: AppColors.purple,
+        onTap: onReplayRoute,
+      ),
+      _QuickActionDef(
+        icon: Icons.history_rounded,
+        label: l10n.tripHistory,
+        color: AppColors.info,
+        onTap: onViewTrips,
+      ),
+      _QuickActionDef(
+        icon: Icons.settings_remote_rounded,
+        label: l10n.commandsTitle,
+        color: AppColors.amber,
+        onTap: onCommands,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.quickActions,
+          style: AppTextStyles.labelMedium.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 72,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: actions.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              final a = actions[i];
+              return _QuickActionButton(
+                icon: a.icon,
+                label: a.label,
+                color: a.color,
+                onTap: a.onTap,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickActionDef {
+  const _QuickActionDef({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+}
+
+class _QuickActionButton extends StatelessWidget {
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          width: 76,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimaryOf(context),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stale position warning
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _StalenessLevel { fresh, stale, old, none }
+
+class _StalePositionWarning extends StatelessWidget {
+  const _StalePositionWarning({required this.lastUpdate});
+  final DateTime? lastUpdate;
+
+  static const _staleThreshold = Duration(minutes: 15);
+  static const _oldThreshold = Duration(minutes: 60);
+
+  _StalenessLevel get _level {
+    if (lastUpdate == null) return _StalenessLevel.none;
+    final age = DateTime.now().difference(lastUpdate!);
+    if (age >= _oldThreshold) return _StalenessLevel.old;
+    if (age >= _staleThreshold) return _StalenessLevel.stale;
+    return _StalenessLevel.fresh;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final level = _level;
+    if (level == _StalenessLevel.fresh) return const SizedBox.shrink();
+
+    final l10n = context.l10n;
+
+    final String text;
+    final Color color;
+    final IconData icon;
+
+    switch (level) {
+      case _StalenessLevel.none:
+        text = l10n.noLivePosition;
+        color = AppColors.textMutedOf(context);
+        icon = Icons.gps_off_rounded;
+      case _StalenessLevel.stale:
+        text = l10n.positionMayBeOutdated;
+        color = AppColors.amber;
+        icon = Icons.access_time_rounded;
+      case _StalenessLevel.old:
+        text = l10n.lastPositionIsOld;
+        color = AppColors.error;
+        icon = Icons.warning_amber_rounded;
+      case _StalenessLevel.fresh:
+        return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

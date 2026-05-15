@@ -2,12 +2,18 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/connection/app_connection_monitor.dart';
+import '../../../../core/debug/debug_log_store.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../fleet_intelligence/domain/fleet_dashboard_period.dart';
+import '../../../fleet_intelligence/presentation/providers/fleet_intelligence_providers.dart';
 import '../../../../shared/providers/core_providers.dart';
 import '../../../alerts/domain/entities/alert.dart';
 import '../../../alerts/presentation/providers/alerts_provider.dart';
 import '../../data/datasources/dashboard_remote_datasource.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../data/services/dashboard_alert_filter.dart';
+import '../../domain/dashboard_refresh_policy.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/entities/insight.dart';
 import '../../domain/repositories/dashboard_repository.dart';
@@ -15,20 +21,35 @@ import 'fleet_live_provider.dart';
 
 // ── Repository & data providers ───────────────────────────────────────────────
 
+final dashboardRemoteDataSourceProvider =
+    Provider<DashboardRemoteDataSource>((ref) {
+  return DashboardRemoteDataSource(ref.read(traccarClientProvider));
+});
+
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
-  return DashboardRepositoryImpl(
-    DashboardRemoteDataSource(ref.read(traccarClientProvider)),
-  );
+  return DashboardRepositoryImpl(ref.read(dashboardRemoteDataSourceProvider));
+});
+
+/// Unified UTC timestamp shared by all providers within the same refresh cycle.
+///
+/// Overridden at the start of each refresh via [dashboardRefreshNowProvider].
+/// Prevents near-simultaneous providers from computing slightly different
+/// `DateTime.now()` values, which would produce different report URLs for
+/// the same logical data window.
+final dashboardRefreshNowProvider = StateProvider<DateTime>((ref) {
+  return DateTime.now().toUtc();
 });
 
 final dashboardSummaryProvider =
     FutureProvider.autoDispose<DashboardSummary>((ref) async {
-  return ref.read(dashboardRepositoryProvider).getSummary();
+  final refreshNow = ref.read(dashboardRefreshNowProvider);
+  return ref.read(dashboardRepositoryProvider).getSummary(refreshNow: refreshNow);
 });
 
 final dashboardInsightsProvider =
     FutureProvider.autoDispose<List<InsightEntity>>((ref) async {
-  return ref.read(dashboardRepositoryProvider).getInsights();
+  final refreshNow = ref.read(dashboardRefreshNowProvider);
+  return ref.read(dashboardRepositoryProvider).getInsights(refreshNow: refreshNow);
 });
 
 // ── Merged summary (REST baseline + live WebSocket overlay) ───────────────────
@@ -96,31 +117,220 @@ final mergedDashboardSummaryProvider =
 
 // ── Refresh notifier ──────────────────────────────────────────────────────────
 
-class DashboardNotifier extends StateNotifier<AsyncValue<void>> {
-  DashboardNotifier(this._ref) : super(const AsyncValue.data(null));
+/// Tracks the state of the current dashboard refresh cycle.
+class DashboardRefreshState {
+  const DashboardRefreshState({
+    this.isRefreshing = false,
+    this.lastRefreshAt,
+    this.lastRefreshMode = DashboardRefreshMode.none,
+    this.error,
+  });
 
-  final Ref _ref;
+  final bool isRefreshing;
+  final DateTime? lastRefreshAt;
+  final DashboardRefreshMode lastRefreshMode;
+  final Object? error;
 
-  /// Refreshes REST data without touching the WebSocket connection.
-  ///
-  /// After refresh, live socket updates continue to apply on top of the
-  /// new REST baseline.
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    try {
-      _ref.invalidate(dashboardSummaryProvider);
-      _ref.invalidate(dashboardInsightsProvider);
-      _ref.invalidate(alertsProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+  bool get hasCachedData => lastRefreshAt != null;
+
+  int get ageSeconds {
+    if (lastRefreshAt == null) return -1;
+    return DateTime.now().difference(lastRefreshAt!).inSeconds;
+  }
+
+  DashboardRefreshState copyWith({
+    bool? isRefreshing,
+    DateTime? lastRefreshAt,
+    DashboardRefreshMode? lastRefreshMode,
+    Object? error,
+    bool clearError = false,
+  }) {
+    return DashboardRefreshState(
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      lastRefreshAt: lastRefreshAt ?? this.lastRefreshAt,
+      lastRefreshMode: lastRefreshMode ?? this.lastRefreshMode,
+      error: clearError ? null : (error ?? this.error),
+    );
   }
 }
 
+class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
+  DashboardNotifier(this._ref) : super(const DashboardRefreshState());
+
+  final Ref _ref;
+
+  /// Minimum interval between non-manual refreshes to prevent
+  /// near-simultaneous triggers (e.g. dashboard_opened + route_resumed).
+  static const _throttleWindow = Duration(seconds: 3);
+  DateTime? _lastRefreshStarted;
+
+  /// Smart refresh — picks the right mode automatically.
+  Future<void> smartRefresh({
+    required String reason,
+    bool isManual = false,
+  }) async {
+    // Throttle non-manual duplicate triggers within the window
+    if (!isManual && _lastRefreshStarted != null) {
+      final elapsed = DateTime.now().difference(_lastRefreshStarted!);
+      if (elapsed < _throttleWindow) {
+        AppLogger.dashboard(
+          'Refresh throttled: reason=$reason, '
+          'elapsedMs=${elapsed.inMilliseconds}, '
+          'throttleWindowMs=${_throttleWindow.inMilliseconds}',
+        );
+        return;
+      }
+    }
+
+    final liveStatus = _ref.read(liveSyncStatusProvider);
+    final mode = computeRefreshMode(
+      lastRefreshAt: state.lastRefreshAt,
+      hasCachedData: state.hasCachedData,
+      isManualRefresh: isManual,
+      liveStatus: liveStatus,
+    );
+
+    AppLogger.dashboard(
+      'Refresh mode selected: ${mode.name}, '
+      'reason: $reason, '
+      'ageSeconds: ${state.ageSeconds}, '
+      'hasCachedData: ${state.hasCachedData}, '
+      'liveStatus: ${liveStatus.name}',
+    );
+
+    if (mode == DashboardRefreshMode.none) {
+      AppLogger.dashboard(
+        'Refresh skipped, reason: fresh_cache, ageSeconds: ${state.ageSeconds}',
+      );
+      return;
+    }
+
+    await _executeRefresh(mode: mode, source: reason);
+  }
+
+  /// Full refresh — legacy entry point for pull-to-refresh & explicit calls.
+  Future<void> refresh({String source = 'unknown'}) async {
+    await _executeRefresh(mode: DashboardRefreshMode.full, source: source);
+  }
+
+  Future<void> _executeRefresh({
+    required DashboardRefreshMode mode,
+    required String source,
+  }) async {
+    if (state.isRefreshing && mode != DashboardRefreshMode.full) {
+      AppLogger.dashboard(
+        'Refresh ignored: another refresh is running, requested: ${mode.name}',
+      );
+      return;
+    }
+
+    _lastRefreshStarted = DateTime.now();
+    final sw = Stopwatch()..start();
+    state = state.copyWith(
+      isRefreshing: true,
+      lastRefreshMode: mode,
+      clearError: true,
+    );
+
+    // Unified timestamp for this refresh cycle
+    final refreshNow = DateTime.now().toUtc();
+    _ref.read(dashboardRefreshNowProvider.notifier).state = refreshNow;
+
+    AppLogger.dashboard(
+      '${_modeLabel(mode)} refresh started, source: $source, '
+      'refreshNow: ${refreshNow.toIso8601String()}',
+    );
+
+    // For full/manual refresh, reset the coalescer cache
+    if (mode == DashboardRefreshMode.full) {
+      _ref.read(dashboardRemoteDataSourceProvider).resetCoalescer();
+    }
+
+    try {
+      switch (mode) {
+        case DashboardRefreshMode.none:
+          break;
+
+        case DashboardRefreshMode.silentLight:
+          AppLogger.dashboard(
+            'Invalidating provider: dashboardSummaryProvider, source: $source',
+          );
+          _ref.invalidate(dashboardSummaryProvider);
+          AppLogger.dashboard(
+            'Triggering: alertsProvider.load(), source: $source',
+          );
+          _ref.read(alertsProvider.notifier).load();
+
+        case DashboardRefreshMode.medium:
+          AppLogger.dashboard(
+            'Invalidating provider: dashboardSummaryProvider, source: $source',
+          );
+          _ref.invalidate(dashboardSummaryProvider);
+          AppLogger.dashboard(
+            'Invalidating provider: dashboardInsightsProvider, source: $source',
+          );
+          _ref.invalidate(dashboardInsightsProvider);
+          AppLogger.dashboard(
+            'Triggering: alertsProvider.load(), source: $source',
+          );
+          _ref.read(alertsProvider.notifier).load();
+
+        case DashboardRefreshMode.full:
+          AppLogger.dashboard(
+            'Invalidating provider: dashboardSummaryProvider, source: $source',
+          );
+          _ref.invalidate(dashboardSummaryProvider);
+          AppLogger.dashboard(
+            'Invalidating provider: dashboardInsightsProvider, source: $source',
+          );
+          _ref.invalidate(dashboardInsightsProvider);
+          AppLogger.alerts('Refresh requested: source=dashboard_$source');
+          AppLogger.dashboard(
+            'Triggering: alertsProvider.load(), source: $source',
+          );
+          _ref.read(alertsProvider.notifier).load();
+          for (final p in FleetDashboardPeriod.values) {
+            AppLogger.dashboard(
+              'Invalidating provider: fleetAdminSnapshotProvider(${p.name}), source: $source',
+            );
+            _ref.invalidate(fleetAdminSnapshotProvider(p));
+          }
+      }
+
+      state = state.copyWith(
+        isRefreshing: false,
+        lastRefreshAt: DateTime.now(),
+        lastRefreshMode: mode,
+      );
+
+      sw.stop();
+      DebugLogStore.instance.dashboardRefreshDurationMs = sw.elapsedMilliseconds;
+      AppLogger.dashboard(
+        '[Dashboard] Refresh completed source=$source durationMs=${sw.elapsedMilliseconds}',
+        durationMs: sw.elapsedMilliseconds,
+      );
+    } catch (e, st) {
+      sw.stop();
+      state = state.copyWith(isRefreshing: false, error: e);
+      AppLogger.error(
+        'Dashboard',
+        '${_modeLabel(mode)} refresh failed, durationMs: ${sw.elapsedMilliseconds}',
+        e,
+        st,
+      );
+    }
+  }
+
+  String _modeLabel(DashboardRefreshMode m) => switch (m) {
+        DashboardRefreshMode.none => 'None',
+        DashboardRefreshMode.silentLight => 'Silent',
+        DashboardRefreshMode.medium => 'Medium',
+        DashboardRefreshMode.full => 'Full',
+      };
+}
+
 final dashboardNotifierProvider =
-    StateNotifierProvider.autoDispose<DashboardNotifier, AsyncValue<void>>(
-        (ref) {
+    StateNotifierProvider<DashboardNotifier, DashboardRefreshState>((ref) {
   return DashboardNotifier(ref);
 });
 
@@ -134,7 +344,7 @@ final dashboardNotifierProvider =
 ///   • Duplicate detection uses the normalised ID from [DashboardAlertFilter.alertId].
 ///   • An alert already in the REST list is not shown a second time from the socket.
 final dashboardAlertsProvider = Provider<AsyncValue<List<AlertEntity>>>((ref) {
-  final restAsync = ref.watch(alertsProvider);
+  final restAsync = ref.watch(alertsProvider).alertsAsync;
   final liveAlerts = ref.watch(socketAlertsProvider);
 
   return restAsync.whenData((restList) {

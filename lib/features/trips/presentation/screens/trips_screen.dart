@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -11,18 +12,83 @@ import '../../../../core/widgets/elmo_card.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../map/core/trip_segment_summary.dart';
 import '../providers/trips_provider.dart';
 import '../../domain/entities/trip.dart';
 
-class TripsScreen extends ConsumerWidget {
+class TripsScreen extends ConsumerStatefulWidget {
   const TripsScreen({super.key, required this.vehicleId});
 
   final String vehicleId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TripsScreen> createState() => _TripsScreenState();
+}
+
+class _TripsScreenState extends ConsumerState<TripsScreen> {
+  DateTime? _from;
+  DateTime? _to;
+
+  VehicleTripsQuery get _query => VehicleTripsQuery(
+        vehicleId: widget.vehicleId,
+        from: _from,
+        to: _to,
+      );
+
+  Future<void> _pickDateRange() async {
     final l10n = context.l10n;
-    final tripsAsync = ref.watch(vehicleTripsProvider(vehicleId));
+    final now = DateTime.now();
+    final initialRange = DateTimeRange(
+      start: _from ?? now.subtract(const Duration(days: 7)),
+      end: _to ?? now,
+    );
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
+      initialDateRange: initialRange,
+      helpText: l10n.tripDateFilter,
+    );
+    if (range == null || !mounted) return;
+
+    setState(() {
+      _from = DateTime(
+        range.start.year,
+        range.start.month,
+        range.start.day,
+      );
+      _to = DateTime(
+        range.end.year,
+        range.end.month,
+        range.end.day,
+        23,
+        59,
+        59,
+      );
+    });
+
+    AppLogger.navigation(
+      'Trips date filter applied: vehicleId=${widget.vehicleId} '
+      'from=$_from to=$_to',
+    );
+  }
+
+  void _clearDateFilter() {
+    if (_from == null && _to == null) return;
+    setState(() {
+      _from = null;
+      _to = null;
+    });
+    AppLogger.navigation(
+      'Trips date filter cleared: vehicleId=${widget.vehicleId}',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tripsAsync = ref.watch(vehicleTripsProvider(_query));
+    final hasDateFilter = _from != null || _to != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -32,43 +98,101 @@ class TripsScreen extends ConsumerWidget {
         ),
         title: Text(l10n.tripHistory),
         actions: [
+          if (hasDateFilter)
+            IconButton(
+              icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+              tooltip: l10n.clearDateFilter,
+              onPressed: _clearDateFilter,
+            ),
           IconButton(
             icon: const Icon(Icons.calendar_today_rounded, size: 18),
-            onPressed: () {},
-            tooltip: l10n.filterByDate,
+            onPressed: _pickDateRange,
+            tooltip: l10n.tripDateFilter,
           ),
         ],
       ),
       body: SafeArea(
         top: false,
-        child: tripsAsync.when(
-          data: (trips) {
-            if (trips.isEmpty) {
-              return EmptyView(
-                icon: Icons.route_outlined,
-                title: l10n.noTrips,
-                message: l10n.noTripsMessage,
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(AppSpacing.screenPadding),
-              itemCount: trips.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (context, i) {
-                final trip = trips[i];
-                return TripCard(
-                  trip: trip,
-                  onTap: () => context.push('/trips/${trip.id}'),
-                );
-              },
-            );
-          },
-          loading: () => LoadingView(message: l10n.loadingTrips),
-          error: (e, _) => ErrorView(
-            message: e.toString(),
-            onRetry: () => ref.invalidate(vehicleTripsProvider(vehicleId)),
-          ),
+        child: Column(
+          children: [
+            if (hasDateFilter)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPadding,
+                  AppSpacing.sm,
+                  AppSpacing.screenPadding,
+                  0,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    '${l10n.tripDateFilter}: '
+                    '${DateFormatter.toDate(_from!)} – ${DateFormatter.toDate(_to!)}',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: tripsAsync.when(
+                data: (trips) {
+                  if (trips.isEmpty) {
+                    return EmptyView(
+                      icon: Icons.route_outlined,
+                      title: l10n.noTrips,
+                      message: l10n.noTripsMessage,
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                    itemCount: trips.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpacing.sm),
+                    itemBuilder: (context, i) {
+                      final trip = trips[i];
+                      return TripCard(
+                        trip: trip,
+                        onTap: () {
+                          final end = trip.endTime ?? DateTime.now();
+                          final params = reportFilterParamsForTrip(
+                            vehicleId: trip.vehicleId,
+                            startTime: trip.startTime,
+                            endTime: end,
+                          );
+                          context.push(
+                            '/vehicles/${trip.vehicleId}/trip-map',
+                            extra: {
+                              'params': params,
+                              'vehicleName': trip.vehicleName,
+                              'tripSubtitle':
+                                  DateFormatter.toDateTime(trip.startTime),
+                            },
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+                loading: () => LoadingView(message: l10n.loadingTrips),
+                error: (e, _) => ErrorView(
+                  message: e.toString(),
+                  onRetry: () => ref.invalidate(vehicleTripsProvider(_query)),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -103,6 +103,25 @@ enum CommandRiskLevel {
         high => 'عالي',
       };
 
+  String get labelEn => switch (this) {
+        low => 'Low',
+        medium => 'Medium',
+        high => 'High',
+      };
+
+  String get labelEs => switch (this) {
+        low => 'Bajo',
+        medium => 'Medio',
+        high => 'Alto',
+      };
+
+  String label(Locale locale) => switch (locale.languageCode) {
+        'ar' => labelAr,
+        'fr' => labelFr,
+        'es' => labelEs,
+        _ => labelEn,
+      };
+
   Color get color => switch (this) {
         low => const Color(0xFF4CAF50),
         medium => const Color(0xFFFF9800),
@@ -201,17 +220,39 @@ class DeviceCommand {
     required this.mapping,
     required this.labelFr,
     required this.labelAr,
+    required this.labelEn,
+    required this.labelEs,
     required this.descriptionFr,
     required this.descriptionAr,
+    required this.descriptionEn,
+    required this.descriptionEs,
     required this.icon,
   });
 
   final TraccarCommandMapping mapping;
   final String labelFr;
   final String labelAr;
+  final String labelEn;
+  final String labelEs;
   final String descriptionFr;
   final String descriptionAr;
+  final String descriptionEn;
+  final String descriptionEs;
   final IconData icon;
+
+  String label(Locale locale) => switch (locale.languageCode) {
+        'ar' => labelAr,
+        'fr' => labelFr,
+        'es' => labelEs,
+        _ => labelEn,
+      };
+
+  String description(Locale locale) => switch (locale.languageCode) {
+        'ar' => descriptionAr,
+        'fr' => descriptionFr,
+        'es' => descriptionEs,
+        _ => descriptionEn,
+      };
 
   // ── Delegates to mapping ─────────────────────────────────────────────────
 

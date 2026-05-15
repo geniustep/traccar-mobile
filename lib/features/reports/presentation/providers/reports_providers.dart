@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../shared/providers/core_providers.dart';
 import '../../../trips/domain/entities/trip.dart';
 import '../../../map/data/datasources/route_datasource.dart';
@@ -16,6 +17,16 @@ import '../../domain/repositories/reports_repository.dart';
 enum ReportPeriod { today, yesterday, thisWeek, thisMonth, custom }
 
 extension ReportPeriodLabel on ReportPeriod {
+  /// Localized label for UI display.
+  String localizedLabel(AppLocalizations l10n) => switch (this) {
+        ReportPeriod.today => l10n.periodToday,
+        ReportPeriod.yesterday => l10n.periodYesterday,
+        ReportPeriod.thisWeek => l10n.periodThisWeek,
+        ReportPeriod.thisMonth => l10n.periodThisMonth,
+        ReportPeriod.custom => l10n.periodCustom,
+      };
+
+  /// @deprecated Use [localizedLabel] instead.
   String get labelFr => switch (this) {
         ReportPeriod.today => "Aujourd'hui",
         ReportPeriod.yesterday => 'Hier',
@@ -159,6 +170,26 @@ class ReportFilterNotifier extends StateNotifier<ReportFilterState> {
   void generate() {
     state = state.copyWith(hasGenerated: true);
   }
+}
+
+// ── Entry params (for pre-filling from Vehicle Details) ──────────────────────
+
+class ReportsEntryParams {
+  const ReportsEntryParams({
+    required this.vehicleId,
+    required this.vehicleName,
+    required this.period,
+    required this.from,
+    required this.to,
+    this.tabIndex = 0,
+  });
+
+  final String vehicleId;
+  final String vehicleName;
+  final ReportPeriod period;
+  final DateTime from;
+  final DateTime to;
+  final int tabIndex;
 }
 
 // ── Repository / datasource providers ────────────────────────────────────────

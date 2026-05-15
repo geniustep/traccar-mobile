@@ -1,6 +1,7 @@
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/models/user_role.dart';
 import '../entities/command_log_entry.dart';
 import '../entities/device_command.dart';
@@ -80,6 +81,8 @@ class CommandExecutionService {
     Map<String, dynamic>? providedParams,
     DeviceInstallationProfile? installation,
   }) async {
+    AppLogger.commands('Command execution: key=${resolved.command.commandKey} deviceId=$deviceId risk=${resolved.command.riskLevel.name}');
+
     final install =
         installation ?? DeviceInstallationProfile.defaultFor(deviceId);
 
@@ -96,6 +99,7 @@ class CommandExecutionService {
 
     switch (validation) {
       case ValidationFailed(:final status, :final reason):
+        AppLogger.commands('Command rejected by validation: key=${resolved.command.commandKey} status=$status');
         // Log every rejected attempt — even safety blocks — so audit trails
         // are complete. Status = rejected.
         final rejectedEntry = CommandLogEntry(
@@ -128,6 +132,7 @@ class CommandExecutionService {
         );
 
       case ValidationPassed(:final willBeQueued):
+        AppLogger.commands('Command validation passed: key=${resolved.command.commandKey} queued=$willBeQueued');
         return _send(
           resolved: resolved,
           deviceId: deviceId,
@@ -205,6 +210,7 @@ class CommandExecutionService {
 
     return result.when(
       success: (_) async {
+        AppLogger.commands('Command API success: key=${cmd.commandKey} deviceId=$deviceId queued=$willBeQueued');
         final done = entry.copyWith(
           status: willBeQueued ? CommandStatus.queued : CommandStatus.success,
         );
@@ -220,6 +226,7 @@ class CommandExecutionService {
         return CommandSuccess(entry: done);
       },
       failure: (ex) async {
+        AppLogger.commandsError('Command API failed: key=${cmd.commandKey} deviceId=$deviceId');
         final friendly = _friendlyError(ex);
         final failed = entry.copyWith(
           status: CommandStatus.failed,

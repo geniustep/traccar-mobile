@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/models/user_role.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -26,6 +27,7 @@ class CommandLogsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logsAsync = ref.watch(commandLogsProvider(deviceId));
+    final l10n = context.l10n;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -41,7 +43,7 @@ class CommandLogsScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Historique', style: AppTextStyles.headlineMedium),
+            Text(l10n.commandHistory, style: AppTextStyles.headlineMedium),
             Text(
               deviceName,
               style: AppTextStyles.bodySmall
@@ -56,7 +58,7 @@ class CommandLogsScreen extends ConsumerWidget {
                 : IconButton(
                     icon: const Icon(Icons.delete_outline_rounded,
                         color: AppColors.error, size: 22),
-                    tooltip: 'Effacer l\'historique',
+                    tooltip: l10n.clearHistory,
                     onPressed: () =>
                         _confirmClear(context, ref),
                   ),
@@ -66,14 +68,14 @@ class CommandLogsScreen extends ConsumerWidget {
       ),
       body: logsAsync.when(
         data: (logs) => logs.isEmpty
-            ? _buildEmpty()
+            ? _buildEmpty(l10n)
             : _buildList(logs),
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.accent),
         ),
         error: (e, _) => Center(
           child: Text(
-            'Erreur de chargement: $e',
+            '${l10n.cmdLoadFailed}: $e',
             style: AppTextStyles.bodyMedium
                 .copyWith(color: AppColors.error),
           ),
@@ -82,7 +84,7 @@ class CommandLogsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -99,12 +101,12 @@ class CommandLogsScreen extends ConsumerWidget {
                 color: AppColors.textMuted, size: 32),
           ),
           const SizedBox(height: 16),
-          Text('Aucune commande envoyée',
+          Text(l10n.noCommandsSent,
               style: AppTextStyles.headlineSmall
                   .copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 8),
           Text(
-            'L\'historique apparaîtra ici après\nl\'envoi de la première commande.',
+            l10n.commandHistoryEmpty,
             style: AppTextStyles.bodySmall
                 .copyWith(color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -131,27 +133,28 @@ class CommandLogsScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surfaceElevated,
-        title: Text('Effacer l\'historique',
+        title: Text(l10n.clearHistory,
             style: AppTextStyles.headlineSmall),
         content: Text(
-          'Tous les journaux de commandes seront supprimés définitivement.',
+          l10n.clearHistoryConfirmMessage,
           style: AppTextStyles.bodyMedium
               .copyWith(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Annuler',
+            child: Text(l10n.cancel,
                 style: AppTextStyles.labelLarge
                     .copyWith(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Effacer',
+            child: Text(l10n.delete,
                 style: AppTextStyles.labelLarge
                     .copyWith(color: AppColors.error)),
           ),
@@ -176,6 +179,7 @@ class _LogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final statusColor = _statusColor(entry.status);
     final riskColor = _riskColor(entry.riskLevel);
 
@@ -255,8 +259,8 @@ class _LogTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'REJETÉ',
-                            style: TextStyle(
+                            l10n.statusRejected.toUpperCase(),
+                            style: const TextStyle(
                               fontSize: 8,
                               fontWeight: FontWeight.w700,
                               color: AppColors.error,
@@ -272,7 +276,7 @@ class _LogTile extends StatelessWidget {
                           size: 12, color: statusColor),
                       const SizedBox(width: 4),
                       Text(
-                        _statusLabel(entry.status),
+                        _statusLabel(entry.status, l10n),
                         style: AppTextStyles.bodySmall.copyWith(
                           color: statusColor,
                           fontWeight: FontWeight.w600,
@@ -320,8 +324,8 @@ class _LogTile extends StatelessWidget {
                                 ? Icons.wifi_rounded
                                 : Icons.wifi_off_rounded,
                             entry.deviceOnlineAtExecution!
-                                ? 'En ligne'
-                                : 'Hors ligne'),
+                                ? l10n.online
+                                : l10n.offline),
                     ],
                   ),
                 ],
@@ -396,13 +400,13 @@ class _LogTile extends StatelessWidget {
         CommandStatus.rejected => Icons.block_rounded,
       };
 
-  String _statusLabel(CommandStatus s) => switch (s) {
-        CommandStatus.success => 'Succès',
-        CommandStatus.failed => 'Échec',
+  String _statusLabel(CommandStatus s, AppLocalizations l10n) => switch (s) {
+        CommandStatus.success => l10n.statusSuccess,
+        CommandStatus.failed => l10n.statusFailed,
         CommandStatus.timeout => 'Timeout',
-        CommandStatus.pending => 'En attente',
-        CommandStatus.queued => 'En file d\'attente',
-        CommandStatus.rejected => 'Rejeté (sécurité)',
+        CommandStatus.pending => l10n.statusPending,
+        CommandStatus.queued => l10n.statusQueued,
+        CommandStatus.rejected => l10n.statusRejected,
       };
 
   Color _riskColor(CommandRiskLevel r) => r.color;
@@ -421,6 +425,8 @@ class _LogDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
     final statusColor = _statusColor(entry.status);
 
     return DraggableScrollableSheet(
@@ -464,7 +470,7 @@ class _LogDetailSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    _statusLabel(entry.status),
+                    _statusLabel(entry.status, l10n),
                     style: TextStyle(
                       color: statusColor,
                       fontSize: 11,
@@ -477,49 +483,49 @@ class _LogDetailSheet extends StatelessWidget {
             const SizedBox(height: 20),
 
             // General fields (visible to all)
-            _section('Informations générales', [
-              _row('Commande', entry.commandKey),
-              _row('Type Traccar', entry.commandType),
-              _row('Catégorie', entry.category.labelFr),
-              _row('Risque', entry.riskLevel.labelFr),
-              _row('Méthode', entry.sendMethod.name),
-              _row('Date', DateFormatter.toDateTime(entry.sentAt)),
+            _section(l10n.generalInfo, [
+              _row(l10n.command, entry.commandKey),
+              _row(l10n.systemType, entry.commandType),
+              _row(l10n.category, entry.category.label(locale)),
+              _row(l10n.risk, entry.riskLevel.label(locale)),
+              _row(l10n.method, entry.sendMethod.name),
+              _row(l10n.date, DateFormatter.toDateTime(entry.sentAt)),
               if (entry.sentByUserName != null)
-                _row('Envoyé par', entry.sentByUserName!),
+                _row(l10n.sentBy, entry.sentByUserName!),
               if (entry.sentByUserId != null)
-                _row('ID utilisateur', entry.sentByUserId!),
+                _row(l10n.userId, entry.sentByUserId!),
             ]),
             const SizedBox(height: 16),
 
             // Execution context (visible to all)
-            _section('Contexte d\'exécution', [
+            _section(l10n.executionContext, [
               if (entry.deviceOnlineAtExecution != null)
                 _row(
-                  'État connexion',
+                  l10n.connectionStatus,
                   entry.deviceOnlineAtExecution!
-                      ? '🟢 En ligne'
-                      : '🔴 Hors ligne',
+                      ? '🟢 ${l10n.online}'
+                      : '🔴 ${l10n.offline}',
                 ),
               if (entry.vehicleSpeedAtExecution != null)
                 _row(
-                  'Vitesse',
+                  l10n.speed,
                   '${entry.vehicleSpeedAtExecution!.toStringAsFixed(1)} km/h',
                 ),
-              _row('Appareil', entry.deviceName),
+              _row(l10n.device, entry.deviceName),
             ]),
 
             // Error info (visible to all if failed/rejected)
             if (entry.errorMessage != null) ...[
               const SizedBox(height: 16),
-              _section('Message d\'erreur', [
-                _row('Message', entry.errorMessage!),
+              _section(l10n.errorMessage, [
+                _row(l10n.message, entry.errorMessage!),
               ]),
             ],
 
             // Technical details — technician/admin only
             if (isTechOrAdmin) ...[
               const SizedBox(height: 16),
-              _techSection(entry),
+              _techSection(entry, l10n),
             ],
           ],
         ),
@@ -585,7 +591,7 @@ class _LogDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _techSection(CommandLogEntry e) {
+  Widget _techSection(CommandLogEntry e, AppLocalizations l10n) {
     final hasRawResponse = e.rawResponse != null && e.rawResponse!.isNotEmpty;
     final hasFailureReason =
         e.failureReason != null && e.failureReason!.isNotEmpty;
@@ -593,10 +599,10 @@ class _LogDetailSheet extends StatelessWidget {
     final rows = <Widget>[];
 
     if (hasFailureReason) {
-      rows.add(_row('Raison technique', e.failureReason!));
+      rows.add(_row(l10n.technicalReason, e.failureReason!));
     }
     if (e.attributes.isNotEmpty) {
-      rows.add(_row('Attributs envoyés', e.attributes.toString()));
+      rows.add(_row(l10n.sentAttributes, e.attributes.toString()));
     }
     if (hasRawResponse) {
       rows.add(const Divider(height: 16, color: AppColors.border));
@@ -605,7 +611,7 @@ class _LogDetailSheet extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Réponse brute (rawResponse)',
+                l10n.rawResponse,
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textMuted,
                   fontSize: 10,
@@ -618,7 +624,7 @@ class _LogDetailSheet extends StatelessWidget {
               color: AppColors.textMuted,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
-              tooltip: 'Copier',
+              tooltip: l10n.copy,
               onPressed: () =>
                   Clipboard.setData(ClipboardData(text: e.rawResponse!)),
             ),
@@ -648,7 +654,7 @@ class _LogDetailSheet extends StatelessWidget {
     if (rows.isEmpty) {
       rows.add(
         Text(
-          'Aucune donnée technique disponible.',
+          l10n.noTechnicalData,
           style: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textMuted,
             fontSize: 11,
@@ -657,7 +663,7 @@ class _LogDetailSheet extends StatelessWidget {
       );
     }
 
-    return _section('Données techniques (Technicien/Admin)', rows);
+    return _section(l10n.technicalData, rows);
   }
 
   Color _statusColor(CommandStatus s) => switch (s) {
@@ -669,12 +675,12 @@ class _LogDetailSheet extends StatelessWidget {
         CommandStatus.rejected => AppColors.error,
       };
 
-  String _statusLabel(CommandStatus s) => switch (s) {
-        CommandStatus.success => 'Succès',
-        CommandStatus.failed => 'Échec',
+  String _statusLabel(CommandStatus s, AppLocalizations l10n) => switch (s) {
+        CommandStatus.success => l10n.statusSuccess,
+        CommandStatus.failed => l10n.statusFailed,
         CommandStatus.timeout => 'Timeout',
-        CommandStatus.pending => 'En attente',
-        CommandStatus.queued => 'En file d\'attente',
-        CommandStatus.rejected => 'Rejeté (sécurité)',
+        CommandStatus.pending => l10n.statusPending,
+        CommandStatus.queued => l10n.statusQueued,
+        CommandStatus.rejected => l10n.statusRejected,
       };
 }

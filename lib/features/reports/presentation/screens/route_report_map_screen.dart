@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart' hide TextDirection;
-
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/maps/map_config.dart';
 import '../../../../core/maps/map_helper.dart';
@@ -11,11 +9,22 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/theme_provider.dart';
-import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/route_decimator.dart';
+import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../map/core/map_zoom_policy.dart';
+import '../../../map/core/route_event_analyzer.dart';
+import '../../../map/core/route_event_models.dart';
+import '../../../map/core/route_event_timeline_models.dart';
+import '../../../map/core/route_event_ui.dart';
+import '../../../map/core/route_intelligence_thresholds.dart';
+import '../../../map/core/route_polyline_builder.dart';
+import '../../../map/core/route_stop_address_enrichment.dart';
 import '../../../map/data/datasources/route_datasource.dart';
+import '../../../map/presentation/widgets/route_event_details_sheet.dart';
+import '../../../map/presentation/widgets/route_event_timeline.dart';
+import '../../../map/presentation/providers/route_intelligence_thresholds_provider.dart';
+import '../../../map/presentation/providers/route_stop_address_providers.dart';
 import '../providers/reports_providers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,10 +40,18 @@ class RouteReportMapScreen extends ConsumerStatefulWidget {
     super.key,
     required this.params,
     required this.vehicleName,
+    this.contextualSubtitle,
+    this.onOpenReplayShortcut,
   });
 
   final ReportFilterParams params;
   final String vehicleName;
+
+  /// Optional second line below the vehicle name (e.g. phased trip heading).
+  final String? contextualSubtitle;
+
+  /// When set (e.g. trip detail surface), exposes a Replay affordance beside the timeline.
+  final VoidCallback? onOpenReplayShortcut;
 
   @override
   ConsumerState<RouteReportMapScreen> createState() =>
@@ -45,6 +62,71 @@ class _RouteReportMapScreenState
     extends ConsumerState<RouteReportMapScreen> {
   GoogleMapController? _mapController;
   bool _hasFitted = false;
+  double _cameraZoom = MapConfig.defaultZoom;
+
+  String _reportIntelKey = '';
+  RouteEventAnalysisResult? _reportIntel;
+
+  /// Phase 7C: shared highlight for timeline row + intelligence marker.
+  String? _selectedRouteEventKey;
+
+  /// Phase 7E: timeline filter (display only).
+  RouteEventTimelineFilter _reportTimelineFilter = RouteEventTimelineFilter.all;
+
+  void _syncReportIntel(List<RoutePoint> pts, RouteIntelligenceThresholds th) {
+    final key = pts.length < 2
+        ? '0'
+        : '${pts.length}_${pts.first.fixTime.millisecondsSinceEpoch}_${pts.last.fixTime.millisecondsSinceEpoch}_${th.cacheKey}';
+    if (key == _reportIntelKey) return;
+    _selectedRouteEventKey = null;
+    _reportTimelineFilter = RouteEventTimelineFilter.all;
+    _reportIntelKey = key;
+    final raw = pts.length < 2
+        ? null
+        : RouteEventAnalyzer.analyze(pts, thresholds: th);
+    _reportIntel = raw == null
+        ? null
+        : enrichRouteIntelStopsFromRoutePoints(raw, pts);
+    if (_reportIntel != null && pts.length >= 2) {
+      _scheduleReportStopAddressPrefetch();
+    }
+  }
+
+  void _scheduleReportStopAddressPrefetch() {
+    final k = _reportIntelKey;
+    final cur = _reportIntel;
+    if (cur == null || cur.stops.isEmpty) return;
+    final resolver = ref.read(routeStopAddressResolverProvider);
+    prefetchStopAddressesSequential(
+      resolver: resolver,
+      intel: cur,
+      isStale: () => !mounted || _reportIntelKey != k,
+      apply: (u) {
+        if (!mounted || _reportIntelKey != k) return;
+        setState(() => _reportIntel = u);
+      },
+    );
+  }
+
+  void _applyReportResolvedStopAddress(String selectionKey, String address) {
+    final intel = _reportIntel;
+    if (intel == null) return;
+    RouteStopEvent? target;
+    for (final s in intel.stops) {
+      if (routeStopSelectionKey(s) == selectionKey) {
+        target = s;
+        break;
+      }
+    }
+    if (target == null) return;
+    final existing = target.address?.trim();
+    if (existing != null && existing.isNotEmpty) return;
+    setState(() {
+      _reportIntel = intel.withStops(
+        replaceStopAddressOnList(intel.stops, target!, address),
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -52,88 +134,87 @@ class _RouteReportMapScreenState
     super.dispose();
   }
 
-  void _fitRoute(List<RoutePoint> pts) {
-    if (pts.isEmpty || _mapController == null) return;
-    final update =
-        MapHelper.fitPoints(pts.map((p) => p.position).toList(), padding: 80);
-    if (update != null) {
-      _mapController!.animateCamera(update);
+  @override
+  void didUpdateWidget(covariant RouteReportMapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.params != widget.params) {
+      _hasFitted = false;
+      _reportIntelKey = '';
+      _reportIntel = null;
+      _selectedRouteEventKey = null;
+      _reportTimelineFilter = RouteEventTimelineFilter.all;
+    }
+  }
+
+  /// Fit camera to full route extent (uses raw points so bounds stay accurate when decimated for drawing).
+  void _fitRoute(List<RoutePoint> boundsPoints) {
+    if (boundsPoints.isEmpty || _mapController == null) return;
+    final pts = boundsPoints
+        .map((p) => p.position)
+        .where(
+          (ll) =>
+              ll.latitude.abs() > 1e-6 || ll.longitude.abs() > 1e-6,
+        )
+        .toList();
+    if (pts.isEmpty) return;
+
+    if (pts.length == 1) {
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(pts.first, 15),
+      );
+    } else {
+      final update = MapHelper.fitPoints(pts, padding: 96);
+      if (update != null) {
+        _mapController!.animateCamera(update);
+      }
     }
     _hasFitted = true;
   }
 
-  Set<Marker> _buildMarkers(List<RoutePoint> pts, BuildContext context) {
-    if (pts.isEmpty) return {};
-    final l10n = AppLocalizations.of(context);
-    final markers = <Marker>{};
-
-    markers.add(Marker(
-      markerId: const MarkerId('route_start'),
-      position: pts.first.position,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-      anchor: const Offset(0.5, 1.0),
-      zIndexInt: 2,
-      infoWindow: InfoWindow(
-        title: l10n.routeDeparture,
-        snippet:
-            '${DateFormat('HH:mm').format(pts.first.fixTime)} · '
-            '${FormatUtils.speed(pts.first.speed)}',
+  void _focusRouteTimelineEvent(RouteEventTimelineItem item) {
+    final c = _mapController;
+    if (c == null || !routeEventTimelineValidPosition(item.position)) return;
+    setState(() => _selectedRouteEventKey = item.selectionKey);
+    c.animateCamera(
+      CameraUpdate.newLatLngZoom(
+        item.position,
+        RouteEventTimeline.focusZoomHint,
       ),
-    ));
-
-    if (pts.length > 1) {
-      markers.add(Marker(
-        markerId: const MarkerId('route_end'),
-        position: pts.last.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        anchor: const Offset(0.5, 1.0),
-        zIndexInt: 2,
-        infoWindow: InfoWindow(
-          title: l10n.routeArrival,
-          snippet:
-              '${DateFormat('HH:mm').format(pts.last.fixTime)} · '
-              '${FormatUtils.speed(pts.last.speed)}',
-        ),
-      ));
-
-      final maxPt = pts.reduce((a, b) => a.speed > b.speed ? a : b);
-      if (maxPt.speed > 5) {
-        markers.add(Marker(
-          markerId: const MarkerId('route_maxspeed'),
-          position: maxPt.position,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueOrange),
-          anchor: const Offset(0.5, 1.0),
-          zIndexInt: 1,
-          infoWindow: InfoWindow(
-            title: l10n.routeMaxSpeedShort,
-            snippet:
-                '${FormatUtils.speed(maxPt.speed)} · '
-                '${DateFormat('HH:mm').format(maxPt.fixTime)}',
+    );
+    if (!mounted) return;
+    RouteEventDetailsSheet.show(
+      context,
+      item: item,
+      onRecenter: () {
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(
+            item.position,
+            RouteEventTimeline.focusZoomHint,
           ),
-        ));
-      }
-    }
-
-    return markers;
+        );
+      },
+      resolver: ref.read(routeStopAddressResolverProvider),
+      onStopAddressCommitted: _applyReportResolvedStopAddress,
+    );
   }
 
-  Set<Polyline> _buildPolylines(List<RoutePoint> pts) {
-    if (pts.length < 2) return {};
-    return {
-      for (var i = 0; i < pts.length - 1; i++)
-        Polyline(
-          polylineId: PolylineId('seg_$i'),
-          points: [pts[i].position, pts[i + 1].position],
-          color: MapHelper.routeColorForSpeed(
-              (pts[i].speed + pts[i + 1].speed) / 2),
-          width: 5,
-          geodesic: true,
-          startCap: Cap.roundCap,
-          endCap: Cap.roundCap,
-          jointType: JointType.round,
-        ),
-    };
+  void _onRouteIntelMarkerTap(RouteEventTimelineItem item) {
+    if (!mounted) return;
+    setState(() => _selectedRouteEventKey = item.selectionKey);
+    RouteEventDetailsSheet.show(
+      context,
+      item: item,
+      onRecenter: () {
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(
+            item.position,
+            RouteEventTimeline.focusZoomHint,
+          ),
+        );
+      },
+      resolver: ref.read(routeStopAddressResolverProvider),
+      onStopAddressCommitted: _applyReportResolvedStopAddress,
+    );
   }
 
   @override
@@ -145,11 +226,47 @@ class _RouteReportMapScreenState
 
     final routeAsync = ref.watch(reportRouteProvider(widget.params));
     final rawPoints = routeAsync.valueOrNull ?? [];
-    final drawPts = RoutePointDecimator.decimateForMap(rawPoints);
+    final riThresholds = ref.watch(
+      routeIntelligenceThresholdsForVehicleProvider(widget.params.vehicleId),
+    );
+    _syncReportIntel(rawPoints, riThresholds);
+    final zoomPolicy = MapZoomPolicy.at(_cameraZoom);
+    final drawPts = RoutePolylineBuilder.decimateForMapWithMax(
+      rawPoints,
+      maxPoints: zoomPolicy.maxVisibleRoutePointsForDecimation(),
+    );
+    final l10n = AppLocalizations.of(context);
 
-    // Auto-fit once when route data arrives
-    if (!_hasFitted && drawPts.isNotEmpty && _mapController != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fitRoute(drawPts));
+    final markers = <Marker>{
+      ...RoutePolylineBuilder.buildRouteMarkers(
+        drawPts,
+        l10n,
+        includeMaxSpeedMarker: zoomPolicy.showRouteMaxSpeedMarker(),
+        compactMaxSpeedTitle: true,
+      ),
+      ...RoutePolylineBuilder.buildHourlyWaypoints(
+        drawPts,
+        enabled: zoomPolicy.showRouteHourlyMarkers(),
+      ),
+      ...RoutePolylineBuilder.buildRouteIntelligenceMarkers(
+        analysis: _reportIntel,
+        l10n: l10n,
+        policy: zoomPolicy,
+        reportStyle: true,
+        vehicleId: widget.params.vehicleId,
+        onMarkerTap: _onRouteIntelMarkerTap,
+        selectedEventKey: _selectedRouteEventKey,
+      ),
+    };
+    final polylines =
+        RoutePolylineBuilder.buildSpeedColoredPolylines(
+      vehicleId: widget.params.vehicleId,
+      pts: drawPts,
+    ).toSet();
+
+    // Auto-fit once when route data arrives (full extent from raw points).
+    if (!_hasFitted && rawPoints.isNotEmpty && _mapController != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitRoute(rawPoints));
     }
 
     final navBottom = MediaQuery.paddingOf(context).bottom;
@@ -165,23 +282,56 @@ class _RouteReportMapScreenState
             error: (_, __) => Center(
               child: Text(context.l10n.errorLoadingRoute),
             ),
-            data: (_) => GoogleMap(
-              initialCameraPosition: MapConfig.defaultCameraPosition,
-              markers: _buildMarkers(drawPts, context),
-              polylines: _buildPolylines(drawPts),
-              style: isDark ? MapConfig.darkStyle : MapConfig.lightStyle,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              mapToolbarEnabled: false,
-              compassEnabled: true,
-              buildingsEnabled: false,
-              onMapCreated: (c) {
-                _mapController = c;
-                if (drawPts.isNotEmpty) {
-                  WidgetsBinding.instance
-                      .addPostFrameCallback((_) => _fitRoute(drawPts));
-                }
-              },
+            data: (_) => Stack(
+              fit: StackFit.expand,
+              children: [
+                GoogleMap(
+                  initialCameraPosition: MapConfig.defaultCameraPosition,
+                  markers: markers,
+                  polylines: polylines,
+                  style: isDark ? MapConfig.darkStyle : MapConfig.lightStyle,
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
+                  compassEnabled: true,
+                  buildingsEnabled: false,
+                  onMapCreated: (c) {
+                    _mapController = c;
+                    c.getZoomLevel().then((z) {
+                      if (mounted) setState(() => _cameraZoom = z);
+                    });
+                    if (rawPoints.isNotEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => _fitRoute(rawPoints),
+                      );
+                    }
+                  },
+                  onCameraIdle: () {
+                    _mapController?.getZoomLevel().then((z) {
+                      if (!mounted) return;
+                      if ((z - _cameraZoom).abs() > 0.02) {
+                        setState(() => _cameraZoom = z);
+                      }
+                    });
+                  },
+                ),
+                if (rawPoints.isEmpty)
+                  Material(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          context.l10n.noRouteReport,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondaryOf(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
 
@@ -191,6 +341,7 @@ class _RouteReportMapScreenState
               padding: const EdgeInsets.all(AppSpacing.screenPadding),
               child: _TopBar(
                 vehicleName: widget.vehicleName,
+                contextualSubtitle: widget.contextualSubtitle,
                 from: widget.params.from.toLocal(),
                 to: widget.params.to.toLocal(),
                 onBack: () => context.pop(),
@@ -214,7 +365,7 @@ class _RouteReportMapScreenState
               children: [
                 _MapBtn(
                   icon: Icons.fit_screen_rounded,
-                  onTap: () => _fitRoute(drawPts),
+                  onTap: () => _fitRoute(rawPoints),
                 ),
                 const SizedBox(height: 6),
                 _MapBtn(
@@ -241,6 +392,15 @@ class _RouteReportMapScreenState
               points: rawPoints,
               drawPoints: drawPts,
               navBottom: navBottom,
+              routeIntel: _reportIntel,
+              routeIntelMemoKey: _reportIntelKey,
+              selectedTimelineItemKey: _selectedRouteEventKey,
+              timelineFilter: _reportTimelineFilter,
+              onTimelineFilterChanged: (f) =>
+                  setState(() => _reportTimelineFilter = f),
+              onTimelineItemTap: _focusRouteTimelineEvent,
+              onOpenReplayShortcut: widget.onOpenReplayShortcut,
+              l10n: l10n,
             ),
           ),
         ],
@@ -256,12 +416,14 @@ class _RouteReportMapScreenState
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.vehicleName,
+    this.contextualSubtitle,
     required this.from,
     required this.to,
     required this.onBack,
   });
 
   final String vehicleName;
+  final String? contextualSubtitle;
   final DateTime from;
   final DateTime to;
   final VoidCallback onBack;
@@ -296,6 +458,18 @@ class _TopBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(vehicleName, style: AppTextStyles.labelLarge),
+                if (contextualSubtitle != null &&
+                    contextualSubtitle!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      contextualSubtitle!,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ),
                 Text(
                   '${DateFormatter.toDate(from)} → ${DateFormatter.toDate(to)}',
                   style: AppTextStyles.bodySmall.copyWith(fontSize: 10),
@@ -337,11 +511,27 @@ class _BottomPanel extends StatelessWidget {
     required this.points,
     required this.drawPoints,
     required this.navBottom,
+    this.routeIntel,
+    required this.routeIntelMemoKey,
+    this.selectedTimelineItemKey,
+    required this.timelineFilter,
+    required this.onTimelineFilterChanged,
+    required this.onTimelineItemTap,
+    this.onOpenReplayShortcut,
+    required this.l10n,
   });
 
   final List<RoutePoint> points;
   final List<RoutePoint> drawPoints;
   final double navBottom;
+  final RouteEventAnalysisResult? routeIntel;
+  final String routeIntelMemoKey;
+  final String? selectedTimelineItemKey;
+  final RouteEventTimelineFilter timelineFilter;
+  final ValueChanged<RouteEventTimelineFilter> onTimelineFilterChanged;
+  final ValueChanged<RouteEventTimelineItem> onTimelineItemTap;
+  final VoidCallback? onOpenReplayShortcut;
+  final AppLocalizations l10n;
 
   static double _calcTotalKm(List<RoutePoint> pts) {
     if (pts.length < 2) return 0;
@@ -354,7 +544,48 @@ class _BottomPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (points.isEmpty) return const SizedBox.shrink();
+    if (points.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceOf(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(color: AppColors.borderOf(context)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.cardPadding,
+            AppSpacing.cardPadding,
+            AppSpacing.cardPadding,
+            AppSpacing.cardPadding + navBottom,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.route_rounded,
+                size: 22,
+                color: AppColors.textMutedOf(context),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  context.l10n.noRouteReport,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondaryOf(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final km = _calcTotalKm(points);
     final dur = points.last.fixTime.difference(points.first.fixTime).abs();
@@ -364,6 +595,7 @@ class _BottomPanel extends StatelessWidget {
     final maxSpd = points.map((p) => p.speed).reduce((a, b) => a > b ? a : b);
     final avgSpd =
         points.map((p) => p.speed).reduce((a, b) => a + b) / points.length;
+    final intelLine = formatRouteIntelSummaryLine(routeIntel, context.l10n);
 
     return Container(
       decoration: BoxDecoration(
@@ -447,6 +679,53 @@ class _BottomPanel extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (intelLine != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    intelLine,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      height: 1.25,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+                if (points.length >= 2) ...[
+                  const SizedBox(height: 10),
+                  RouteEventTimeline(
+                    analysisKey: routeIntelMemoKey,
+                    analysis: routeIntel,
+                    compact: false,
+                    reportStyle: true,
+                    showEmptyState: true,
+                    collapsedItemLimit: 12,
+                    selectedItemKey: selectedTimelineItemKey,
+                    filter: timelineFilter,
+                    onFilterChanged: onTimelineFilterChanged,
+                    onItemTap: onTimelineItemTap,
+                  ),
+                ],
+                if (points.length >= 2 && onOpenReplayShortcut != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: Icon(
+                        Icons.play_circle_outline_rounded,
+                        color: AppColors.accent.withValues(alpha: 0.95),
+                        size: 18,
+                      ),
+                      label: Text(l10n.tripReplay),
+                      onPressed: onOpenReplayShortcut,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -9,12 +9,35 @@ class AlertsRepositoryImpl implements AlertsRepository {
 
   @override
   Future<List<AlertEntity>> getAlerts({
-    int page = 1,
-    int pageSize = 20,
+    String status = 'all',
+    int limit = 50,
+    int offset = 0,
+    int? deviceId,
   }) async {
-    final models = await _dataSource.getAlerts(page: page, pageSize: pageSize);
+    final models = await _dataSource.getAlerts(
+      status: status,
+      limit: limit,
+      offset: offset,
+      deviceId: deviceId,
+    );
     return models.map((m) => m.toEntity()).toList();
   }
+
+  @override
+  Future<int> getUnreadCount() => _dataSource.getUnreadCount();
+
+  @override
+  Future<AlertEntity> getAlertById(int id) async {
+    final model = await _dataSource.getAlertById(id);
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> markAlertRead(int id) => _dataSource.markAlertRead(id);
+
+  @override
+  Future<void> markAllAlertsRead({DateTime? before}) =>
+      _dataSource.markAllAlertsRead(before: before);
 
   @override
   Future<List<AlertEntity>> getSmartAlerts() async {
@@ -29,7 +52,5 @@ class AlertsRepositoryImpl implements AlertsRepository {
   }
 
   @override
-  Future<void> markAsRead(String alertId) async {
-    await _dataSource.markAsRead(alertId);
-  }
+  Future<void> markAsRead(String alertId) => _dataSource.markAsRead(alertId);
 }

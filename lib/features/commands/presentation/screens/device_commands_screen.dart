@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -41,6 +42,7 @@ class _DeviceCommandsScreenState extends ConsumerState<DeviceCommandsScreen> {
     super.initState();
     _expanded[CommandCategory.deviceInformation] = true;
     _expanded[CommandCategory.tracking] = true;
+    AppLogger.commands('Commands screen opened: deviceId=${widget.deviceId} name=${widget.deviceName}');
   }
 
   @override
@@ -86,19 +88,22 @@ class _DeviceCommandsScreenState extends ConsumerState<DeviceCommandsScreen> {
             ),
             Expanded(
               child: resolvedAsync.when(
-                data: (byCategory) => _buildSections(
-                  context,
-                  byCategory: byCategory,
-                  dispatchingKey: dispatchingKey,
-                ),
+                data: (byCategory) {
+                  final total = byCategory.values.fold<int>(0, (sum, list) => sum + list.length);
+                  AppLogger.commands('Commands loaded: count=$total deviceId=${widget.deviceId}');
+                  return _buildSections(
+                    context,
+                    byCategory: byCategory,
+                    dispatchingKey: dispatchingKey,
+                  );
+                },
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: AppColors.accent),
                 ),
-                error: (_, __) => _buildSections(
-                  context,
-                  byCategory: const {},
-                  dispatchingKey: dispatchingKey,
-                ),
+                error: (e, __) {
+                  AppLogger.commandsError('Commands load failed: deviceId=${widget.deviceId} error=$e');
+                  return _buildError(context);
+                },
               ),
             ),
           ],
@@ -209,10 +214,58 @@ class _DeviceCommandsScreenState extends ConsumerState<DeviceCommandsScreen> {
     );
   }
 
+  Widget _buildError(BuildContext context) {
+    final l10n = context.l10n;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+            ),
+            child: const Icon(Icons.error_outline_rounded,
+                color: AppColors.error, size: 32),
+          ),
+          const SizedBox(height: 16),
+          Text(l10n.cmdLoadFailed,
+              style: AppTextStyles.headlineSmall
+                  .copyWith(color: AppColors.textSecondaryOf(context))),
+          const SizedBox(height: 8),
+          Text(
+            l10n.cmdErrorUnexpected,
+            style: AppTextStyles.bodySmall
+                .copyWith(color: AppColors.textMutedOf(context)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              ref.invalidate(supportedCommandTypesProvider);
+              ref.invalidate(installationProfileProvider);
+            },
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(l10n.cmdRetry),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.accent,
+              side: BorderSide(color: AppColors.accent.withValues(alpha: 0.3)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleDispatch(ResolvedDeviceCommand resolved) async {
     if (!mounted) return;
+    AppLogger.commands('Command selected: key=${resolved.commandKey} risk=${resolved.command.riskLevel.name} deviceId=${widget.deviceId}');
 
     if (resolved.command.requiresConfirmation) {
+      AppLogger.commands('Confirmation dialog opened: key=${resolved.commandKey} risk=${resolved.command.riskLevel.name}');
       final confirmed = await showCommandConfirmationDialog(
         context,
         resolved: resolved,
@@ -232,6 +285,12 @@ class _DeviceCommandsScreenState extends ConsumerState<DeviceCommandsScreen> {
     );
 
     if (!mounted) return;
+
+    AppLogger.commands('Command result: key=${resolved.commandKey} result=${result.runtimeType} deviceId=${widget.deviceId}');
+
+    if (result is CommandBlockedBySafety) {
+      AppLogger.commands('Command blocked: key=${resolved.commandKey} reason=${result.reason}');
+    }
 
     if (result is CommandNeedsConfirmation) {
       final confirmed = await showCommandConfirmationDialog(

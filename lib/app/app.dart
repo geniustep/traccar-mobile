@@ -5,7 +5,9 @@ import '../core/l10n/app_localizations.dart';
 import '../core/l10n/locale_provider.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_provider.dart';
+import '../features/notifications/services/fcm_sync_provider.dart';
 import '../shared/providers/traccar_providers.dart';
+import 'fcm_event_listener.dart';
 import 'router.dart';
 import 'socket_event_listener.dart';
 
@@ -15,20 +17,22 @@ class ElmoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(socketAuthSyncProvider);
+    ref.watch(connectionSocketSyncProvider);
+    ref.watch(fcmAuthSyncProvider);
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
     final isArabic = locale.languageCode == 'ar';
 
     return MaterialApp.router(
-      title: 'ELMO Fleet',
+      title: 'Elmo GPS',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(isArabic: isArabic),
       darkTheme: AppTheme.dark(isArabic: isArabic),
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) =>
-          SocketEventListener(child: child),
+          FcmEventListener(child: SocketEventListener(child: child)),
       locale: locale,
       supportedLocales: const [
         Locale('en'),

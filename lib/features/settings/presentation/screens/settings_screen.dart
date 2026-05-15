@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../map/presentation/widgets/route_intelligence_thresholds_preview.dart';
+import '../../../map/presentation/widgets/route_intelligence_thresholds_editor.dart';
 
 // ── Notifications toggle provider ─────────────────────────────────────────────
 final _notificationsEnabledProvider = StateProvider<bool>((ref) => true);
@@ -107,6 +110,12 @@ class SettingsScreen extends ConsumerWidget {
                 // ── Preferences ──────────────────────────────────────────────
                 _SectionLabel(l10n.sectionPreferences),
                 const SizedBox(height: AppSpacing.sm),
+                _SectionLabel(l10n.routeIntelSettingsPreviewSection),
+                const SizedBox(height: AppSpacing.xs),
+                const RouteIntelligenceGlobalThresholdPreview(),
+                const SizedBox(height: AppSpacing.md),
+                const RouteIntelligenceLocalThresholdsEditor(),
+                const SizedBox(height: AppSpacing.md),
                 _SettingsGroup(isDark: isDark, children: [
                   _NotificationsTile(l10n: l10n, isDark: isDark),
                   _GroupDivider(),
@@ -181,18 +190,32 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showAboutDialog(BuildContext context, AppLocalizations l10n) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.aboutElmo),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const _AboutRow('ELMO Fleet Intelligence', ''),
+            const SizedBox(height: 8),
+            Image.asset(
+              isDark ? 'assets/images/elmo-02.png' : 'assets/images/elmogps.png',
+              width: 180,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 20),
             _AboutRow('${l10n.version}:', '1.0.0'),
             const SizedBox(height: 8),
-            const Text('Smart GPS fleet tracking powered by Traccar.'),
+            Text(
+              l10n.aboutFleetTrackingSubtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 4),
           ],
         ),
         actions: [
@@ -270,13 +293,15 @@ class _ProfileHeader extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    l10n.settingsTitle,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: -0.3,
+                  // شعار Elmo GPS — long-press (debug) يفتح Debug Console الداخلي
+                  GestureDetector(
+                    onLongPress: kDebugMode
+                        ? () => context.push('/debug-console')
+                        : null,
+                    child: Image.asset(
+                      'assets/images/elmo-02.png',
+                      height: 28,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   _GlassButton(

@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/connection/app_connection_monitor.dart';
+import '../../core/logging/app_logger.dart';
 import '../../core/socket/traccar_socket_service.dart';
 import '../../core/socket/socket_provider.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
@@ -36,9 +40,6 @@ final socketAuthSyncProvider = Provider<void>((ref) {
   final svc = ref.watch(concreteSocketServiceProvider);
   void syncToAuth(AuthState state) {
     if (state.isAuthenticated && !state.isLoading) {
-      // Ensure JSESSIONID (from Set-Cookie) before WS — required by some
-      // Nginx+Traccar stacks; also covers upgrades from app versions that
-      // did not store the cookie, or if parsing failed the first time.
       Future.microtask(() async {
         try {
           await ref.read(authRepositoryProvider).ensureTraccarSocketSession();
@@ -54,3 +55,33 @@ final socketAuthSyncProvider = Provider<void>((ref) {
   syncToAuth(ref.read(authProvider));
   ref.onDispose(svc.disconnect);
 });
+
+// ── Connection monitor ↔ Socket bridge ────────────────────────────────────────
+
+/// Bridges [TraccarSocketService] state & data events to [AppConnectionMonitor].
+///
+/// Watch from the app root alongside [socketAuthSyncProvider].
+final connectionSocketSyncProvider = Provider<void>((ref) {
+  final monitor = ref.read(appConnectionMonitorProvider.notifier);
+  final svc = ref.watch(concreteSocketServiceProvider);
+
+  final stateSub = svc.stateStream.listen((socketState) {
+    AppLogger.websocket('State: ${_socketLabel(socketState)}');
+    monitor.onSocketStateChanged(socketState);
+  });
+
+  final msgSub = svc.messageStream.listen((msg) {
+    if (!msg.isEmpty) {
+      monitor.recordLiveEvent();
+    }
+  });
+
+  ref.onDispose(() {
+    stateSub.cancel();
+    msgSub.cancel();
+  });
+});
+
+String _socketLabel(dynamic s) {
+  return s.toString();
+}

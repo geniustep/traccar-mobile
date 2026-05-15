@@ -1,8 +1,10 @@
+import '../../../../core/error/app_exception.dart';
 import '../../../../core/network/traccar_client.dart';
 import '../../../../core/api/traccar_endpoints.dart';
+import 'vehicle_device_gateway.dart';
 import '../models/vehicle_model.dart';
 
-class VehicleRemoteDataSource {
+class VehicleRemoteDataSource implements VehicleDeviceGateway {
   const VehicleRemoteDataSource(this._client);
 
   final TraccarClient _client;
@@ -57,6 +59,32 @@ class VehicleRemoteDataSource {
 
   /// Live position — same as getVehicle (Traccar always returns latest).
   Future<VehicleModel> getVehicleLive(String id) => getVehicle(id);
+
+  /// Full device row JSON for merge-then-[PUT] flows (preserves all fields).
+  @override
+  Future<Map<String, dynamic>> getDeviceJson(int deviceId) async {
+    final result = await _client.get<Map<String, dynamic>>(
+      TraccarEndpoints.deviceById(deviceId),
+      fromJson: (j) => j as Map<String, dynamic>,
+    );
+    return result.getOrThrow();
+  }
+
+  /// [PUT] `/devices/{id}` with a full device object (same shape as [getDeviceJson]).
+  @override
+  Future<void> putDevice(Map<String, dynamic> deviceJson) async {
+    final rawId = deviceJson['id'];
+    final id = rawId is int ? rawId : int.tryParse('$rawId');
+    if (id == null) {
+      throw const ValidationException(message: 'Invalid device id.');
+    }
+    (await _client.put<dynamic>(
+      TraccarEndpoints.deviceUpdate(id),
+      data: deviceJson,
+      fromJson: (j) => j,
+    ))
+        .getOrThrow();
+  }
 
   // ── Private helpers ──────────────────────────────────────────────────────
 

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -10,14 +9,9 @@ import '../../../../core/error/app_exception.dart';
 import '../../../../core/network/network_exception.dart';
 import '../../../../shared/providers/core_providers.dart';
 
-// ── Shared Prefs ─────────────────────────────────────────────────────────────
-
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
-  return SharedPreferences.getInstance();
-});
-
 // ── Repository ───────────────────────────────────────────────────────────────
 
+/// Uses [sharedPreferencesProvider] from `core_providers.dart` (single app-wide instance).
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider).valueOrNull;
   if (prefs == null) throw StateError('SharedPreferences not ready');

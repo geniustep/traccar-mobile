@@ -159,20 +159,19 @@ class _EfficiencyScoreCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.12),
+            color.withValues(alpha: 0.12),
             AppColors.cardBackgroundOf(context),
           ],
         ),
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.fleetEfficiencyScore,
-                  style: AppTextStyles.bodySmall),
+              Text(l10n.fleetEfficiencyScore, style: AppTextStyles.bodySmall),
               Text(
                 '${score.toStringAsFixed(1)}%',
                 style: AppTextStyles.displayMedium.copyWith(color: color),
@@ -202,8 +201,7 @@ class _EfficiencyScoreCard extends StatelessWidget {
                 Center(
                   child: Text(
                     '${score.toInt()}',
-                    style:
-                        AppTextStyles.headlineSmall.copyWith(color: color),
+                    style: AppTextStyles.headlineSmall.copyWith(color: color),
                   ),
                 ),
               ],
@@ -232,8 +230,7 @@ class _WeeklyBarChart extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(data.dailyDistances.length, (i) {
-                final ratio =
-                    max > 0 ? data.dailyDistances[i] / max : 0.0;
+                final ratio = max > 0 ? data.dailyDistances[i] / max : 0.0;
                 final isMax = data.dailyDistances[i] == max;
                 return Expanded(
                   child: Padding(
@@ -245,8 +242,7 @@ class _WeeklyBarChart extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 3),
                             child: Text(
-                              FormatUtils.distance(
-                                  data.dailyDistances[i]),
+                              FormatUtils.distance(data.dailyDistances[i]),
                               style: AppTextStyles.labelSmall.copyWith(
                                 fontSize: 9,
                                 color: AppColors.accent,
@@ -266,11 +262,11 @@ class _WeeklyBarChart extends StatelessWidget {
                                     isMax
                                         ? AppColors.accent
                                         : AppColors.accent
-                                            .withOpacity(0.4),
+                                            .withValues(alpha: 0.4),
                                     isMax
                                         ? AppColors.accentDark
                                         : AppColors.accent
-                                            .withOpacity(0.2),
+                                            .withValues(alpha: 0.2),
                                   ],
                                 ),
                                 borderRadius: const BorderRadius.vertical(
@@ -410,7 +406,7 @@ class _HighlightCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),

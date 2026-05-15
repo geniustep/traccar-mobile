@@ -27,6 +27,7 @@ class CommandCapabilityService {
     required List<String> traccarSupportedTypes,
     required DeviceInstallationProfile installation,
     String? deviceModel,
+    String languageCode = 'fr',
   }) {
     final profile = DeviceProfilesCatalog.findByModel(deviceModel);
     final resolved = <ResolvedDeviceCommand>[];
@@ -40,6 +41,7 @@ class CommandCapabilityService {
         traccarSupportedTypes: traccarSupportedTypes,
         installation: installation,
         profile: profile,
+        languageCode: languageCode,
       );
       // Hide permissionDenied from viewer and operator — they should never
       // see commands they cannot use. Technicians see admin-only commands
@@ -61,6 +63,7 @@ class CommandCapabilityService {
     required List<String> traccarSupportedTypes,
     required DeviceInstallationProfile installation,
     String? deviceModel,
+    String languageCode = 'fr',
   }) {
     final all = resolveAll(
       userRole: userRole,
@@ -69,6 +72,7 @@ class CommandCapabilityService {
       traccarSupportedTypes: traccarSupportedTypes,
       installation: installation,
       deviceModel: deviceModel,
+      languageCode: languageCode,
     );
 
     final map = <CommandCategory, List<ResolvedDeviceCommand>>{};
@@ -89,13 +93,14 @@ class CommandCapabilityService {
     required List<String> traccarSupportedTypes,
     required DeviceInstallationProfile installation,
     DeviceCommandProfile? profile,
+    String languageCode = 'fr',
   }) {
     // ── Step 1: Permission check ───────────────────────────────────────────
     if (!command.canBeUsedBy(userRole)) {
       return ResolvedDeviceCommand(
         command: command,
         status: CommandCapabilityStatus.permissionDenied,
-        disableReason: 'Vous n\'avez pas les droits pour cette commande.',
+        disableReason: _permissionDeniedReason(languageCode),
       );
     }
 
@@ -105,8 +110,7 @@ class CommandCapabilityService {
         return ResolvedDeviceCommand(
           command: command,
           status: CommandCapabilityStatus.notSupportedByDevice,
-          disableReason:
-              'Cette commande n\'est pas supportée par ce modèle d\'appareil.',
+          disableReason: _notSupportedByModelReason(languageCode),
         );
       }
     }
@@ -122,8 +126,7 @@ class CommandCapabilityService {
         return ResolvedDeviceCommand(
           command: command,
           status: CommandCapabilityStatus.notSupportedByDevice,
-          disableReason:
-              'Cette commande n\'est pas disponible selon le serveur Traccar.',
+          disableReason: _notSupportedByPlatformReason(languageCode),
         );
       }
     }
@@ -136,7 +139,8 @@ class CommandCapabilityService {
         return ResolvedDeviceCommand(
           command: command,
           status: CommandCapabilityStatus.notInstalled,
-          disableReason: DeviceInstallationProfile.missingFlagReasonFr(missing),
+          disableReason:
+              DeviceInstallationProfile.missingFlagReason(missing, languageCode),
         );
       }
     }
@@ -147,17 +151,13 @@ class CommandCapabilityService {
         return ResolvedDeviceCommand(
           command: command,
           status: CommandCapabilityStatus.offlineBlocked,
-          disableReason:
-              'L\'appareil est hors ligne. Cette commande ne peut pas être '
-              'exécutée sans connexion active.',
+          disableReason: _offlineBlockedReason(languageCode),
         );
       }
       return ResolvedDeviceCommand(
         command: command,
         status: CommandCapabilityStatus.offlineQueued,
-        queueMessage:
-            'L\'appareil est hors ligne. La commande sera envoyée dès '
-            'qu\'il se reconnecte.',
+        queueMessage: _offlineQueuedReason(languageCode),
       );
     }
 
@@ -167,10 +167,8 @@ class CommandCapabilityService {
       return ResolvedDeviceCommand(
         command: command,
         status: CommandCapabilityStatus.blockedBySpeed,
-        disableReason:
-            'Le véhicule se déplace à ${currentSpeedKmh.toStringAsFixed(0)} km/h. '
-            'Cette commande est bloquée au-dessus de '
-            '${command.maxAllowedSpeedKmh.toStringAsFixed(0)} km/h.',
+        disableReason: _speedBlockedReason(
+            languageCode, currentSpeedKmh, command.maxAllowedSpeedKmh),
       );
     }
 
@@ -194,7 +192,7 @@ class CommandCapabilityService {
       return ResolvedDeviceCommand(
         command: command,
         status: CommandCapabilityStatus.notSupportedByDevice,
-        disableReason: 'Cette commande n\'est pas supportée par cette application.',
+        disableReason: _unsupportedByAppReason(languageCode),
       );
     }
 
@@ -204,4 +202,65 @@ class CommandCapabilityService {
       status: CommandCapabilityStatus.available,
     );
   }
+
+  // ── Locale-aware reason helpers ─────────────────────────────────────────────
+
+  static String _permissionDeniedReason(String lang) => switch (lang) {
+        'ar' => 'ليس لديك صلاحية لهذا الأمر.',
+        'fr' => 'Vous n\'avez pas les droits pour cette commande.',
+        'es' => 'No tiene permisos para este comando.',
+        _ => 'You do not have permission for this command.',
+      };
+
+  static String _notSupportedByModelReason(String lang) => switch (lang) {
+        'ar' => 'هذا الأمر غير مدعوم من هذا الطراز.',
+        'fr' => 'Cette commande n\'est pas supportée par ce modèle d\'appareil.',
+        'es' => 'Este comando no es compatible con este modelo de dispositivo.',
+        _ => 'This command is not supported by this device model.',
+      };
+
+  static String _notSupportedByPlatformReason(String lang) => switch (lang) {
+        'ar' => 'هذا الأمر غير متاح وفقاً للنظام.',
+        'fr' => 'Cette commande n\'est pas disponible selon la plateforme ELMOGPS.',
+        'es' => 'Este comando no está disponible según la plataforma.',
+        _ => 'This command is not available on this platform.',
+      };
+
+  static String _offlineBlockedReason(String lang) => switch (lang) {
+        'ar' => 'الجهاز غير متصل. لا يمكن تنفيذ هذا الأمر بدون اتصال نشط.',
+        'fr' =>
+          'L\'appareil est hors ligne. Cette commande ne peut pas être exécutée sans connexion active.',
+        'es' =>
+          'El dispositivo está desconectado. Este comando no se puede ejecutar sin conexión activa.',
+        _ => 'Device is offline. This command cannot be executed without an active connection.',
+      };
+
+  static String _offlineQueuedReason(String lang) => switch (lang) {
+        'ar' => 'الجهاز غير متصل. سيتم إرسال الأمر عند إعادة الاتصال.',
+        'fr' =>
+          'L\'appareil est hors ligne. La commande sera envoyée dès qu\'il se reconnecte.',
+        'es' =>
+          'El dispositivo está desconectado. El comando se enviará cuando se reconecte.',
+        _ => 'Device is offline. The command will be sent when it reconnects.',
+      };
+
+  static String _speedBlockedReason(
+          String lang, double currentSpeed, double maxSpeed) =>
+      switch (lang) {
+        'ar' =>
+          'المركبة تتحرك بسرعة ${currentSpeed.toStringAsFixed(0)} كم/س. هذا الأمر محظور فوق ${maxSpeed.toStringAsFixed(0)} كم/س.',
+        'fr' =>
+          'Le véhicule se déplace à ${currentSpeed.toStringAsFixed(0)} km/h. Cette commande est bloquée au-dessus de ${maxSpeed.toStringAsFixed(0)} km/h.',
+        'es' =>
+          'El vehículo se mueve a ${currentSpeed.toStringAsFixed(0)} km/h. Este comando está bloqueado por encima de ${maxSpeed.toStringAsFixed(0)} km/h.',
+        _ =>
+          'Vehicle is moving at ${currentSpeed.toStringAsFixed(0)} km/h. This command is blocked above ${maxSpeed.toStringAsFixed(0)} km/h.',
+      };
+
+  static String _unsupportedByAppReason(String lang) => switch (lang) {
+        'ar' => 'هذا الأمر غير مدعوم من هذا التطبيق.',
+        'fr' => 'Cette commande n\'est pas supportée par cette application.',
+        'es' => 'Este comando no es compatible con esta aplicación.',
+        _ => 'This command is not supported by this application.',
+      };
 }

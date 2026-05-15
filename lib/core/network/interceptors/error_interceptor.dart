@@ -28,12 +28,36 @@ class ErrorInterceptor extends Interceptor {
         AppException.timeout(),
       DioExceptionType.cancel => AppException.cancelled(),
       DioExceptionType.connectionError => AppException.noConnection(),
+      DioExceptionType.badCertificate => UnknownException(
+          message:
+              'Failed to verify the server certificate (HTTPS). '
+              'Self-signed or mismatched certificates often cause this. '
+              'Try a valid certificate, or use the correct server URL.',
+          details: e.error,
+        ),
       DioExceptionType.badResponse => AppException.fromStatusCode(
           e.response?.statusCode ?? 0,
           _extractMessage(e.response?.data),
         ),
-      _ => UnknownException(message: e.message ?? 'Unexpected error occurred'),
+      DioExceptionType.unknown => UnknownException(
+          message: _fallbackDioMessage(e),
+          details: e.error,
+        ),
     };
+  }
+
+  /// Dio often sets [DioException.message] to the generic "Unexpected error occurred"
+  /// while the real cause is in [DioException.error].
+  String _fallbackDioMessage(DioException e) {
+    final generic = e.message == null ||
+        e.message!.isEmpty ||
+        e.message == 'Unexpected error occurred';
+    final err = e.error;
+    if (generic && err != null) {
+      final s = err.toString();
+      if (s.isNotEmpty) return s;
+    }
+    return e.message ?? 'Unexpected error occurred';
   }
 
   String? _extractMessage(dynamic data) {

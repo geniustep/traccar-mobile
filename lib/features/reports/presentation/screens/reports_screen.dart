@@ -27,7 +27,9 @@ import 'pdf_preview_screen.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ReportsScreen extends ConsumerStatefulWidget {
-  const ReportsScreen({super.key});
+  const ReportsScreen({super.key, this.entryParams});
+
+  final ReportsEntryParams? entryParams;
 
   @override
   ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
@@ -53,7 +55,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabCount, vsync: this);
+    final entry = widget.entryParams;
+    _tabController = TabController(
+      length: _tabCount,
+      vsync: this,
+      initialIndex: entry != null ? entry.tabIndex.clamp(0, _tabCount - 1) : 0,
+    );
+
+    if (entry != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final notifier = ref.read(reportFilterProvider.notifier);
+        notifier.setVehicle(entry.vehicleId, entry.vehicleName);
+        notifier.setPeriod(entry.period);
+        if (entry.period == ReportPeriod.custom) {
+          notifier.setFrom(entry.from);
+          notifier.setTo(entry.to);
+        }
+        notifier.generate();
+      });
+    }
   }
 
   @override
@@ -382,7 +402,7 @@ class _ShareBottomSheet extends ConsumerWidget {
     if (path == null || !context.mounted) return;
     await ref.read(reportShareServiceProvider).sharePdf(
           path,
-          subject: 'Rapport ELMOGPS — ${filter.vehicleName}',
+          subject: AppLocalizations.of(context).reportPdfSubject(filter.vehicleName),
         );
   }
 
@@ -410,7 +430,7 @@ class _ShareBottomSheet extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PdfPreviewScreen(
-          title: 'Rapport — ${filter.vehicleName}',
+          title: AppLocalizations.of(context).reportPdfTitle(filter.vehicleName),
           filePath: path,
         ),
       ),
@@ -604,7 +624,7 @@ class _ReportFilterBar extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: _PeriodChip(
-                    label: p.labelFr,
+                    label: p.localizedLabel(AppLocalizations.of(context)),
                     isSelected: isSelected,
                     onTap: () => onPeriodSelected(p),
                   ),
@@ -620,7 +640,7 @@ class _ReportFilterBar extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _DateChip(
-                    label: 'De',
+                    label: AppLocalizations.of(context).startDateLabel,
                     value: DateFormatter.toDateTime(filter.from),
                     icon: Icons.calendar_today_rounded,
                     onTap: () => _pickDateTime(context, filter.from, onFromPicked),
@@ -633,7 +653,7 @@ class _ReportFilterBar extends ConsumerWidget {
                 ),
                 Expanded(
                   child: _DateChip(
-                    label: 'À',
+                    label: AppLocalizations.of(context).endDateLabel,
                     value: DateFormatter.toDateTime(filter.to),
                     icon: Icons.calendar_today_rounded,
                     onTap: () => _pickDateTime(context, filter.to, onToPicked),
@@ -1554,7 +1574,7 @@ class _TripReportCard extends StatelessWidget {
                         style: AppTextStyles.labelLarge),
                     Text(
                       '${DateFormatter.toTime(trip.startTime)} → '
-                      '${trip.endTime != null ? DateFormatter.toTime(trip.endTime!) : 'En cours'}',
+                      '${trip.endTime != null ? DateFormatter.toTime(trip.endTime!) : AppLocalizations.of(context).ongoingTrip}',
                       style: AppTextStyles.bodySmall,
                     ),
                   ],

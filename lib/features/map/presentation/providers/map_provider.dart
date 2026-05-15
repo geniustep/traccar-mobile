@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../../vehicles/presentation/providers/vehicles_provider.dart';
 import '../../../../core/socket/socket_provider.dart';
+import '../../core/map_camera_focus.dart';
+import '../../core/vehicle_live_merger.dart';
+import 'map_vehicle_filter.dart';
 
 // ── Live-merged map vehicles ──────────────────────────────────────────────────
 
@@ -20,34 +23,34 @@ final mapVehiclesProvider =
   final livePositions = ref.watch(livePositionsProvider);
 
   return vehiclesAsync.whenData((vehicles) {
-    if (livePositions.isEmpty) return vehicles;
-
-    return vehicles.map((v) {
-      final deviceId = int.tryParse(v.id);
-      if (deviceId == null) return v;
-
-      final pos = livePositions[deviceId];
-      if (pos == null) return v;
-
-      final speedKmh = pos.speed * 1.852;
-      final status = speedKmh > 2.0
-          ? 'moving'
-          : (pos.ignitionOn ? 'idle' : 'stopped');
-
-      return v.copyWith(
-        latitude: pos.latitude,
-        longitude: pos.longitude,
-        speed: speedKmh,
-        status: status,
-        lastUpdate: pos.fixTime,
-        ignition: pos.ignitionOn,
-        batteryVoltage: pos.batteryVoltage,
-        fuelLevel: pos.fuelLevel,
-      );
-    }).toList();
+    return VehicleLiveMerger.mergeFleet(vehicles, livePositions);
   });
 });
 
 // Selected vehicle ID on map (for bottom sheet popup)
 final selectedMapVehicleProvider =
     StateProvider.autoDispose<String?>((ref) => null);
+
+/// Set before navigating to `/map` to focus a vehicle after the screen mounts.
+final pendingMapVehicleFocusProvider = StateProvider<String?>((ref) => null);
+
+/// Camera focus/fit-bounds request consumed by [LiveMapScreen] after filter apply.
+final pendingMapCameraFocusProvider =
+    StateProvider<MapCameraFocusRequest?>((ref) => null);
+
+/// In-memory visibility filter for the live map (not persisted).
+final vehicleMapFilterProvider =
+    StateProvider.autoDispose<VehicleMapFilterState>(
+  (ref) => const VehicleMapFilterState(),
+);
+
+/// Fleet list after applying [vehicleMapFilterProvider] (raw merge unchanged).
+final filteredMapVehiclesProvider =
+    Provider.autoDispose<AsyncValue<List<VehicleEntity>>>((ref) {
+  final vehiclesAsync = ref.watch(mapVehiclesProvider);
+  final filter = ref.watch(vehicleMapFilterProvider);
+
+  return vehiclesAsync.whenData(
+    (vehicles) => applyVehicleMapFilter(vehicles, filter),
+  );
+});

@@ -39,6 +39,7 @@ class _GeofenceEditorScreenState extends ConsumerState<GeofenceEditorScreen> {
   bool _notifyExit = false;
   bool _busy = false;
   GeofenceEntity? _initial;
+  int _mapFitSeq = 0;
 
   static const _presets = <Color>[
     Color(0xFF2196F3),
@@ -58,7 +59,11 @@ class _GeofenceEditorScreenState extends ConsumerState<GeofenceEditorScreen> {
   Future<void> _hydrate() async {
     if (widget.isCreate) {
       _center = MapConfig.defaultCameraPosition.target;
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {
+          _mapFitSeq++;
+        });
+      }
       return;
     }
     final id = int.tryParse(widget.geofenceId);
@@ -92,7 +97,9 @@ class _GeofenceEditorScreenState extends ConsumerState<GeofenceEditorScreen> {
         ..addAll(GeofenceAreaCodec.decodePolygon(g.area));
     }
     _color = Color.fromARGB(255, g.fillColor.red, g.fillColor.green, g.fillColor.blue);
-    setState(() {});
+    setState(() {
+      _mapFitSeq++;
+    });
   }
 
   int _argb(Color c) =>
@@ -250,6 +257,7 @@ class _GeofenceEditorScreenState extends ConsumerState<GeofenceEditorScreen> {
               if (k == GeofenceDrawKind.circle && _center == null) {
                 _center = MapConfig.defaultCameraPosition.target;
               }
+              _mapFitSeq++;
             }),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -281,6 +289,12 @@ class _GeofenceEditorScreenState extends ConsumerState<GeofenceEditorScreen> {
             polygonPoints: _poly,
             strokeColor: stroke,
             fillColor: fill,
+            fitNonce: _mapFitSeq,
+            emptyHint: _kind == GeofenceDrawKind.polygon && _poly.isEmpty
+                ? l10n.geofencePolygonTapHint
+                : _kind == GeofenceDrawKind.circle && _center == null
+                    ? l10n.geofenceTapMapCenterHint
+                    : null,
             onMapTap: (pos) => setState(() {
               if (_kind == GeofenceDrawKind.circle) {
                 _center = pos;

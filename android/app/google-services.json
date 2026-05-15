@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "599940066361",
+    "project_id": "elmogps-production",
+    "storage_bucket": "elmogps-production.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599940066361:android:52801456525de22d0371e8",
+        "android_client_info": {
+          "package_name": "com.example.elmogps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBY7crvZ4KJPWLAY6p9nbXlTkVrbJ5H5Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

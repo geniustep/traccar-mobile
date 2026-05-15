@@ -1,1020 +1,435 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/elmo_card.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/widgets/section_header.dart';
-import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/format_utils.dart';
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../core/models/traccar_position.dart';
-import '../../../../core/models/traccar_device.dart';
 import '../../../../shared/providers/traccar_providers.dart';
+import '../../../commands/presentation/providers/commands_provider.dart';
+import '../../../map/core/map_camera_focus.dart';
+import '../../../map/presentation/providers/map_provider.dart';
+import '../../../map/presentation/widgets/route_intelligence_thresholds_preview.dart';
+import '../../../map/presentation/widgets/route_intelligence_vehicle_central_threshold_editor.dart';
 import '../../../trips/presentation/providers/trips_provider.dart';
-import '../../../trips/domain/entities/trip.dart';
 import '../../../alerts/presentation/providers/alerts_provider.dart';
-import '../../../alerts/domain/entities/alert.dart';
 import '../../../fleet/presentation/fleet_vehicle_brief_provider.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../domain/entities/vehicle.dart';
+import '../providers/vehicle_today_dashboard_provider.dart';
 import '../providers/vehicles_provider.dart';
+import '../widgets/vehicle_detail_cards.dart';
+import '../widgets/report_entry_sheet.dart';
+import '../widgets/replay_entry_sheet.dart';
 
-/// سطر تعريفي للسائق في شاشة تفاصيل المركبة.
-String vehicleDetailFleetDriverLine(
-  AppLocalizations l10n,
-  VehicleEntity vehicle,
-  FleetVehicleBrief? brief,
-) {
-  if (brief != null) return brief.driverLine;
-  final n = vehicle.driverName?.trim();
-  if (n != null && n.isNotEmpty) return l10n.fleetCardDriverAssigned(n);
-  return l10n.fleetCardNoDriver;
-}
-
-class VehicleDetailScreen extends ConsumerWidget {
+class VehicleDetailScreen extends ConsumerStatefulWidget {
   const VehicleDetailScreen({super.key, required this.vehicleId});
 
   final String vehicleId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VehicleDetailScreen> createState() =>
+      _VehicleDetailScreenState();
+}
+
+class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLogger.navigation(
+        'Vehicle details opened: vehicleId=${widget.vehicleId} '
+        'source=vehicle_detail_screen',
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final vehicleAsync = ref.watch(vehicleDetailProvider(vehicleId));
-    final tripsAsync = ref.watch(vehicleTripsProvider(vehicleId));
-    final alertsAsync = ref.watch(vehicleAlertsProvider(vehicleId));
-    final livePositions = ref.watch(livePositionsProvider);
-    final liveDevices = ref.watch(liveDevicesProvider);
-    final fleetBriefMap = ref.watch(fleetVehicleBriefMapProvider);
+    final vehicleAsync = ref.watch(vehicleDetailProvider(widget.vehicleId));
+
+    ref.listen(vehicleDetailProvider(widget.vehicleId), (prev, next) {
+      if (prev?.isLoading == true && next.hasValue) {
+        AppLogger.navigation(
+          'Vehicle details loaded: vehicleId=${widget.vehicleId}',
+        );
+      }
+      if (next.hasError && prev?.hasError != true) {
+        AppLogger.navigation(
+          'Vehicle details load failed: vehicleId=${widget.vehicleId}',
+        );
+      }
+    });
 
     return Scaffold(
       body: vehicleAsync.when(
-        data: (vehicle) {
-          final deviceId = int.tryParse(vehicle.id);
-          final brief = fleetBriefMap[vehicleId];
-          final livePos = deviceId != null ? livePositions[deviceId] : null;
-          final device = deviceId != null ? liveDevices[deviceId] : null;
-          final status = StatusBadge.fromString(vehicle.status);
-          final voltage = livePos?.vehicleVoltage ?? vehicle.batteryVoltage;
-
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // ── App bar ─────────────────────────────────────────────────────
-              SliverAppBar(
-                pinned: true,
-                elevation: 0,
-                surfaceTintColor: Colors.transparent,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                  onPressed: () => context.pop(),
-                ),
-                title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(vehicle.name, style: AppTextStyles.headlineMedium),
-                    Text(
-                      vehicle.plateNumber,
-                      style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondaryOf(context)),
-                    ),
-                  ],
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.settings_remote_rounded,
-                        color: AppColors.accent),
-                    tooltip: l10n.commandsTitle,
-                    onPressed: () => context.push(
-                      '/vehicles/$vehicleId/commands',
-                      extra: {'name': vehicle.name},
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.gps_fixed_rounded,
-                        color: AppColors.accent),
-                    tooltip: l10n.trackVehicle,
-                    onPressed: () =>
-                        context.push('/vehicles/$vehicleId/track'),
-                  ),
-                ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(1),
-                  child: Container(
-                      height: 1, color: AppColors.borderOf(context)),
-                ),
-              ),
-
-              // ── Content ─────────────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.screenPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. Status + Speed
-                        ElmoCard(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _StatusItem(
-                                  label: l10n.statusLabel,
-                                  value: StatusBadge(status: status),
-                                ),
-                              ),
-                              Container(
-                                  width: 0.5,
-                                  height: 40,
-                                  color: AppColors.borderOf(context)),
-                              Expanded(
-                                child: _StatusItem(
-                                  label: l10n.speedLabel,
-                                  value: Text(
-                                    FormatUtils.speed(
-                                        livePos?.speedKmh ?? vehicle.speed),
-                                    style: AppTextStyles.headlineSmall,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: AppSpacing.md),
-
-                        // 2. Real-time telemetry
-                        ElmoCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.statusMoving,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    l10n.telemetryRealTime,
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                        color: AppColors.textMutedOf(context)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              _TelemetryGrid(
-                                ignition:
-                                    livePos?.ignitionOn ?? vehicle.ignition,
-                                motion: livePos?.motion ?? vehicle.isMoving,
-                                speedKmh:
-                                    livePos?.speedKmh ?? vehicle.speed,
-                                fuelLiters:
-                                    livePos?.fuelLevel ?? vehicle.fuelLevel,
-                                voltage: livePos?.vehicleVoltage ??
-                                    vehicle.batteryVoltage,
-                                hardBrake: livePos?.hardBrake ?? false,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: AppSpacing.md),
-
-                        ElmoCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.emerald,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    l10n.sectionFleet,
-                                    style:
-                                        AppTextStyles.labelSmall.copyWith(
-                                      color:
-                                          AppColors.textMutedOf(context),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              _FleetBriefLine(
-                                icon: Icons.person_outline_rounded,
-                                text: vehicleDetailFleetDriverLine(
-                                    l10n, vehicle, brief),
-                              ),
-                              const SizedBox(height: 6),
-                              _FleetBriefLine(
-                                icon: Icons.build_circle_outlined,
-                                text: brief?.maintenanceLine ??
-                                    l10n.fleetCardNoMaintenance,
-                              ),
-                              if (brief?.hasMaintenanceOverdue == true) ...[
-                                const SizedBox(height: AppSpacing.sm),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        AppColors.error.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.warning_rounded,
-                                          color: AppColors.error, size: 18),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          l10n.maintStatusOverdue,
-                                          style: const TextStyle(
-                                            color: AppColors.error,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              if (brief?.insuranceLine.isNotEmpty == true)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: AppSpacing.sm),
-                                  child: _FleetBriefLine(
-                                    icon:
-                                        Icons.verified_user_outlined,
-                                    text: brief!.insuranceLine,
-                                  ),
-                                ),
-                              if (brief?.techLine.isNotEmpty == true)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 6),
-                                  child: _FleetBriefLine(
-                                    icon: Icons.fact_check_outlined,
-                                    text: brief!.techLine,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: AppSpacing.md),
-
-                        // 3. Current location (if address available)
-                        if (vehicle.address != null) ...[
-                          ElmoCard(
-                            child: Row(
-                              children: [
-                                const Icon(Icons.location_on_rounded,
-                                    color: AppColors.accent, size: 20),
-                                const SizedBox(width: AppSpacing.sm),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(l10n.currentLocation,
-                                          style: AppTextStyles.labelSmall),
-                                      Text(vehicle.address!,
-                                          style: AppTextStyles.bodyMedium),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                        ],
-
-                        // 4. Track vehicle button
-                        GestureDetector(
-                          onTap: () =>
-                              context.push('/vehicles/$vehicleId/track'),
-                          child: Container(
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(
-                                  AppSpacing.cardRadius),
-                              border: Border.all(
-                                  color: AppColors.accent
-                                      .withValues(alpha: 0.35),
-                                  width: 1),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.gps_fixed_rounded,
-                                    color: AppColors.accent, size: 20),
-                                const SizedBox(width: 10),
-                                Text(
-                                  l10n.trackVehicle,
-                                  style: const TextStyle(
-                                    color: AppColors.accent,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Icon(Icons.arrow_forward_ios_rounded,
-                                    color: AppColors.accent, size: 13),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: AppSpacing.md),
-
-                        // 5. Info grid
-                        _buildInfoGrid(
-                            context, vehicle, livePos, voltage, l10n),
-
-                        // 6. Device info (if live device data available)
-                        if (device != null) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          _buildDeviceCard(context, device, l10n),
-                        ],
-
-                        // 7. Position details (altitude, course, accuracy, odometer)
-                        if (livePos != null &&
-                            _hasPositionDetails(livePos)) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          _buildPositionCard(context, livePos, l10n),
-                        ],
-
-                        const SizedBox(height: AppSpacing.sectionSpacing),
-
-                        // 8. Recent Trips
-                        SectionHeader(
-                          title: l10n.recentTrips,
-                          actionLabel: l10n.allTrips,
-                          onAction: () =>
-                              context.push('/vehicles/$vehicleId/trips'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        tripsAsync.when(
-                          data: (trips) {
-                            if (trips.isEmpty) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.all(AppSpacing.lg),
-                                child: Center(
-                                  child: Text(l10n.noTripsToday,
-                                      style: AppTextStyles.bodySmall),
-                                ),
-                              );
-                            }
-                            return Column(
-                              children: trips.take(3).map((trip) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                      bottom: AppSpacing.sm),
-                                  child: _TripTile(trip: trip),
-                                );
-                              }).toList(),
-                            );
-                          },
-                          loading: () => const InlineLoader(),
-                          error: (_, __) => const SizedBox.shrink(),
-                        ),
-
-                        const SizedBox(height: AppSpacing.sectionSpacing),
-
-                        // 9. Recent Alerts
-                        SectionHeader(
-                          title: l10n.recentAlerts,
-                          actionLabel: l10n.allAlerts,
-                          onAction: () => context.go('/alerts'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        alertsAsync.when(
-                          data: (alerts) {
-                            if (alerts.isEmpty) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.all(AppSpacing.lg),
-                                child: Center(
-                                  child: Text(l10n.noAlertsVehicle,
-                                      style: AppTextStyles.bodySmall),
-                                ),
-                              );
-                            }
-                            return Column(
-                              children: alerts.take(3).map((alert) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                      bottom: AppSpacing.sm),
-                                  child: _AlertTile(alert: alert),
-                                );
-                              }).toList(),
-                            );
-                          },
-                          loading: () => const InlineLoader(),
-                          error: (_, __) => const SizedBox.shrink(),
-                        ),
-
-                        SizedBox(
-                            height:
-                                MediaQuery.paddingOf(context).bottom + 12),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+        data: (vehicle) => _VehicleDetailBody(
+          vehicleId: widget.vehicleId,
+          vehicle: vehicle,
+        ),
         loading: () => LoadingView(message: l10n.loadingVehicle),
         error: (e, _) => ErrorView(
           message: e.toString(),
-          onRetry: () => ref.invalidate(vehicleDetailProvider(vehicleId)),
+          onRetry: () =>
+              ref.invalidate(vehicleDetailProvider(widget.vehicleId)),
         ),
       ),
     );
   }
+}
 
-  Widget _buildInfoGrid(
-    BuildContext context,
-    VehicleEntity vehicle,
-    TraccarPosition? livePos,
-    double? voltage,
-    AppLocalizations l10n,
-  ) {
-    final tiles = <Widget>[];
-    if (vehicle.driverName != null) {
-      tiles.add(_InfoGridTile(
-        icon: Icons.person_rounded,
-        label: l10n.driverLabel,
-        value: vehicle.driverName!,
-      ));
-    }
-    if (voltage != null) {
-      tiles.add(_InfoGridTile(
-        icon: Icons.battery_charging_full_rounded,
-        label: l10n.batteryVoltageLabel,
-        value: FormatUtils.voltage(voltage),
-        color: voltage < 11.8 ? AppColors.warning : null,
-      ));
-    }
-    tiles.add(_InfoGridTile(
-      icon: Icons.gps_fixed_rounded,
-      label: l10n.coordinatesLabel,
-      value:
-          '${vehicle.latitude.toStringAsFixed(4)}, ${vehicle.longitude.toStringAsFixed(4)}',
-    ));
-    if (vehicle.lastUpdate != null) {
-      tiles.add(_InfoGridTile(
-        icon: Icons.access_time_rounded,
-        label: l10n.lastUpdateLabel,
-        value: DateFormatter.toRelative(vehicle.lastUpdate!),
-      ));
-    }
-    if (tiles.isEmpty) return const SizedBox.shrink();
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: AppSpacing.sm,
-        mainAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 2.8,
-      ),
-      children: tiles,
+void _openVehicleAlerts(
+  WidgetRef ref,
+  BuildContext context,
+  VehicleEntity vehicle,
+) {
+  AppLogger.alerts(
+    'Vehicle alerts opened: vehicleId=${vehicle.id} source=vehicle_detail',
+  );
+  ref.read(alertsProvider.notifier).setVehicleFilter(
+        vehicle.id,
+        vehicleName: vehicle.name,
+      );
+  context.go('/alerts');
+}
+
+void _openViewOnFleetMap(WidgetRef ref, BuildContext context, String vehicleId) {
+  AppLogger.navigation(
+    'View on map: vehicleId=$vehicleId source=vehicle_detail',
+  );
+  ref.read(pendingMapCameraFocusProvider.notifier).state =
+      MapCameraFocusRequest.single(vehicleId);
+  context.go('/map');
+}
+
+class _VehicleDetailBody extends ConsumerWidget {
+  const _VehicleDetailBody({
+    required this.vehicleId,
+    required this.vehicle,
+  });
+
+  final String vehicleId;
+  final VehicleEntity vehicle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final livePositions = ref.watch(livePositionsProvider);
+    final liveDevices = ref.watch(liveDevicesProvider);
+    final fleetBriefMap = ref.watch(fleetVehicleBriefMapProvider);
+    final tripsAsync = ref.watch(
+      vehicleTripsProvider(VehicleTripsQuery(vehicleId: vehicleId)),
     );
-  }
+    final alertsAsync = ref.watch(vehicleAlertsProvider(vehicleId));
+    final todayDashboardAsync =
+        ref.watch(vehicleTodayDashboardProvider(vehicleId));
+    final isAdmin = ref.watch(currentUserRoleProvider).isAdmin;
 
-  Widget _buildDeviceCard(
-    BuildContext context,
-    TraccarDevice device,
-    AppLocalizations l10n,
-  ) {
-    return ElmoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.deviceInfo,
-            style: AppTextStyles.labelSmall
-                .copyWith(color: AppColors.textMutedOf(context)),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          if (device.model != null && device.model!.isNotEmpty) ...[
-            _DeviceInfoRow(
-              icon: Icons.phone_android_rounded,
-              label: l10n.deviceModelLabel,
-              value: device.model!,
-            ),
-            Divider(
-                height: 12,
-                thickness: 0.5,
-                color: AppColors.borderOf(context)),
-          ],
-          _DeviceInfoRow(
-            icon: Icons.tag_rounded,
-            label: l10n.deviceIdLabel,
-            value: device.uniqueId,
-          ),
-          if (device.phone != null && device.phone!.isNotEmpty) ...[
-            Divider(
-                height: 12,
-                thickness: 0.5,
-                color: AppColors.borderOf(context)),
-            _DeviceInfoRow(
-              icon: Icons.sim_card_rounded,
-              label: l10n.devicePhoneLabel,
-              value: device.phone!,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+    final deviceId = int.tryParse(vehicle.id);
+    final brief = fleetBriefMap[vehicleId];
+    final livePos = deviceId != null ? livePositions[deviceId] : null;
+    final device = deviceId != null ? liveDevices[deviceId] : null;
+    final status = StatusBadge.fromString(vehicle.status);
 
-  bool _hasPositionDetails(TraccarPosition pos) =>
-      pos.altitude != 0 ||
-      pos.course != 0 ||
-      pos.accuracy > 0 ||
-      (pos.odometer != null && pos.odometer! > 0);
-
-  Widget _buildPositionCard(
-    BuildContext context,
-    TraccarPosition pos,
-    AppLocalizations l10n,
-  ) {
-    return ElmoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.positionDetails,
-            style: AppTextStyles.labelSmall
-                .copyWith(color: AppColors.textMutedOf(context)),
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // ── App bar ───────────────────────────────────────────────────────
+        SliverAppBar(
+          pinned: true,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            onPressed: () => context.pop(),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (pos.altitude != 0)
-                _PositionChip(
-                    label: l10n.altitudeLabel,
-                    value: '${pos.altitude.toStringAsFixed(0)} m'),
-              if (pos.course != 0)
-                _PositionChip(
-                    label: l10n.courseLabel,
-                    value: '${pos.course.toStringAsFixed(0)}°'),
-              if (pos.accuracy > 0)
-                _PositionChip(
-                    label: l10n.accuracyLabel,
-                    value: '${pos.accuracy.toStringAsFixed(0)} m'),
-              if (pos.odometer != null && pos.odometer! > 0)
-                _PositionChip(
-                    label: l10n.odometerLabel,
-                    value: FormatUtils.distance(pos.odometer!)),
+              Text(vehicle.name, style: AppTextStyles.headlineMedium),
+              Text(
+                vehicle.plateNumber,
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.textSecondaryOf(context)),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Telemetry ─────────────────────────────────────────────────────────────────
-
-class _TelemetryGrid extends StatelessWidget {
-  const _TelemetryGrid({
-    required this.ignition,
-    required this.motion,
-    required this.speedKmh,
-    required this.fuelLiters,
-    required this.voltage,
-    required this.hardBrake,
-  });
-
-  final bool ignition;
-  final bool motion;
-  final double speedKmh;
-  final double? fuelLiters;
-  final double? voltage;
-  final bool hardBrake;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _TelemetryCell(
-                label: l10n.ignitionLabel,
-                child: Icon(
-                  ignition
-                      ? Icons.power_settings_new_rounded
-                      : Icons.power_off_rounded,
-                  color: ignition
-                      ? AppColors.statusMoving
-                      : AppColors.textMutedOf(context),
-                  size: 22,
-                ),
-              ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_remote_rounded,
+                  color: AppColors.accent),
+              tooltip: l10n.commandsTitle,
+              onPressed: () {
+                AppLogger.navigation(
+                    'VehicleDetail: Commands tapped vehicleId=$vehicleId');
+                context.push(
+                  '/vehicles/$vehicleId/commands',
+                  extra: {'name': vehicle.name},
+                );
+              },
             ),
-            Expanded(
-              child: _TelemetryCell(
-                label: l10n.motionLabel,
-                child: Icon(
-                  motion
-                      ? Icons.directions_run_rounded
-                      : Icons.pause_circle_outline,
-                  color: motion
-                      ? AppColors.accent
-                      : AppColors.textMutedOf(context),
-                  size: 22,
-                ),
-              ),
-            ),
-            Expanded(
-              child: _TelemetryCell(
-                label: l10n.speedLabel,
-                child: Text(
-                  FormatUtils.speed(speedKmh),
-                  style: AppTextStyles.labelLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            IconButton(
+              icon: const Icon(Icons.gps_fixed_rounded,
+                  color: AppColors.accent),
+              tooltip: l10n.trackVehicle,
+              onPressed: () {
+                AppLogger.navigation(
+                    'VehicleDetail: Track tapped vehicleId=$vehicleId');
+                context.push('/vehicles/$vehicleId/track');
+              },
             ),
           ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: AppColors.borderOf(context)),
+          ),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: _TelemetryCell(
-                label: l10n.fuelLabel,
-                child: Text(
-                  FormatUtils.fuelLevel(fuelLiters),
-                  style: AppTextStyles.labelLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            Expanded(
-              child: _TelemetryCell(
-                label: l10n.batteryVoltageLabel,
-                child: Text(
-                  FormatUtils.voltage(voltage),
-                  style: AppTextStyles.labelLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            Expanded(
-              child: _TelemetryCell(
-                label: l10n.brakingLabel,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      hardBrake
-                          ? Icons.warning_amber_rounded
-                          : Icons.check_circle_outline_rounded,
-                      color: hardBrake
-                          ? AppColors.warning
-                          : AppColors.textMutedOf(context),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        hardBrake ? l10n.hardBrakeLabel : l10n.normalLabel,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: hardBrake
-                              ? AppColors.warning
-                              : AppColors.textMutedOf(context),
+
+        // ── Content ───────────────────────────────────────────────────────
+        SliverToBoxAdapter(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // A. Status + Speed + Last Update
+                  VdStatusSpeedCard(
+                    status: StatusBadge(status: status),
+                    speedKmh: livePos?.speedKmh ?? vehicle.speed,
+                    lastUpdate: vehicle.lastUpdate,
+                  ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // B. Live telemetry
+                  VdTelemetryCard(
+                    ignition: livePos?.ignitionOn ?? vehicle.ignition,
+                    motion: livePos?.motion ?? vehicle.isMoving,
+                    speedKmh: livePos?.speedKmh ?? vehicle.speed,
+                    fuelLiters: livePos?.fuelLevel ?? vehicle.fuelLevel,
+                    voltage:
+                        livePos?.vehicleVoltage ?? vehicle.batteryVoltage,
+                    hardBrake: livePos?.hardBrake ?? false,
+                  ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // C. Location
+                  VdLocationCard(
+                    vehicle: vehicle,
+                    onViewOnMap: () =>
+                        _openViewOnFleetMap(ref, context, vehicleId),
+                    onLiveTracking: () {
+                      AppLogger.navigation(
+                          'VehicleDetail: Live tracking vehicleId=$vehicleId');
+                      context.push('/vehicles/$vehicleId/track');
+                    },
+                  ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // D. Today Summary
+                  todayDashboardAsync.when(
+                    data: (dashboard) {
+                      if (!dashboard.hasSummary) {
+                        AppLogger.dashboard(
+                            'VehicleDetail: Today summary returned null for vehicleId=$vehicleId');
+                      } else {
+                        AppLogger.dashboard(
+                            'Vehicle daily summary loaded: vehicleId=$vehicleId '
+                            'stops=${dashboard.stopsCount} '
+                            'alertsToday=${dashboard.alertsTodayCount}',
+                        );
+                      }
+                      return VdTodaySummaryCard(dashboard: dashboard);
+                    },
+                    loading: () => const VdTodaySummaryCard(),
+                    error: (e, _) {
+                      AppLogger.error('VehicleDetail',
+                          'Today summary failed for vehicleId=$vehicleId', e);
+                      AppLogger.dashboard(
+                          'Vehicle daily summary failed: vehicleId=$vehicleId');
+                      return const VdTodaySummaryCard();
+                    },
+                  ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // E. Fleet Info
+                  VdFleetInfoCard(vehicle: vehicle, brief: brief),
+
+                  const SizedBox(height: AppSpacing.sectionSpacing),
+
+                  // G. Actions
+                  VdActionsSection(
+                    onGenerateReport: () async {
+                      AppLogger.navigation(
+                          'Report opened from vehicle details: '
+                          'vehicleId=$vehicleId');
+                      final params = await showReportEntrySheet(
+                        context,
+                        vehicleId: vehicleId,
+                        vehicleName: vehicle.name,
+                      );
+                      if (params != null && context.mounted) {
+                        AppLogger.navigation(
+                            'VehicleDetail: navigating to /reports with '
+                            'vehicleId=${params.vehicleId} tab=${params.tabIndex} '
+                            'period=${params.period}');
+                        context.push('/reports', extra: params);
+                      }
+                    },
+                    onReplayRoute: () async {
+                      AppLogger.navigation(
+                          'Replay opened from vehicle details: '
+                          'vehicleId=$vehicleId');
+                      final result = await showReplayEntrySheet(
+                        context,
+                        vehicleId: vehicleId,
+                        vehicleName: vehicle.name,
+                      );
+                      if (result != null && context.mounted) {
+                        AppLogger.navigation(
+                            'VehicleDetail: navigating to /reports/replay '
+                            'vehicleId=${result.vehicleId} '
+                            'from=${result.from} to=${result.to}');
+                        context.push(
+                          '/reports/replay',
+                          extra: {
+                            'params': ReportFilterParams(
+                              vehicleId: result.vehicleId,
+                              from: result.from.toUtc(),
+                              to: result.to.toUtc(),
+                            ),
+                            'vehicleName': result.vehicleName,
+                          },
+                        );
+                      }
+                    },
+                    onViewOnMap: () =>
+                        _openViewOnFleetMap(ref, context, vehicleId),
+                    onLiveTracking: () {
+                      AppLogger.navigation(
+                          'VehicleDetail: Live tracking tapped vehicleId=$vehicleId');
+                      context.push('/vehicles/$vehicleId/track');
+                    },
+                    onViewTrips: () {
+                      AppLogger.navigation(
+                          'VehicleDetail: View Trips tapped vehicleId=$vehicleId');
+                      context.push('/vehicles/$vehicleId/trips');
+                    },
+                    onCommands: () {
+                      AppLogger.navigation(
+                          'VehicleDetail: Commands tapped vehicleId=$vehicleId');
+                      context.push(
+                        '/vehicles/$vehicleId/commands',
+                        extra: {'name': vehicle.name},
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: AppSpacing.sectionSpacing),
+
+                  // F. Recent Trips
+                  SectionHeader(
+                    title: l10n.recentTrips,
+                    actionLabel: l10n.allTrips,
+                    onAction: () =>
+                        context.push('/vehicles/$vehicleId/trips'),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  tripsAsync.when(
+                    data: (trips) {
+                      if (trips.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Center(
+                            child: Text(l10n.noTripsToday,
+                                style: AppTextStyles.bodySmall),
+                          ),
+                        );
+                      }
+                      return Column(
+                        children: trips.take(3).map((trip) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: AppSpacing.sm),
+                            child: VdTripTile(trip: trip),
+                          );
+                        }).toList(),
+                      );
+                    },
+                    loading: () => const InlineLoader(),
+                    error: (_, __) => Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline_rounded,
+                                size: 16,
+                                color: AppColors.textMutedOf(context)),
+                            const SizedBox(width: 8),
+                            Text(l10n.tripsLoadError,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textMutedOf(context))),
+                          ],
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.sectionSpacing),
+
+                  // F. Recent Alerts
+                  SectionHeader(
+                    title: l10n.recentAlerts,
+                    actionLabel: l10n.allAlerts,
+                    onAction: () => context.go('/alerts'),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  VdRecentAlertsSection(
+                    alertsAsync: alertsAsync,
+                    onViewAll: () => _openVehicleAlerts(ref, context, vehicle),
+                  ),
+
+                  const SizedBox(height: AppSpacing.sectionSpacing),
+
+                  if (isAdmin) ...[
+                    RouteIntelligenceVehicleThresholdPreview(
+                      vehicleId: vehicleId,
+                      vehicleName: vehicle.name,
+                      groupId: vehicle.groupId,
+                    ),
+                    RouteIntelligenceVehicleCentralThresholdSection(
+                      vehicleId: vehicleId,
+                    ),
                   ],
-                ),
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // H. Technical Info (collapsible)
+                  VdTechnicalInfoSection(
+                    device: device,
+                    livePos: livePos,
+                  ),
+
+                  SizedBox(
+                      height: MediaQuery.paddingOf(context).bottom + 12),
+                ],
               ),
             ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _TelemetryCell extends StatelessWidget {
-  const _TelemetryCell({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        child,
-        const SizedBox(height: 4),
-        Text(label,
-            style: AppTextStyles.labelSmall, textAlign: TextAlign.center),
-      ],
-    );
-  }
-}
-
-// ── Status item ───────────────────────────────────────────────────────────────
-
-class _StatusItem extends StatelessWidget {
-  const _StatusItem({required this.label, required this.value});
-
-  final String label;
-  final Widget value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        value,
-        const SizedBox(height: 4),
-        Text(label, style: AppTextStyles.labelSmall),
-      ],
-    );
-  }
-}
-
-// ── Info grid tile ────────────────────────────────────────────────────────────
-
-class _InfoGridTile extends StatelessWidget {
-  const _InfoGridTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackgroundOf(context),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderOf(context), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: color ?? AppColors.textMutedOf(context)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(label, style: AppTextStyles.labelSmall),
-                Text(
-                  value,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: color ?? AppColors.textPrimaryOf(context),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Device info row ───────────────────────────────────────────────────────────
-
-class _DeviceInfoRow extends StatelessWidget {
-  const _DeviceInfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.textMutedOf(context)),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall
-              .copyWith(color: AppColors.textMutedOf(context)),
-        ),
-        const Spacer(),
-        Flexible(
-          child: Text(
-            value,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textPrimaryOf(context),
-              fontWeight: FontWeight.w500,
-            ),
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
           ),
         ),
       ],
-    );
-  }
-}
-
-// ── Position chip ─────────────────────────────────────────────────────────────
-
-class _PositionChip extends StatelessWidget {
-  const _PositionChip({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevatedOf(context),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderOf(context), width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textMutedOf(context),
-              fontSize: 9,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textPrimaryOf(context),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Trip tile ─────────────────────────────────────────────────────────────────
-
-class _TripTile extends StatelessWidget {
-  const _TripTile({required this.trip});
-
-  final TripEntity trip;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackgroundOf(context),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderOf(context), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.route_rounded, color: AppColors.accent, size: 18),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormatter.toDateTime(trip.startTime),
-                  style: AppTextStyles.labelLarge.copyWith(fontSize: 12),
-                ),
-                Text(
-                  '${FormatUtils.distance(trip.distanceMeters)} · '
-                  '${DateFormatter.duration(trip.durationSeconds)}',
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Text(
-            FormatUtils.speed(trip.maxSpeedKmh),
-            style: AppTextStyles.labelSmall
-                .copyWith(color: AppColors.textSecondaryOf(context)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Fleet brief rows (Phase 5) ────────────────────────────────────────────────
-
-class _FleetBriefLine extends StatelessWidget {
-  const _FleetBriefLine({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon,
-            size: 18,
-            color: AppColors.accent.withValues(alpha: 0.85)),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTextStyles.bodySmall.copyWith(height: 1.35),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ── Alert tile ────────────────────────────────────────────────────────────────
-
-class _AlertTile extends StatelessWidget {
-  const _AlertTile({required this.alert});
-
-  final AlertEntity alert;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackgroundOf(context),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderOf(context), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: AppColors.warning, size: 18),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert.title,
-                  style: AppTextStyles.labelLarge.copyWith(fontSize: 12),
-                ),
-                Text(
-                  DateFormatter.toRelative(alert.createdAt),
-                  style: AppTextStyles.bodySmall,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

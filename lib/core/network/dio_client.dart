@@ -74,9 +74,9 @@ class DioClient {
       }
       // Connection refused → server exists but is not listening
       if (msg.contains('connection refused')) {
-        return NetworkException(
+        return const NetworkException(
           message: 'Connection refused by the server. '
-              'Make sure Traccar is running.',
+              'Make sure the ELMOGPS platform is running.',
           code: 'CONNECTION_REFUSED',
         );
       }

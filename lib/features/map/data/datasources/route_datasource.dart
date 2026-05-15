@@ -1,6 +1,7 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/network/traccar_client.dart';
 import '../../../../core/api/traccar_endpoints.dart';
+import '../../core/traccar_units.dart';
 
 /// A single position point from Traccar's route report.
 class RoutePoint {
@@ -10,6 +11,7 @@ class RoutePoint {
     required this.course,
     required this.fixTime,
     required this.ignition,
+    this.address,
   });
 
   final LatLng position;
@@ -18,20 +20,26 @@ class RoutePoint {
   final DateTime fixTime;
   final bool ignition;
 
+  /// When the server includes a resolved address on the position (Phase 7D).
+  final String? address;
+
   factory RoutePoint.fromJson(Map<String, dynamic> json) {
     final attrs =
         Map<String, dynamic>.from(json['attributes'] as Map? ?? {});
+    final rawAddr = json['address'] as String?;
+    final trimmed = rawAddr?.trim();
     return RoutePoint(
       position: LatLng(
         (json['latitude'] as num?)?.toDouble() ?? 0,
         (json['longitude'] as num?)?.toDouble() ?? 0,
       ),
-      speed: ((json['speed'] as num?)?.toDouble() ?? 0) * 1.852,
+      speed: TraccarUnits.knotsToKmh((json['speed'] as num?)?.toDouble() ?? 0),
       course: (json['course'] as num?)?.toDouble() ?? 0,
       fixTime: DateTime.tryParse(
                   json['fixTime'] as String? ?? '')?.toLocal() ??
               DateTime.now(),
       ignition: attrs['ignition'] as bool? ?? false,
+      address: (trimmed != null && trimmed.isNotEmpty) ? trimmed : null,
     );
   }
 }

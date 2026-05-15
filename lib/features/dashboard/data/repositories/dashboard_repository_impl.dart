@@ -9,14 +9,14 @@ class DashboardRepositoryImpl implements DashboardRepository {
   final DashboardRemoteDataSource _dataSource;
 
   @override
-  Future<DashboardSummary> getSummary() async {
-    final model = await _dataSource.getSummary();
+  Future<DashboardSummary> getSummary({DateTime? refreshNow}) async {
+    final model = await _dataSource.getSummary(refreshNow: refreshNow);
     return model.toEntity();
   }
 
   @override
-  Future<List<InsightEntity>> getInsights() async {
-    final models = await _dataSource.getInsights();
+  Future<List<InsightEntity>> getInsights({DateTime? refreshNow}) async {
+    final models = await _dataSource.getInsights(refreshNow: refreshNow);
     return models.map((m) => m.toEntity()).toList();
   }
 }

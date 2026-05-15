@@ -77,12 +77,11 @@ class ElmoAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
-        child: Container(height: 0.5, color: cs.outline.withOpacity(0.3)),
+        child: Container(height: 0.5, color: cs.outline.withValues(alpha: 0.3)),
       ),
     );
   }
 
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(kToolbarHeight + 0.5);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 0.5);
 }

@@ -13,6 +13,7 @@ class AlertEntity {
     required this.longitude,
     required this.attributes,
     this.geofenceId,
+    this.readAt,
   });
 
   final String id;
@@ -24,6 +25,7 @@ class AlertEntity {
   final String vehicleName;
   final DateTime createdAt;
   final bool isRead;
+  final DateTime? readAt;
   final double? latitude;
   final double? longitude;
   final Map<String, dynamic> attributes;
@@ -32,7 +34,7 @@ class AlertEntity {
   bool get isCritical => severity == 'critical';
   bool get hasLocation => latitude != null && longitude != null;
 
-  AlertEntity copyWith({bool? isRead}) {
+  AlertEntity copyWith({bool? isRead, DateTime? readAt}) {
     return AlertEntity(
       id: id,
       type: type,
@@ -43,6 +45,7 @@ class AlertEntity {
       vehicleName: vehicleName,
       createdAt: createdAt,
       isRead: isRead ?? this.isRead,
+      readAt: readAt ?? this.readAt,
       latitude: latitude,
       longitude: longitude,
       attributes: attributes,

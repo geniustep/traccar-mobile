@@ -4,6 +4,9 @@ import '../../domain/repositories/trips_repository.dart';
 import '../../data/datasources/trips_remote_datasource.dart';
 import '../../data/repositories/trips_repository_impl.dart';
 import '../../../../shared/providers/core_providers.dart';
+import 'vehicle_trips_query.dart';
+
+export 'vehicle_trips_query.dart';
 
 final tripsRepositoryProvider = Provider<TripsRepository>((ref) {
   return TripsRepositoryImpl(
@@ -12,8 +15,12 @@ final tripsRepositoryProvider = Provider<TripsRepository>((ref) {
 });
 
 final vehicleTripsProvider = FutureProvider.autoDispose
-    .family<List<TripEntity>, String>((ref, vehicleId) async {
-  return ref.read(tripsRepositoryProvider).getVehicleTrips(vehicleId);
+    .family<List<TripEntity>, VehicleTripsQuery>((ref, query) async {
+  return ref.read(tripsRepositoryProvider).getVehicleTrips(
+        query.vehicleId,
+        from: query.from,
+        to: query.to,
+      );
 });
 
 final tripDetailProvider =

@@ -37,6 +37,7 @@ class AppLocalizations {
   String get language => _t('language');
   String get appearance => _t('appearance');
   String get aboutElmo => _t('aboutElmo');
+  String get aboutFleetTrackingSubtitle => _t('aboutFleetTrackingSubtitle');
   String get signOut => _t('signOut');
   String get version => _t('version');
   String get editProfile => _t('editProfile');
@@ -118,6 +119,7 @@ class AppLocalizations {
   String get statusOfflinePlural => _t('statusOfflinePlural');
   String totalFleetCount(int n) =>
       _t('totalFleetCount').replaceAll('{n}', '$n');
+  String get lastKnownData => _t('lastKnownData');
 
   // ── Alerts ─────────────────────────────────────────────────────────────────
   String get allAlerts => _t('allAlerts');
@@ -198,6 +200,60 @@ class AppLocalizations {
           .replaceAll('{total}', '$total');
   String errorLoadingData(String e) =>
       _t('errorLoadingData').replaceAll('{error}', e);
+  String get cmdConfirmRequired => _t('cmdConfirmRequired');
+  String get cmdCriticalAction => _t('cmdCriticalAction');
+  String get cmdConfirmSendMessage => _t('cmdConfirmSendMessage');
+  String get cmdCriticalWarningDefault => _t('cmdCriticalWarningDefault');
+  String get cmdTypeToConfirm => _t('cmdTypeToConfirm');
+  String get cmdExecuteCommand => _t('cmdExecuteCommand');
+  String get cmdDeviceOnline => _t('cmdDeviceOnline');
+  String get cmdDeviceOffline => _t('cmdDeviceOffline');
+  String get cmdLastUpdate => _t('cmdLastUpdate');
+  String get cmdVehicleStopped => _t('cmdVehicleStopped');
+  String get cmdSentSuccess => _t('cmdSentSuccess');
+  String get cmdSentFailed => _t('cmdSentFailed');
+  String get cmdQueuedMessage => _t('cmdQueuedMessage');
+  String get cmdErrorSavedNotFound => _t('cmdErrorSavedNotFound');
+  String get cmdErrorUnsupported => _t('cmdErrorUnsupported');
+  String get cmdErrorTimeout => _t('cmdErrorTimeout');
+  String get cmdErrorUnauthorized => _t('cmdErrorUnauthorized');
+  String get cmdErrorForbidden => _t('cmdErrorForbidden');
+  String get cmdErrorNoConnection => _t('cmdErrorNoConnection');
+  String get cmdErrorBadRequest => _t('cmdErrorBadRequest');
+  String get cmdErrorServer => _t('cmdErrorServer');
+  String get cmdErrorUnexpected => _t('cmdErrorUnexpected');
+  String get cmdConfirmWord => _t('cmdConfirmWord');
+  String get cmdLoadFailed => _t('cmdLoadFailed');
+  String get cmdRetry => _t('cmdRetry');
+  String get vehicle => _t('vehicle');
+
+  // ── Command Logs Screen ─────────────────────────────────────────────────────
+  String get commandHistory => _t('commandHistory');
+  String get commandHistoryEmpty => _t('commandHistoryEmpty');
+  String get clearHistoryConfirmMessage => _t('clearHistoryConfirmMessage');
+  String get delete => _t('delete');
+  String get generalInfo => _t('generalInfo');
+  String get command => _t('command');
+  String get systemType => _t('systemType');
+  String get category => _t('category');
+  String get risk => _t('risk');
+  String get method => _t('method');
+  String get date => _t('date');
+  String get sentBy => _t('sentBy');
+  String get userId => _t('userId');
+  String get executionContext => _t('executionContext');
+  String get connectionStatus => _t('connectionStatus');
+  String get online => _t('online');
+  String get speed => _t('speed');
+  String get device => _t('device');
+  String get errorMessage => _t('errorMessage');
+  String get message => _t('message');
+  String get technicalData => _t('technicalData');
+  String get technicalReason => _t('technicalReason');
+  String get sentAttributes => _t('sentAttributes');
+  String get rawResponse => _t('rawResponse');
+  String get copy => _t('copy');
+  String get noTechnicalData => _t('noTechnicalData');
 
   // ── Vehicle Detail ─────────────────────────────────────────────────────────
   String get statusLabel => _t('statusLabel');
@@ -246,8 +302,142 @@ class AppLocalizations {
   String get freeLabel => _t('freeLabel');
   String get routeLabel => _t('routeLabel');
   String get vehicleDetails => _t('vehicleDetails');
+  String get todaySummaryTitle => _t('todaySummaryTitle');
+  String get engineHoursLabel => _t('engineHoursLabel');
+  String get vehicleActionsTitle => _t('vehicleActionsTitle');
+  String get technicalInfoTitle => _t('technicalInfoTitle');
+  String get noSummaryData => _t('noSummaryData');
+  String get noAlertsForVehicle => _t('noAlertsForVehicle');
+  String get alertsLoadError => _t('alertsLoadError');
+  String get tripsLoadError => _t('tripsLoadError');
+
+  // ── Report entry bottom sheet ─────────────────────────────────────────
+  String get reportSheetTitle => _t('reportSheetTitle');
+  String get selectReportType => _t('selectReportType');
+  String get selectPeriod => _t('selectPeriod');
+  String get startDateLabel => _t('startDateLabel');
+  String get endDateLabel => _t('endDateLabel');
+  String get invalidDateRange => _t('invalidDateRange');
+  String get generateVehicleReport => _t('generateVehicleReport');
+
+  // ── Replay entry bottom sheet ─────────────────────────────────────────
+  String get replaySheetTitle => _t('replaySheetTitle');
+  String get selectReplayPeriod => _t('selectReplayPeriod');
+  String get startReplay => _t('startReplay');
+  String get replayRangeTooLong => _t('replayRangeTooLong');
+  String get noReplayDataForPeriod => _t('noReplayDataForPeriod');
+
+  // ── Report PDF / share ──────────────────────────────────────────────
+  String reportPdfSubject(String name) => '${_t('reportPdfSubjectPrefix')} — $name';
+  String reportPdfTitle(String name) => '${_t('reportPdfTitlePrefix')} — $name';
+
   String get todayRouteLabel => _t('todayRouteLabel');
+  String get mapSearchVehicleHint => _t('mapSearchVehicleHint');
+  String get filterAlertsMap => _t('filterAlertsMap');
+  String get mapEmptyFilteredState => _t('mapEmptyFilteredState');
+  String get mapNoVehiclesEmpty => _t('mapNoVehiclesEmpty');
+  String get liveFollowRunningLabel => _t('liveFollowRunningLabel');
+  String get resumeVehicleFollow => _t('resumeVehicleFollow');
+  String get mapLayersTitle => _t('mapLayersTitle');
+  String get mapLayerAlerts => _t('mapLayerAlerts');
+  String get mapLayerRoutesToday => _t('mapLayerRoutesToday');
+  String get mapTypeNormal => _t('mapTypeNormal');
+  String get mapTypeSatellite => _t('mapTypeSatellite');
+  String get mapTypeTerrain => _t('mapTypeTerrain');
+  String get mapVehicleListTitle => _t('mapVehicleListTitle');
+  String get uniqueIdShortLabel => _t('uniqueIdShortLabel');
+  String get mapLayersButton => _t('mapLayersButton');
+  String get filterVehicles => _t('filterVehicles');
+  String get chooseVehicles => _t('chooseVehicles');
+  String get chooseVehiclesHint => _t('chooseVehiclesHint');
+  String get showAllVehicles => _t('showAllVehicles');
+  String get showAllVehiclesOnMap => _t('showAllVehiclesOnMap');
+  String get showVehicleOnMap => _t('showVehicleOnMap');
+  String showSelectedVehiclesOnMap(int count) =>
+      _t('showSelectedVehiclesOnMap').replaceAll('{count}', '$count');
+  String get clearSelection => _t('clearSelection');
+  String selectedVehiclesCount(int count) =>
+      _t('selectedVehiclesCount').replaceAll('{count}', '$count');
+  String get mapFilterSearchHint => _t('mapFilterSearchHint');
+  String get onlineOnlyFilter => _t('onlineOnlyFilter');
+  String get movingOnlyFilter => _t('movingOnlyFilter');
+  String vehiclesShownCount(int count) =>
+      _t('vehiclesShownCount').replaceAll('{count}', '$count');
+  String get clearMapFilter => _t('clearMapFilter');
+  String get noVehiclesMatchFilter => _t('noVehiclesMatchFilter');
+  String get selectVehiclesTitle => _t('selectVehiclesTitle');
+  String get mapFilterActiveLabel => _t('mapFilterActiveLabel');
+  String get mapFilterZeroVisible => _t('mapFilterZeroVisible');
+  String get selectMultipleVehiclesHint => _t('selectMultipleVehiclesHint');
+  String vehiclesSelectedCount(int count) =>
+      _t('vehiclesSelectedCount').replaceAll('{count}', '$count');
+  String matchingVehiclesCount(int count) =>
+      _t('matchingVehiclesCount').replaceAll('{count}', '$count');
+  String get noMatchingVehicles => _t('noMatchingVehicles');
+  String get vehicleComparisonTitle => _t('vehicleComparisonTitle');
+  String get compareVehicles => _t('compareVehicles');
+  String compareVehiclesCount(int count) =>
+      _t('compareVehiclesCount').replaceAll('{count}', '$count');
+  String comparedVehiclesCount(int count) =>
+      _t('comparedVehiclesCount').replaceAll('{count}', '$count');
+  String get selectAtLeastTwoVehicles => _t('selectAtLeastTwoVehicles');
+  String get todayComparison => _t('todayComparison');
+  String get stopsToday => _t('stopsToday');
+  String get maxSpeed => _t('maxSpeed');
+  String get averageSpeed => _t('averageSpeed');
+  String get stopDuration => _t('stopDuration');
+  String get lastUpdate => _t('lastUpdate');
+  String get highestDistance => _t('highestDistance');
+  String get highestAlerts => _t('highestAlerts');
+  String get highestStopDuration => _t('highestStopDuration');
+  String get mostRecentUpdate => _t('mostRecentUpdate');
+  String get removeFromComparison => _t('removeFromComparison');
+  String get noComparisonData => _t('noComparisonData');
+  String get comparisonLoadFailed => _t('comparisonLoadFailed');
+  String get comparisonLoading => _t('comparisonLoading');
+  String get comparisonLoadingAnalyzing => _t('comparisonLoadingAnalyzing');
+  String get backToMap => _t('backToMap');
+  String get multiVehicleReplayTitle => _t('multiVehicleReplayTitle');
+  String get replaySelectedVehicles => _t('replaySelectedVehicles');
+  String replayVehiclesCount(int count) =>
+      _t('replayVehiclesCount').replaceAll('{count}', '$count');
+  String get replayComparedVehicles => _t('replayComparedVehicles');
+  String get selectAtLeastTwoVehiclesReplay =>
+      _t('selectAtLeastTwoVehiclesReplay');
+  String get multiReplayLimitMessage => _t('multiReplayLimitMessage');
+  String get multiReplayLoading => _t('multiReplayLoading');
+  String get multiReplayNoData => _t('multiReplayNoData');
+  String get multiReplayLoadFailed => _t('multiReplayLoadFailed');
+  String get routeDataUnavailable => _t('routeDataUnavailable');
+  String get hideVehicle => _t('hideVehicle');
+  String get showVehicle => _t('showVehicle');
+  String get replayToday => _t('replayToday');
+  String get chooseReplayDate => _t('chooseReplayDate');
+  String get replayMultiVehicles => _t('replayMultiVehicles');
+  String get stopsCountLabel => _t('stopsCountLabel');
+  String get alertsTodayLabel => _t('alertsTodayLabel');
+  String get alertsForVehicle => _t('alertsForVehicle');
+  String alertsForVehicleName(String name) =>
+      _t('alertsForVehicleName').replaceAll('{name}', name);
+  String get tripDateFilter => _t('tripDateFilter');
+  String get clearDateFilter => _t('clearDateFilter');
+  String get centerFleetTooltip => _t('centerFleetTooltip');
+  String fleetSummaryBar(int online, int total, int moving, int idle) =>
+      _t('fleetSummaryBar')
+          .replaceAll('{online}', '$online')
+          .replaceAll('{total}', '$total')
+          .replaceAll('{moving}', '$moving')
+          .replaceAll('{idle}', '$idle');
   String get locationUnavailable => _t('locationUnavailable');
+  String get noLivePosition => _t('noLivePosition');
+  String get positionMayBeOutdated => _t('positionMayBeOutdated');
+  String get lastPositionIsOld => _t('lastPositionIsOld');
+  String get currentAddress => _t('currentAddress');
+  String get liveTracking => _t('liveTracking');
+  String get liveTrackingActive => _t('liveTrackingActive');
+  String get trackingDataStale => _t('trackingDataStale');
+  String get trackingReconnecting => _t('trackingReconnecting');
+  String get trackingOffline => _t('trackingOffline');
   String get updateLocationFailed => _t('updateLocationFailed');
   String fleetOnlineCount(int online, int total, int moving) =>
       _t('fleetOnlineCount')
@@ -270,6 +460,63 @@ class AppLocalizations {
   String get toLabel             => _t('toLabel');
   String get timeRangeLabel      => _t('timeRangeLabel');
   String get pickDateTimeHint    => _t('pickDateTimeHint');
+
+  // ── Route Intelligence threshold preview (Phase 6G, read-only) ─────────────
+  String routeIntelSpeedKmh(String v) =>
+      _t('routeIntelSpeedKmh').replaceAll('{v}', v);
+  String routeIntelMinutesShort(int n) =>
+      _t('routeIntelMinutesShort').replaceAll('{n}', '$n');
+  String get routeIntelPreviewTitle => _t('routeIntelPreviewTitle');
+  String get routeIntelPreviewReadOnlyHint =>
+      _t('routeIntelPreviewReadOnlyHint');
+  String get routeIntelPreviewLoadingLayers =>
+      _t('routeIntelPreviewLoadingLayers');
+  String get routeIntelPreviewGroupLoadError =>
+      _t('routeIntelPreviewGroupLoadError');
+  String get routeIntelSettingsPreviewSection =>
+      _t('routeIntelSettingsPreviewSection');
+  String get routeIntelOverspeedThreshold =>
+      _t('routeIntelOverspeedThreshold');
+  String get routeIntelStopEnter => _t('routeIntelStopEnter');
+  String get routeIntelStopExit => _t('routeIntelStopExit');
+  String get routeIntelMinStopDuration => _t('routeIntelMinStopDuration');
+  String get routeIntelDetectStops => _t('routeIntelDetectStops');
+  String get routeIntelDetectOverspeed => _t('routeIntelDetectOverspeed');
+  String get routeIntelDetectIgnition => _t('routeIntelDetectIgnition');
+  String get routeIntelSourceDevice => _t('routeIntelSourceDevice');
+  String get routeIntelSourceGroup => _t('routeIntelSourceGroup');
+  String get routeIntelSourceUser => _t('routeIntelSourceUser');
+  String get routeIntelSourceLocal => _t('routeIntelSourceLocal');
+  String get routeIntelSourceDefault => _t('routeIntelSourceDefault');
+  String get routeIntelEnabled => _t('routeIntelEnabled');
+  String get routeIntelDisabled => _t('routeIntelDisabled');
+  String get routeIntelLocalEditorTitle => _t('routeIntelLocalEditorTitle');
+  String get routeIntelLocalParamsHeading => _t('routeIntelLocalParamsHeading');
+  String get routeIntelSave => _t('routeIntelSave');
+  String get routeIntelResetLocalPrefsSettings =>
+      _t('routeIntelResetLocalPrefsSettings');
+  String get routeIntelSavedSnack => _t('routeIntelSavedSnack');
+  String get routeIntelResetSnack => _t('routeIntelResetSnack');
+  String get routeIntelInvalidValue => _t('routeIntelInvalidValue');
+  String get routeIntelLocalOnlyCentralWarning =>
+      _t('routeIntelLocalOnlyCentralWarning');
+
+  // ── Route Intelligence vehicle central edit (Phase 6K) ─────────────────────
+  String get routeIntelVehicleEditTitle => _t('routeIntelVehicleEditTitle');
+  String get routeIntelVehicleEditSubtitle =>
+      _t('routeIntelVehicleEditSubtitle');
+  String get routeIntelVehicleEditButton => _t('routeIntelVehicleEditButton');
+  String get routeIntelVehicleSave => _t('routeIntelVehicleSave');
+  String get routeIntelVehicleReset => _t('routeIntelVehicleReset');
+  String get routeIntelVehicleSaved => _t('routeIntelVehicleSaved');
+  String get routeIntelVehicleResetDone => _t('routeIntelVehicleResetDone');
+  String get routeIntelVehicleSaveError => _t('routeIntelVehicleSaveError');
+  String get routeIntelVehicleResetError => _t('routeIntelVehicleResetError');
+  String get routeIntelVehicleOnlyHint => _t('routeIntelVehicleOnlyHint');
+  String get routeIntelVehicleNoPermissionHint =>
+      _t('routeIntelVehicleNoPermissionHint');
+  String get routeIntelVehicleResetConfirmMessage =>
+      _t('routeIntelVehicleResetConfirmMessage');
 
   // ── Reports ────────────────────────────────────────────────────────────────
   String get reportsTitle         => _t('reportsTitle');
@@ -339,6 +586,213 @@ class AppLocalizations {
           .replaceAll('{total}', '$total')
           .replaceAll('{drawn}', '$drawn');
 
+  String get routeEventsTimelineTitle => _t('routeEventsTimelineTitle');
+  String get routeEventsNoneDetected => _t('routeEventsNoneDetected');
+  String get routeEventsSeeMore => _t('routeEventsSeeMore');
+  String get routeEventsSeeLess => _t('routeEventsSeeLess');
+  String get routeEventFilterAll => _t('routeEventFilterAll');
+  String get routeEventFilterStops => _t('routeEventFilterStops');
+  String get routeEventFilterOverspeed => _t('routeEventFilterOverspeed');
+  String get routeEventFilterIgnition => _t('routeEventFilterIgnition');
+  String get routeEventsFilterNoMatches => _t('routeEventsFilterNoMatches');
+
+  // ── Trip segmentation (Phase 8) ─────────────────────────────────────────────
+  String get tripsTitle => _t('tripsTitle');
+  String get tripLabel => _t('tripLabel');
+  String tripTitle(int n) => _t('tripTitle').replaceAll('{n}', '$n');
+  String get tripStart => _t('tripStart');
+  String get tripEnd => _t('tripEnd');
+  String get tripDuration => _t('tripDuration');
+  String get tripDistance => _t('tripDistance');
+  String tripStopsCount(int n) => _t('tripStopsCount').replaceAll('{n}', '$n');
+  String tripOverspeedCount(int n) =>
+      _t('tripOverspeedCount').replaceAll('{n}', '$n');
+  String get tripMaxSpeed => _t('tripMaxSpeed');
+  String get tripReplay => _t('tripReplay');
+  String get tripViewOnMap => _t('tripViewOnMap');
+  String get tripsNoneDetected => _t('tripsNoneDetected');
+  String get tripShort => _t('tripShort');
+  String get tripKm => _t('tripKm');
+  String get tripMin => _t('tripMin');
+  String tripTimeArrow(String from, String to) => _t('tripTimeArrow')
+      .replaceAll('{from}', from)
+      .replaceAll('{to}', to);
+  String get tripKmUnit => _t('tripKmUnit');
+  String tripIgnitionSummary(int onCount, int offCount) => _t('tripIgnitionSummary')
+      .replaceAll('{on}', '$onCount')
+      .replaceAll('{off}', '$offCount');
+
+  // ── Trip behavior score (Phase 9B) ─────────────────────────────────────────
+  String get driverScoreLabel => _t('driverScoreLabel');
+  String get driverScoreExcellent => _t('driverScoreExcellent');
+  String get driverScoreGood => _t('driverScoreGood');
+  String get driverScoreModerate => _t('driverScoreModerate');
+  String get driverScoreHighRisk => _t('driverScoreHighRisk');
+  String get driverScoreUnknown => _t('driverScoreUnknown');
+  String get driverScoreNotScorable => _t('driverScoreNotScorable');
+  String get driverScoreTripTooShort => _t('driverScoreTripTooShort');
+
+  // ── Daily / period behavior score UI (Phase 9E) ─────────────────────────────
+  String get dailyScoreTitle => _t('dailyScoreTitle');
+  String get dailyScorePeriodTitle => _t('dailyScorePeriodTitle');
+  String get dailyScoreNotScorable => _t('dailyScoreNotScorable');
+  String get dailyScoreInsufficientData => _t('dailyScoreInsufficientData');
+  String dailyScoreTripCount(int n) =>
+      _t('dailyScoreTripCount').replaceAll('{n}', '$n');
+  String dailyScoreScorableTrips(int scored, int total) => _t('dailyScoreScorableTrips')
+      .replaceAll('{scored}', '$scored')
+      .replaceAll('{total}', '$total');
+  String dailyScoreTotalDistance(String km) =>
+      _t('dailyScoreTotalDistance').replaceAll('{km}', km);
+  String dailyScoreOverspeed(int n) =>
+      _t('dailyScoreOverspeed').replaceAll('{n}', '$n');
+  String dailyScoreStops(int n) =>
+      _t('dailyScoreStops').replaceAll('{n}', '$n');
+  String dailyScoreBestTrip(String name) =>
+      _t('dailyScoreBestTrip').replaceAll('{name}', name);
+  String dailyScoreWorstTrip(String name) =>
+      _t('dailyScoreWorstTrip').replaceAll('{name}', name);
+  String get dailyScoreNoTrips => _t('dailyScoreNoTrips');
+  String get dailyScoreDetailsTitle => _t('dailyScoreDetailsTitle');
+  String get dailyScoreEvaluatedTrips => _t('dailyScoreEvaluatedTrips');
+  String get dailyScoreUnscoredTrips => _t('dailyScoreUnscoredTrips');
+  String get dailyScoreTotalDuration => _t('dailyScoreTotalDuration');
+  String get dailyScoreTotalStopDuration => _t('dailyScoreTotalStopDuration');
+  String get dailyScoreUnscoredExcludedHint => _t('dailyScoreUnscoredExcludedHint');
+  String get dailyScoreNoEvaluatedTrips => _t('dailyScoreNoEvaluatedTrips');
+  String get dailyScoreTapForDetails => _t('dailyScoreTapForDetails');
+  String get dailyScoreBestTripLabel => _t('dailyScoreBestTripLabel');
+  String get dailyScoreWorstTripLabel => _t('dailyScoreWorstTripLabel');
+
+  // ── Fleet intelligence dashboard (Phase 10B) ───────────────────────────────
+  String get fleetIntelTitle => _t('fleetIntelTitle');
+  String get fleetIntelSubtitle => _t('fleetIntelSubtitle');
+  String get fleetIntelScore => _t('fleetIntelScore');
+  String get fleetIntelNotScorable => _t('fleetIntelNotScorable');
+  String get fleetIntelInsufficientData => _t('fleetIntelInsufficientData');
+  String get fleetIntelVehicles => _t('fleetIntelVehicles');
+  String get fleetIntelActiveVehicles => _t('fleetIntelActiveVehicles');
+  String get fleetIntelInactiveVehicles => _t('fleetIntelInactiveVehicles');
+  String get fleetIntelTrips => _t('fleetIntelTrips');
+  String get fleetIntelDistance => _t('fleetIntelDistance');
+  String get fleetIntelOverspeed => _t('fleetIntelOverspeed');
+  String get fleetIntelStops => _t('fleetIntelStops');
+  String get fleetIntelBestVehicle => _t('fleetIntelBestVehicle');
+  String get fleetIntelWorstVehicle => _t('fleetIntelWorstVehicle');
+  String get fleetIntelMostActiveVehicle => _t('fleetIntelMostActiveVehicle');
+  String get fleetIntelMostOverspeedVehicle => _t('fleetIntelMostOverspeedVehicle');
+  String get fleetIntelMostStoppedVehicle => _t('fleetIntelMostStoppedVehicle');
+  String get fleetIntelNeedsAttention => _t('fleetIntelNeedsAttention');
+  String get fleetIntelRiskDistribution => _t('fleetIntelRiskDistribution');
+  String get fleetIntelNoData => _t('fleetIntelNoData');
+  String get fleetIntelLoading => _t('fleetIntelLoading');
+  String get fleetIntelError => _t('fleetIntelError');
+  String get fleetIntelToday => _t('fleetIntelToday');
+  String get fleetIntelYesterday => _t('fleetIntelYesterday');
+  String get fleetIntelLast7Days => _t('fleetIntelLast7Days');
+  String get fleetIntelNoTripsInPeriod => _t('fleetIntelNoTripsInPeriod');
+  String fleetIntelVehicleFallback(String id) =>
+      _t('fleetIntelVehicleFallback').replaceAll('{id}', id);
+  String fleetIntelDrivingDuration(String value) =>
+      _t('fleetIntelDrivingDuration').replaceAll('{value}', value);
+  String fleetIntelStopDuration(String value) =>
+      _t('fleetIntelStopDuration').replaceAll('{value}', value);
+  String fleetIntelSampleNote(int included, int total, int cap) => _t('fleetIntelSampleNote')
+      .replaceAll('{included}', '$included')
+      .replaceAll('{total}', '$total')
+      .replaceAll('{cap}', '$cap');
+  String get fleetIntelOpenTrackingTooltip => _t('fleetIntelOpenTrackingTooltip');
+  String get fleetIntelDrivingTime => _t('fleetIntelDrivingTime');
+  String get fleetIntelPartialRoutes => _t('fleetIntelPartialRoutes');
+  String get fleetIntelCustomPeriod => _t('fleetIntelCustomPeriod');
+  String get fleetIntelRefresh => _t('fleetIntelRefresh');
+  String fleetIntelUpdatedAt(String time) =>
+      _t('fleetIntelUpdatedAt').replaceAll('{time}', time);
+  String get fleetIntelPartialData => _t('fleetIntelPartialData');
+  String fleetIntelAnalyzedVehicles(int analyzed, int total) =>
+      _t('fleetIntelAnalyzedVehicles')
+          .replaceAll('{analyzed}', '$analyzed')
+          .replaceAll('{total}', '$total');
+  String fleetIntelLimitedToVehicles(int cap) =>
+      _t('fleetIntelLimitedToVehicles').replaceAll('{cap}', '$cap');
+
+  String get fleetAttentionTitle => _t('fleetAttentionTitle');
+  String get fleetAttentionNone => _t('fleetAttentionNone');
+  String get fleetAttentionHighRisk => _t('fleetAttentionHighRisk');
+  String get fleetAttentionLowScore => _t('fleetAttentionLowScore');
+  String get fleetAttentionManyOverspeed => _t('fleetAttentionManyOverspeed');
+  String get fleetAttentionManyStops => _t('fleetAttentionManyStops');
+  String get fleetAttentionInactive => _t('fleetAttentionInactive');
+  String get fleetAttentionInsufficientData =>
+      _t('fleetAttentionInsufficientData');
+  String get fleetAttentionOpenVehicle => _t('fleetAttentionOpenVehicle');
+  String get fleetAttentionDetailsTitle => _t('fleetAttentionDetailsTitle');
+  String get fleetAttentionScore => _t('fleetAttentionScore');
+  String get fleetAttentionReasons => _t('fleetAttentionReasons');
+  String get fleetAttentionTrips => _t('fleetAttentionTrips');
+  String get fleetAttentionDistance => _t('fleetAttentionDistance');
+  String get fleetAttentionOverspeed => _t('fleetAttentionOverspeed');
+  String get fleetAttentionStops => _t('fleetAttentionStops');
+  String get fleetAttentionOpenMap => _t('fleetAttentionOpenMap');
+  String get fleetAttentionOpenTrips => _t('fleetAttentionOpenTrips');
+  String get fleetAttentionNoScore => _t('fleetAttentionNoScore');
+
+  // ── Trip behavior score details (Phase 9C) ─────────────────────────────────
+  String get driverScoreDetailsTitle => _t('driverScoreDetailsTitle');
+  String get driverScoreTripScoredYes => _t('driverScoreTripScoredYes');
+  String get driverScoreTripScoredNo => _t('driverScoreTripScoredNo');
+  String driverScoreFinalScore(String value) =>
+      _t('driverScoreFinalScore').replaceAll('{value}', value);
+
+  String get driverScoreSpeedPenalty => _t('driverScoreSpeedPenalty');
+  String get driverScoreStopPenalty => _t('driverScoreStopPenalty');
+  String get driverScoreIgnitionPenalty => _t('driverScoreIgnitionPenalty');
+  String get driverScoreEfficiencyPenalty => _t('driverScoreEfficiencyPenalty');
+  String get driverScoreFactorsTitle => _t('driverScoreFactorsTitle');
+  String get driverScoreReasonOverspeed => _t('driverScoreReasonOverspeed');
+  String get driverScoreReasonHeavyOverspeed =>
+      _t('driverScoreReasonHeavyOverspeed');
+  String get driverScoreReasonLongStops => _t('driverScoreReasonLongStops');
+  String get driverScoreReasonExcessiveStops =>
+      _t('driverScoreReasonExcessiveStops');
+  String get driverScoreReasonIgnitionTransitions =>
+      _t('driverScoreReasonIgnitionTransitions');
+  String get driverScoreReasonLowEfficiency =>
+      _t('driverScoreReasonLowEfficiency');
+  String get driverScoreReasonCleanTrip => _t('driverScoreReasonCleanTrip');
+  String get driverScoreReasonShortTrip => _t('driverScoreReasonShortTrip');
+  String get driverScoreReliableEnough => _t('driverScoreReliableEnough');
+  String get driverScoreNotReliableEnough => _t('driverScoreNotReliableEnough');
+  String get driverScoreSteadyDriving => _t('driverScoreSteadyDriving');
+  String get driverScoreSeverityLow => _t('driverScoreSeverityLow');
+  String get driverScoreSeverityMedium => _t('driverScoreSeverityMedium');
+  String get driverScoreSeverityHigh => _t('driverScoreSeverityHigh');
+  String get driverScoreFactorOther => _t('driverScoreFactorOther');
+
+  String driverScoreBaseScore(String value) =>
+      _t('driverScoreBaseScore').replaceAll('{value}', value);
+  String driverScoreTotalPenalty(String value) =>
+      _t('driverScoreTotalPenalty').replaceAll('{value}', value);
+  String driverScorePenaltyLine(String name, String points) =>
+      _t('driverScorePenaltyLine')
+          .replaceAll('{name}', name)
+          .replaceAll('{points}', points);
+  String driverScoreFactorOccurrences(int n) =>
+      _t('driverScoreFactorOccurrences').replaceAll('{n}', '$n');
+
+  String get routeEventDetailsTitle => _t('routeEventDetailsTitle');
+  String get routeEventDetailsStop => _t('routeEventDetailsStop');
+  String get routeEventDetailsOverspeed => _t('routeEventDetailsOverspeed');
+  String get routeEventDetailsIgnitionOn => _t('routeEventDetailsIgnitionOn');
+  String get routeEventDetailsIgnitionOff => _t('routeEventDetailsIgnitionOff');
+  String get routeEventDetailsStartTime => _t('routeEventDetailsStartTime');
+  String get routeEventDetailsEndTime => _t('routeEventDetailsEndTime');
+  String get routeEventDetailsDuration => _t('routeEventDetailsDuration');
+  String get routeEventDetailsTime => _t('routeEventDetailsTime');
+  String get routeEventDetailsMaxSpeed => _t('routeEventDetailsMaxSpeed');
+  String get routeEventDetailsLocation => _t('routeEventDetailsLocation');
+  String get routeEventDetailsRecenter => _t('routeEventDetailsRecenter');
+
   // ── Replay ─────────────────────────────────────────────────────────────────
   String get replayRoute              => _t('replayRoute');
   String get replayPlay               => _t('replayPlay');
@@ -347,12 +801,31 @@ class AppLocalizations {
   String get replaySpeed              => _t('replaySpeed');
   String get replayCurrentSpeed       => _t('replayCurrentSpeed');
   String get replayCurrentTime        => _t('replayCurrentTime');
+  String get replayRecenter           => _t('replayRecenter');
+  String get replayVehicleHidden      => _t('replayVehicleHidden');
+  String get replayVehicleNoData      => _t('replayVehicleNoData');
+  String get replayVehicleActive      => _t('replayVehicleActive');
+  String get replayPlaying            => _t('replayPlaying');
+  String get replayPaused             => _t('replayPaused');
+  String get replayShowLabels         => _t('replayShowLabels');
+  String get replayHideLabels         => _t('replayHideLabels');
+  String get replayMapLegend          => _t('replayMapLegend');
+  String replayPointsCount(int count) =>
+      _t('replayPointsCount').replaceAll('{count}', '$count');
   String get replayProgress           => _t('replayProgress');
   String get loadingReplay            => _t('loadingReplay');
   String get errorLoadingReplay       => _t('errorLoadingReplay');
   String get notEnoughDataForReplay   => _t('notEnoughDataForReplay');
   String get routeCompleted           => _t('routeCompleted');
   String get viewReplay               => _t('viewReplay');
+  String get replayMissingGpsData     => _t('replayMissingGpsData');
+  String get replayMissingData        => _t('replayMissingData');
+  String replayGapsDetected(int count) =>
+      _t('replayGapsDetected').replaceAll('{count}', '$count');
+  String get replayGapStartLabel      => _t('replayGapStartLabel');
+  String get replayGapEndLabel        => _t('replayGapEndLabel');
+  String get replayGapDurationLabel   => _t('replayGapDurationLabel');
+  String get replayGapsSheetTitle     => _t('replayGapsSheetTitle');
 
   // ── Speed Chart ────────────────────────────────────────────────────────────
   String get speedChartTitle          => _t('speedChartTitle');
@@ -539,6 +1012,90 @@ class AppLocalizations {
   String get reportGeneratedBy  => _t('reportGeneratedBy');
   String get reportGeneratedOn  => _t('reportGeneratedOn');
 
+  // ── Fleet Intelligence / Admin Dashboard (Phase 6) ────────────────────────
+  String get fleetIntelligenceTitle => _t('fleetIntelligenceTitle');
+  String get fleetIntelligenceDashboardSubtitle =>
+      _t('fleetIntelligenceDashboardSubtitle');
+  String get vehiclesOnline => _t('vehiclesOnline');
+  String get kpiDriversTotal => _t('kpiDriversTotal');
+  String get kpiDriversActive => _t('kpiDriversActive');
+  String get maintenanceOverdueVehicles => _t('maintenanceOverdueVehicles');
+  String get insufficientData => _t('insufficientData');
+  String get companyManagement => _t('companyManagement');
+  String get distributors => _t('distributors');
+  String get companyManagementHint => _t('companyManagementHint');
+  String get utilizationScore => _t('utilizationScore');
+  String get mostActiveVehicles => _t('mostActiveVehicles');
+  String get leastActiveVehicles => _t('leastActiveVehicles');
+  String get driversToWatch => _t('driversToWatch');
+  String get vehicleActivitySection => _t('vehicleActivitySection');
+  String get driverRankingSection => _t('driverRankingSection');
+  String get maintenanceOverviewSection => _t('maintenanceOverviewSection');
+  String get alertsOverviewSection => _t('alertsOverviewSection');
+  String get vehicleUtilizationSection => _t('vehicleUtilizationSection');
+  String get maintenanceUpcomingCount => _t('maintenanceUpcomingCount');
+  String get maintenanceSoonCount => _t('maintenanceSoonCount');
+  String get maintenanceOverdueCount => _t('maintenanceOverdueCount');
+  String get nextMaintenances => _t('nextMaintenances');
+  String get alertsTotalPeriod => _t('alertsTotalPeriod');
+  String get alertsOverspeed => _t('alertsOverspeed');
+  String get alertsGeofence => _t('alertsGeofence');
+  String get alertsOnlineOffline => _t('alertsOnlineOffline');
+  String get lastImportantEvents => _t('lastImportantEvents');
+  String get periodTotalDistance => _t('periodTotalDistance');
+  String get vehiclesActiveInPeriod => _t('vehiclesActiveInPeriod');
+  String get fleetIntelLiveStatusHint => _t('fleetIntelLiveStatusHint');
+  String get exportDashboardReport => _t('exportDashboardReport');
+  String get driverRankEstimatedNote => _t('driverRankEstimatedNote');
+  String get notAvailable => _t('notAvailable');
+  String get fleetStatusProblem => _t('fleetStatusProblem');
+  String get adminDashboardLoadError => _t('adminDashboardLoadError');
+  String get adminDashboardTripsPartialError =>
+      _t('adminDashboardTripsPartialError');
+  String get licenseAttentionTitle => _t('licenseAttentionTitle');
+
+  // ── Admin Dashboard premium copy (Phase 6.3) ───────────────────────────────
+  String get dashboardConnectionLive => _t('dashboardConnectionLive');
+  String get dashboardConnectionReconnecting =>
+      _t('dashboardConnectionReconnecting');
+  String get dashboardConnectionOverview => _t('dashboardConnectionOverview');
+  String get dashboardConnectionDegraded =>
+      _t('dashboardConnectionDegraded');
+  String get dashboardConnectionLiveReconnecting =>
+      _t('dashboardConnectionLiveReconnecting');
+  String get dashboardConnectionOffline =>
+      _t('dashboardConnectionOffline');
+  String get dashboardConnectionServerUnavailable =>
+      _t('dashboardConnectionServerUnavailable');
+  String get dashboardConnectionSessionExpired =>
+      _t('dashboardConnectionSessionExpired');
+  String get dashboardConnectionChecking =>
+      _t('dashboardConnectionChecking');
+  String get dashboardSyncInProgress => _t('dashboardSyncInProgress');
+  String get dashboardDistanceQuietHint => _t('dashboardDistanceQuietHint');
+  String get dashboardNoActivityToday => _t('dashboardNoActivityToday');
+  String get dashboardNoActivityPeriod => _t('dashboardNoActivityPeriod');
+  String get dashboardViewFullFleet => _t('dashboardViewFullFleet');
+  String get dashboardNoUrgentMaintenance => _t('dashboardNoUrgentMaintenance');
+  String get dashboardNoImportantAlerts => _t('dashboardNoImportantAlerts');
+  String get dashboardImportantAlertsLabel =>
+      _t('dashboardImportantAlertsLabel');
+  String get dashboardVehicleActivityEmpty =>
+      _t('dashboardVehicleActivityEmpty');
+
+  String fleetEventTypeLabel(String type) => switch (type) {
+        'deviceOverspeed' => _t('fleetEvtOverspeed'),
+        'geofenceEnter' => _t('fleetEvtGeofenceIn'),
+        'geofenceExit' => _t('fleetEvtGeofenceOut'),
+        'deviceOffline' => _t('fleetEvtOffline'),
+        'deviceOnline' => _t('fleetEvtOnline'),
+        'alarm' => _t('fleetEvtAlarm'),
+        'ignitionOn' => _t('fleetEvtIgnitionOn'),
+        'ignitionOff' => _t('fleetEvtIgnitionOff'),
+        'maintenance' => _t('fleetEvtMaintenance'),
+        _ => type,
+      };
+
   // ── Translations map ───────────────────────────────────────────────────────
   static const Map<String, Map<String, String>> _strings = {
     'en': {
@@ -561,6 +1118,8 @@ class AppLocalizations {
       'language': 'Language',
       'appearance': 'Appearance',
       'aboutElmo': 'About ELMO',
+      'aboutFleetTrackingSubtitle':
+          'Smart fleet GPS tracking on the ELMOGPS platform.',
       'signOut': 'Sign Out',
       'version': 'Version',
       'editProfile': 'Edit Profile',
@@ -633,6 +1192,7 @@ class AppLocalizations {
       'statusIdlePlural': 'Idle',
       'statusOfflinePlural': 'Offline',
       'totalFleetCount': 'Total fleet: {n} vehicle(s)',
+      'lastKnownData': 'Last known data',
       // Alerts
       'allAlerts': 'All Alerts',
       'smartAlerts': 'Smart Alerts',
@@ -706,6 +1266,59 @@ class AppLocalizations {
       'statusRejected': 'Rejected',
       'availableOf': '{available}/{total} available',
       'errorLoadingData': 'Error: {error}',
+      'cmdConfirmRequired': 'Confirmation required',
+      'cmdCriticalAction': 'Critical action',
+      'cmdConfirmSendMessage': 'You are about to send',
+      'cmdCriticalWarningDefault': 'This action may affect vehicle safety and the driver. Make sure execution is safe.',
+      'cmdTypeToConfirm': 'To confirm, type:',
+      'cmdExecuteCommand': 'Execute command',
+      'cmdDeviceOnline': 'Device online',
+      'cmdDeviceOffline': 'Device offline',
+      'cmdLastUpdate': 'Last update:',
+      'cmdVehicleStopped': 'Stopped',
+      'cmdSentSuccess': 'sent successfully.',
+      'cmdSentFailed': 'failed',
+      'cmdQueuedMessage': 'The command has been queued and will be executed when the device reconnects.',
+      'cmdErrorSavedNotFound': 'No saved command found for this device. A technician must configure it first.',
+      'cmdErrorUnsupported': 'This command is not supported by this device.',
+      'cmdErrorTimeout': 'Connection timed out. Check your connection and try again.',
+      'cmdErrorUnauthorized': 'Session expired. Please log in again.',
+      'cmdErrorForbidden': 'You do not have permission for this operation.',
+      'cmdErrorNoConnection': 'No internet connection. Check your network and try again.',
+      'cmdErrorBadRequest': 'The command could not be processed. Check parameters and try again.',
+      'cmdErrorServer': 'Server error. Please try again in a moment.',
+      'cmdErrorUnexpected': 'An unexpected error occurred. Try again or contact support.',
+      'cmdConfirmWord': 'CONFIRM',
+      'cmdLoadFailed': 'Failed to load commands',
+      'cmdRetry': 'Retry',
+      'vehicle': 'Vehicle',
+      // Command Logs Screen
+      'commandHistory': 'History',
+      'commandHistoryEmpty': 'History will appear here after\nsending the first command.',
+      'clearHistoryConfirmMessage': 'All command logs will be permanently deleted.',
+      'delete': 'Delete',
+      'generalInfo': 'General information',
+      'command': 'Command',
+      'systemType': 'System type',
+      'category': 'Category',
+      'risk': 'Risk',
+      'method': 'Method',
+      'date': 'Date',
+      'sentBy': 'Sent by',
+      'userId': 'User ID',
+      'executionContext': 'Execution context',
+      'connectionStatus': 'Connection status',
+      'online': 'Online',
+      'speed': 'Speed',
+      'device': 'Device',
+      'errorMessage': 'Error message',
+      'message': 'Message',
+      'technicalData': 'Technical data (Technician/Admin)',
+      'technicalReason': 'Technical reason',
+      'sentAttributes': 'Sent attributes',
+      'rawResponse': 'Raw response',
+      'copy': 'Copy',
+      'noTechnicalData': 'No technical data available.',
       // Vehicle Detail
       'statusLabel': 'Status',
       'telemetryRealTime': 'Real-time Telemetry',
@@ -736,6 +1349,56 @@ class AppLocalizations {
       'courseLabel': 'Direction',
       'odometerLabel': 'Odometer',
       'accuracyLabel': 'Accuracy',
+      'routeIntelSpeedKmh': '{v} km/h',
+      'routeIntelMinutesShort': '{n} min',
+      'routeIntelPreviewTitle': 'Route analysis settings',
+      'routeIntelPreviewReadOnlyHint':
+          'Read-only preview. Values are merged from your account, device, and group where applicable.',
+      'routeIntelPreviewLoadingLayers': 'Loading some settings layers…',
+      'routeIntelPreviewGroupLoadError':
+          'Could not load group defaults; preview may be incomplete.',
+      'routeIntelSettingsPreviewSection': 'Route analysis (preview)',
+      'routeIntelOverspeedThreshold': 'Overspeed threshold',
+      'routeIntelStopEnter': 'Stop enter speed',
+      'routeIntelStopExit': 'Stop exit speed',
+      'routeIntelMinStopDuration': 'Minimum stop duration',
+      'routeIntelDetectStops': 'Detect stops',
+      'routeIntelDetectOverspeed': 'Detect overspeed',
+      'routeIntelDetectIgnition': 'Detect ignition',
+      'routeIntelSourceDevice': 'Device',
+      'routeIntelSourceGroup': 'Group',
+      'routeIntelSourceUser': 'User',
+      'routeIntelSourceLocal': 'Local',
+      'routeIntelSourceDefault': 'Default',
+      'routeIntelEnabled': 'Enabled',
+      'routeIntelDisabled': 'Disabled',
+      'routeIntelLocalEditorTitle': 'Edit local thresholds',
+      'routeIntelLocalParamsHeading': 'Local parameters',
+      'routeIntelSave': 'Save',
+      'routeIntelResetLocalPrefsSettings': 'Reset local settings',
+      'routeIntelSavedSnack': 'Saved',
+      'routeIntelResetSnack': 'Reset',
+      'routeIntelInvalidValue': 'Invalid value',
+      'routeIntelLocalOnlyCentralWarning':
+          'These settings are stored locally on this device. They do not modify the central ELMOGPS configuration.',
+      'routeIntelVehicleEditTitle': 'Edit vehicle thresholds',
+      'routeIntelVehicleEditSubtitle':
+          'Saved to this vehicle’s central configuration on the platform.',
+      'routeIntelVehicleEditButton': 'Edit vehicle thresholds',
+      'routeIntelVehicleSave': 'Save',
+      'routeIntelVehicleReset': 'Reset vehicle thresholds',
+      'routeIntelVehicleSaved': 'Vehicle settings saved.',
+      'routeIntelVehicleResetDone': 'Vehicle settings reset.',
+      'routeIntelVehicleSaveError':
+          'Could not save settings. Please try again.',
+      'routeIntelVehicleResetError':
+          'Could not reset settings. Please try again.',
+      'routeIntelVehicleOnlyHint':
+          'These settings apply only to this vehicle.',
+      'routeIntelVehicleNoPermissionHint':
+          'You can view route analysis settings; only eligible roles can change central vehicle configuration.',
+      'routeIntelVehicleResetConfirmMessage':
+          'Remove only this vehicle’s route analysis overrides on the platform. Fleet, account, and local settings stay unchanged.',
       // Maps
       'mapLoadingFleet': 'Loading map…',
       'mapLoadError': 'Failed to load vehicle data',
@@ -752,8 +1415,121 @@ class AppLocalizations {
       'freeLabel': 'Free',
       'routeLabel': 'Route',
       'vehicleDetails': 'Vehicle Details',
+      'todaySummaryTitle': "Today's Activity",
+      'engineHoursLabel': 'Engine hours',
+      'vehicleActionsTitle': 'Actions',
+      'technicalInfoTitle': 'Technical Details',
+      'noSummaryData': 'No activity data available for today.',
+      'noAlertsForVehicle': 'No alerts for this vehicle.',
+      'alertsLoadError': 'Could not load alerts.',
+      'tripsLoadError': 'Could not load trips.',
+      'reportSheetTitle': 'Generate Vehicle Report',
+      'selectReportType': 'Report type',
+      'selectPeriod': 'Period',
+      'startDateLabel': 'Start date',
+      'endDateLabel': 'End date',
+      'invalidDateRange': 'Start date must be before end date.',
+      'generateVehicleReport': 'Generate',
+      'replaySheetTitle': 'Replay Vehicle Route',
+      'selectReplayPeriod': 'Select period',
+      'startReplay': 'Start Replay',
+      'replayRangeTooLong': 'Range exceeds 24 hours. Replay may be slow with large data.',
+      'noReplayDataForPeriod': 'No route data available for this period.',
+      'reportPdfSubjectPrefix': 'ELMOGPS Report',
+      'reportPdfTitlePrefix': 'Report',
       'todayRouteLabel': "Today's Route",
+      'mapSearchVehicleHint': 'Search vehicle, plate, ID…',
+      'filterAlertsMap': 'Alerts',
+      'mapEmptyFilteredState': 'No vehicles in this state right now.',
+      'mapNoVehiclesEmpty': 'No vehicles to show right now.',
+      'liveFollowRunningLabel': 'Following live…',
+      'resumeVehicleFollow': 'Resume follow',
+      'mapLayersTitle': 'Map layers',
+      'mapLayerAlerts': 'Show alerts on map',
+      'mapLayerRoutesToday': "Today's route trace",
+      'mapTypeNormal': 'Default map',
+      'mapTypeSatellite': 'Satellite',
+      'mapTypeTerrain': 'Terrain',
+      'mapVehicleListTitle': 'Fleet list',
+      'uniqueIdShortLabel': 'Device ID',
+      'mapLayersButton': 'Layers',
+      'filterVehicles': 'Filter vehicles',
+      'chooseVehicles': 'Choose vehicles',
+      'chooseVehiclesHint': 'Select one or more vehicles to show on the map',
+      'showAllVehicles': 'Show all vehicles',
+      'showAllVehiclesOnMap': 'Show all vehicles on map',
+      'showVehicleOnMap': 'Show vehicle on map',
+      'showSelectedVehiclesOnMap': 'Show {count} vehicles on map',
+      'clearSelection': 'Clear selection',
+      'selectedVehiclesCount': '{count} selected',
+      'mapFilterSearchHint': 'Search by name, plate, or ID…',
+      'onlineOnlyFilter': 'Online only',
+      'movingOnlyFilter': 'Moving only',
+      'vehiclesShownCount': '{count} vehicles shown',
+      'clearMapFilter': 'Clear filter',
+      'noVehiclesMatchFilter': 'No vehicles match this filter.',
+      'selectVehiclesTitle': 'Select vehicles',
+      'mapFilterActiveLabel': 'Filter active',
+      'mapFilterZeroVisible': 'No vehicles visible — adjust filter',
+      'selectMultipleVehiclesHint': 'Select one or more vehicles to show on the map',
+      'vehiclesSelectedCount': '{count} vehicles selected',
+      'matchingVehiclesCount': '{count} matching vehicles',
+      'noMatchingVehicles': 'No vehicles match your search',
+      'vehicleComparisonTitle': 'Vehicle comparison',
+      'compareVehicles': 'Compare vehicles',
+      'compareVehiclesCount': 'Compare {count} vehicles',
+      'comparedVehiclesCount': '{count} vehicles compared',
+      'selectAtLeastTwoVehicles': 'Select at least two vehicles to compare.',
+      'todayComparison': 'Today',
+      'stopsToday': 'Stops today',
+      'maxSpeed': 'Max speed',
+      'averageSpeed': 'Average speed',
+      'stopDuration': 'Stop duration',
+      'lastUpdate': 'Last update',
+      'highestDistance': 'Highest distance',
+      'highestAlerts': 'Most alerts',
+      'highestStopDuration': 'Longest stop time',
+      'mostRecentUpdate': 'Most recent update',
+      'removeFromComparison': 'Remove from comparison',
+      'noComparisonData': 'No comparison data',
+      'comparisonLoadFailed': 'Could not load comparison',
+      'comparisonLoading': 'Loading comparison…',
+      'comparisonLoadingAnalyzing': 'Analyzing selected vehicles…',
+      'backToMap': 'Back to map',
+      'multiVehicleReplayTitle': 'Multi-vehicle replay',
+      'replaySelectedVehicles': 'Replay selected vehicles',
+      'replayVehiclesCount': 'Replay {count} vehicles',
+      'replayComparedVehicles': 'Replay compared vehicles',
+      'selectAtLeastTwoVehiclesReplay':
+          'Select at least two vehicles to start replay.',
+      'multiReplayLimitMessage': 'Multi-vehicle replay is limited to 5 vehicles.',
+      'multiReplayLoading': 'Loading multi-vehicle replay…',
+      'multiReplayNoData': 'No route data for the selected vehicles.',
+      'multiReplayLoadFailed': 'Could not load replay.',
+      'routeDataUnavailable': 'No route data',
+      'hideVehicle': 'Hide vehicle',
+      'showVehicle': 'Show vehicle',
+      'replayToday': 'Today',
+      'chooseReplayDate': 'Choose date',
+      'replayMultiVehicles': 'Multi-vehicle replay',
+      'stopsCountLabel': 'Stops',
+      'alertsTodayLabel': 'Alerts today',
+      'alertsForVehicle': 'Alerts for this vehicle',
+      'alertsForVehicleName': 'Alerts for {name}',
+      'tripDateFilter': 'Filter trips by date',
+      'clearDateFilter': 'Clear date filter',
+      'centerFleetTooltip': 'Centre fleet',
+      'fleetSummaryBar': '{online}/{total} online · {moving} moving · {idle} idle',
       'locationUnavailable': 'Unavailable',
+      'noLivePosition': 'No live position',
+      'positionMayBeOutdated': 'Position may be outdated',
+      'lastPositionIsOld': 'Last position is old',
+      'currentAddress': 'Address',
+      'liveTracking': 'Live tracking',
+      'liveTrackingActive': 'Live',
+      'trackingDataStale': 'Stale data',
+      'trackingReconnecting': 'Reconnecting',
+      'trackingOffline': 'Offline',
       'updateLocationFailed': 'Failed to update location',
       'fleetOnlineCount': '{online}/{total} online · {moving} moving',
       'routePointsCount': '{n} pts',
@@ -834,6 +1610,171 @@ class AppLocalizations {
       'routeAvgSpeedShort': 'Avg spd',
       'routePointsShort': 'Points',
       'routeGpsPointsInfo': '{total} GPS pts · {drawn} pts displayed',
+      'routeEventsTimelineTitle': 'Trip events',
+      'routeEventsNoneDetected': 'No route events detected',
+      'routeEventsSeeMore': 'See more',
+      'routeEventsSeeLess': 'See less',
+      'routeEventFilterAll': 'All',
+      'routeEventFilterStops': 'Stops',
+      'routeEventFilterOverspeed': 'Overspeed',
+      'routeEventFilterIgnition': 'Ignition',
+      'routeEventsFilterNoMatches': 'No events in this filter',
+      'tripsTitle': 'Trips',
+      'tripLabel': 'Trip',
+      'tripTitle': 'Trip {n}',
+      'tripStart': 'Start',
+      'tripEnd': 'End',
+      'tripDuration': 'Duration',
+      'tripDistance': 'Distance',
+      'tripStopsCount': '{n} stops',
+      'tripOverspeedCount': '{n} overspeed',
+      'tripMaxSpeed': 'Max speed',
+      'tripReplay': 'Replay',
+      'tripViewOnMap': 'View on map',
+      'tripsNoneDetected': 'No trips detected for this period.',
+      'tripShort': 'Short trip',
+      'tripKm': 'km',
+      'tripMin': 'min',
+      'tripTimeArrow': '{from} → {to}',
+      'tripKmUnit': 'km',
+      'tripIgnitionSummary': 'Ignition: {on} on · {off} off',
+      'driverScoreLabel': 'Score',
+      'driverScoreExcellent': 'Excellent',
+      'driverScoreGood': 'Good',
+      'driverScoreModerate': 'Moderate',
+      'driverScoreHighRisk': 'Needs attention',
+      'driverScoreUnknown': 'Unknown',
+      'driverScoreNotScorable': 'Not rated',
+      'driverScoreTripTooShort': 'Trip too short',
+      'dailyScoreTitle': 'Driving score',
+      'dailyScorePeriodTitle': 'For this period',
+      'dailyScoreNotScorable': 'Not rated',
+      'dailyScoreInsufficientData': 'Not enough data to score this period',
+      'dailyScoreTripCount': '{n} trips',
+      'dailyScoreScorableTrips': '{scored} scored · {total} trips',
+      'dailyScoreTotalDistance': '{km} km total',
+      'dailyScoreOverspeed': '{n} overspeed',
+      'dailyScoreStops': '{n} stops',
+      'dailyScoreBestTrip': 'Best trip: {name}',
+      'dailyScoreWorstTrip': 'Needs attention: {name}',
+      'dailyScoreNoTrips': 'No trips in this period',
+      'dailyScoreDetailsTitle': 'Driving score details',
+      'dailyScoreEvaluatedTrips': 'Trips evaluated',
+      'dailyScoreUnscoredTrips': 'Trips not scored',
+      'dailyScoreTotalDuration': 'Total duration',
+      'dailyScoreTotalStopDuration': 'Total stop duration',
+      'dailyScoreUnscoredExcludedHint':
+          'Trips that are not shown as scored here are not included in this period average.',
+      'dailyScoreNoEvaluatedTrips': 'No trips were scored for this period.',
+      'dailyScoreTapForDetails': 'Tap for details',
+      'dailyScoreBestTripLabel': 'Best trip',
+      'dailyScoreWorstTripLabel': 'Needs attention',
+      'fleetIntelTitle': 'Fleet behavior',
+      'fleetIntelSubtitle':
+          'Driving quality summary for ELMOGPS fleet (sample window).',
+      'fleetIntelScore': 'Fleet score',
+      'fleetIntelNotScorable': 'Not rated',
+      'fleetIntelInsufficientData': 'Not enough data',
+      'fleetIntelVehicles': 'Vehicles',
+      'fleetIntelActiveVehicles': 'Active',
+      'fleetIntelInactiveVehicles': 'Inactive',
+      'fleetIntelTrips': 'Trips',
+      'fleetIntelDistance': 'Distance',
+      'fleetIntelOverspeed': 'Overspeed',
+      'fleetIntelStops': 'Stops',
+      'fleetIntelBestVehicle': 'Best vehicle',
+      'fleetIntelWorstVehicle': 'Needs attention (lowest score)',
+      'fleetIntelMostActiveVehicle': 'Most driven',
+      'fleetIntelMostOverspeedVehicle': 'Most overspeed events',
+      'fleetIntelMostStoppedVehicle': 'Longest stop time',
+      'fleetIntelNeedsAttention': 'Needs follow-up',
+      'fleetIntelRiskDistribution': 'Risk mix',
+      'fleetIntelNoData': '—',
+      'fleetIntelLoading': 'Loading fleet summary…',
+      'fleetIntelError': 'Could not load summary. Pull to retry.',
+      'fleetIntelToday': 'Today',
+      'fleetIntelYesterday': 'Yesterday',
+      'fleetIntelLast7Days': 'Last 7 days',
+      'fleetIntelNoTripsInPeriod': 'No trips in this window for sampled vehicles.',
+      'fleetIntelVehicleFallback': 'Vehicle {id}',
+      'fleetIntelDrivingDuration': 'Driving time: {value}',
+      'fleetIntelStopDuration': 'Stop time: {value}',
+      'fleetIntelSampleNote':
+          '{included}/{total} vehicles · up to {cap} loaded per refresh (online-first).',
+      'fleetIntelOpenTrackingTooltip': 'Open tracking',
+      'fleetIntelDrivingTime': 'Driving time',
+      'fleetIntelPartialRoutes':
+          'Some fleet routes could not be loaded; metrics may be incomplete.',
+      'fleetIntelCustomPeriod': 'Custom',
+      'fleetIntelRefresh': 'Refresh',
+      'fleetIntelUpdatedAt': 'Updated · {time}',
+      'fleetIntelPartialData': 'Some indicators are based on partial fleet data.',
+      'fleetIntelAnalyzedVehicles':
+          'Loaded routes for {analyzed} of {total} vehicles.',
+      'fleetIntelLimitedToVehicles':
+          'The platform loads up to {cap} vehicles per analysis to protect performance.',
+      'fleetAttentionTitle': 'Vehicles to follow',
+      'fleetAttentionNone': 'No vehicles need follow-up for this period.',
+      'fleetAttentionHighRisk': 'High risk',
+      'fleetAttentionLowScore': 'Low score',
+      'fleetAttentionManyOverspeed': 'Many overspeed moments',
+      'fleetAttentionManyStops': 'Many or long stops',
+      'fleetAttentionInactive': 'Inactive / no trips',
+      'fleetAttentionInsufficientData': 'Insufficient data',
+      'fleetAttentionOpenVehicle': 'Open vehicle',
+      'fleetAttentionDetailsTitle': 'Follow-up',
+      'fleetAttentionScore': 'Period score',
+      'fleetAttentionReasons': 'Why this vehicle is listed',
+      'fleetAttentionTrips': 'Trips',
+      'fleetAttentionDistance': 'Distance',
+      'fleetAttentionOverspeed': 'Overspeed moments',
+      'fleetAttentionStops': 'Stops',
+      'fleetAttentionOpenMap': 'Open map',
+      'fleetAttentionOpenTrips': 'Open trips',
+      'fleetAttentionNoScore': 'No score for this period (not enough reliable trips).',
+      'driverScoreDetailsTitle': 'Score details',
+      'driverScoreTripScoredYes': 'This trip is scored',
+      'driverScoreTripScoredNo': 'This trip is not scored',
+      'driverScoreFinalScore': 'Final score: {value}',
+      'driverScoreBaseScore': 'Starting score: {value}',
+      'driverScoreTotalPenalty': 'Total penalties: {value}',
+      'driverScoreSpeedPenalty': 'Speed overshoots',
+      'driverScoreStopPenalty': 'Stops & long idle time',
+      'driverScoreIgnitionPenalty': 'Ignition changes',
+      'driverScoreEfficiencyPenalty': 'Slow overall progress',
+      'driverScoreFactorsTitle': 'What influenced this score',
+      'driverScoreReasonOverspeed': 'Moments over the speed limit',
+      'driverScoreReasonHeavyOverspeed': 'High-speed overshoots',
+      'driverScoreReasonLongStops': 'Long stationary periods',
+      'driverScoreReasonExcessiveStops': 'Many stops relative to distance',
+      'driverScoreReasonIgnitionTransitions': 'Frequent ignition changes',
+      'driverScoreReasonLowEfficiency': 'Low average speed with frequent stops',
+      'driverScoreReasonCleanTrip': 'No notable issues on this trip',
+      'driverScoreReasonShortTrip':
+          'Route was too short or brief for a reliable score.',
+      'driverScoreReliableEnough':
+          'The trip was long enough to produce a meaningful score.',
+      'driverScoreNotReliableEnough':
+          'A fair score cannot be shown for this trip with the data available.',
+      'driverScoreSteadyDriving': 'Steady driving — no noteworthy penalties.',
+      'driverScoreSeverityLow': 'Low impact',
+      'driverScoreSeverityMedium': 'Medium impact',
+      'driverScoreSeverityHigh': 'Strong impact',
+      'driverScoreFactorOther': 'Another factor',
+      'driverScorePenaltyLine': '{name}: −{points}',
+      'driverScoreFactorOccurrences': '×{n}',
+      'routeEventDetailsTitle': 'Event details',
+      'routeEventDetailsStop': 'Stop',
+      'routeEventDetailsOverspeed': 'Overspeed',
+      'routeEventDetailsIgnitionOn': 'Ignition on',
+      'routeEventDetailsIgnitionOff': 'Ignition off',
+      'routeEventDetailsStartTime': 'Start time',
+      'routeEventDetailsEndTime': 'End time',
+      'routeEventDetailsDuration': 'Duration',
+      'routeEventDetailsTime': 'Time',
+      'routeEventDetailsMaxSpeed': 'Max speed',
+      'routeEventDetailsLocation': 'Location',
+      'routeEventDetailsRecenter': 'Recenter on map',
       // Replay
       'replayRoute': 'Replay route',
       'replayPlay': 'Play',
@@ -842,12 +1783,29 @@ class AppLocalizations {
       'replaySpeed': 'Playback speed',
       'replayCurrentSpeed': 'Current speed',
       'replayCurrentTime': 'Current time',
+      'replayRecenter': 'Re-center',
+      'replayVehicleHidden': 'Hidden',
+      'replayVehicleNoData': 'No data',
+      'replayVehicleActive': 'Active',
+      'replayPlaying': 'Playing',
+      'replayPaused': 'Paused',
+      'replayShowLabels': 'Show labels',
+      'replayHideLabels': 'Hide labels',
+      'replayMapLegend': 'Vehicles',
+      'replayPointsCount': '{count} points',
       'replayProgress': 'Progress',
       'loadingReplay': 'Loading replay…',
       'errorLoadingReplay': 'Error loading replay.',
       'notEnoughDataForReplay': 'Not enough GPS data for replay.',
       'routeCompleted': 'Route completed',
       'viewReplay': 'View replay',
+      'replayMissingGpsData': 'Missing GPS data',
+      'replayMissingData': 'Missing data',
+      'replayGapsDetected': 'Missing data: {count}',
+      'replayGapStartLabel': 'Last fix before gap',
+      'replayGapEndLabel': 'First fix after gap',
+      'replayGapDurationLabel': 'Gap duration',
+      'replayGapsSheetTitle': 'GPS data gaps',
       // Speed chart
       'speedChartTitle': 'Speed chart',
       'speedChartMax': 'Max speed',
@@ -980,6 +1938,76 @@ class AppLocalizations {
       'fleetAlertLicenseExpiredDesc': '{name}: driving license has expired',
       'reportFleetMaintenanceSoon': 'Maintenance report — Coming soon',
       'reportFleetDriversSoon': 'Drivers report — Coming soon',
+      'fleetIntelligenceTitle': 'Fleet Intelligence',
+      'fleetIntelligenceDashboardSubtitle': 'Fleet KPIs and live status',
+      'vehiclesOnline': 'Online',
+      'kpiDriversTotal': 'Drivers',
+      'kpiDriversActive': 'Active drivers',
+      'maintenanceOverdueVehicles': 'Vehicles — overdue maintenance',
+      'insufficientData': 'Insufficient data',
+      'companyManagement': 'Company management',
+      'distributors': 'Distributors',
+      'companyManagementHint':
+          'Company and distributor management will be added in a dedicated phase.',
+      'utilizationScore': 'Utilization score',
+      'mostActiveVehicles': 'Most active vehicles',
+      'leastActiveVehicles': 'Least active / idle',
+      'driversToWatch': 'Drivers to watch',
+      'vehicleActivitySection': 'Vehicle activity',
+      'driverRankingSection': 'Driver ranking',
+      'maintenanceOverviewSection': 'Maintenance overview',
+      'alertsOverviewSection': 'Alerts overview',
+      'vehicleUtilizationSection': 'Vehicle utilization',
+      'maintenanceUpcomingCount': 'Upcoming',
+      'maintenanceSoonCount': 'Due soon',
+      'maintenanceOverdueCount': 'Overdue records',
+      'nextMaintenances': 'Next maintenance',
+      'alertsTotalPeriod': 'Total (important)',
+      'alertsOverspeed': 'Overspeed',
+      'alertsGeofence': 'Geofence enter/exit',
+      'alertsOnlineOffline': 'Online / offline (events)',
+      'lastImportantEvents': 'Recent important events',
+      'periodTotalDistance': 'Period distance',
+      'vehiclesActiveInPeriod': 'Vehicles with trips',
+      'fleetIntelLiveStatusHint':
+          'Status (moving / stopped / idle / offline) reflects the live fleet snapshot.',
+      'exportDashboardReport': 'Export dashboard report',
+      'driverRankEstimatedNote':
+          'Ranking is approximate and based on trips/events linked to the driver\'s assigned vehicles.',
+      'notAvailable': 'Not available',
+      'fleetStatusProblem': 'Needs attention',
+      'adminDashboardLoadError': 'Could not load the dashboard.',
+      'adminDashboardTripsPartialError':
+          'Could not load trips/events for this period. Other sections still use available data.',
+      'dashboardConnectionLive': 'Live',
+      'dashboardConnectionReconnecting': 'Reconnecting',
+      'dashboardConnectionOverview': 'Offline',
+      'dashboardConnectionDegraded': 'Connected · Delayed sync',
+      'dashboardConnectionLiveReconnecting': 'Reconnecting live…',
+      'dashboardConnectionOffline': 'Offline',
+      'dashboardConnectionServerUnavailable': 'Server unavailable',
+      'dashboardConnectionSessionExpired': 'Session expired',
+      'dashboardConnectionChecking': 'Connecting…',
+      'dashboardSyncInProgress': 'Syncing…',
+      'dashboardDistanceQuietHint':
+          'Distance will update as soon as vehicles start moving.',
+      'dashboardNoActivityToday': 'No activity detected today.',
+      'dashboardNoActivityPeriod': 'No activity in this period.',
+      'dashboardViewFullFleet': 'View full fleet',
+      'dashboardNoUrgentMaintenance': 'No urgent maintenance.',
+      'dashboardNoImportantAlerts': 'No important alerts.',
+      'dashboardImportantAlertsLabel': 'Important alerts',
+      'dashboardVehicleActivityEmpty': 'No active vehicles in this period.',
+      'licenseAttentionTitle': 'License — follow up',
+      'fleetEvtOverspeed': 'Overspeed',
+      'fleetEvtGeofenceIn': 'Geofence entry',
+      'fleetEvtGeofenceOut': 'Geofence exit',
+      'fleetEvtOffline': 'Offline',
+      'fleetEvtOnline': 'Online',
+      'fleetEvtAlarm': 'Alarm',
+      'fleetEvtIgnitionOn': 'Ignition on',
+      'fleetEvtIgnitionOff': 'Ignition off',
+      'fleetEvtMaintenance': 'Maintenance',
       'validationRequired': 'This field is required',
       // PDF / Share
       'exportPdfLabel': 'Export PDF',
@@ -1013,6 +2041,8 @@ class AppLocalizations {
       'language': 'اللغة',
       'appearance': 'المظهر',
       'aboutElmo': 'حول ELMO',
+      'aboutFleetTrackingSubtitle':
+          'تتبُّع أساطيل GPS ذكي عبر منصة ELMOGPS.',
       'signOut': 'تسجيل الخروج',
       'version': 'الإصدار',
       'editProfile': 'تعديل الملف الشخصي',
@@ -1085,6 +2115,7 @@ class AppLocalizations {
       'statusIdlePlural': 'خاملة',
       'statusOfflinePlural': 'مقطوعة',
       'totalFleetCount': 'إجمالي الأسطول: {n} مركبة',
+      'lastKnownData': 'آخر بيانات معروفة',
       // Alerts
       'allAlerts': 'جميع التنبيهات',
       'smartAlerts': 'تنبيهات ذكية',
@@ -1155,6 +2186,59 @@ class AppLocalizations {
       'statusRejected': 'مرفوض',
       'availableOf': '{available}/{total} متاح',
       'errorLoadingData': 'خطأ: {error}',
+      'cmdConfirmRequired': 'التأكيد مطلوب',
+      'cmdCriticalAction': 'إجراء حرج',
+      'cmdConfirmSendMessage': 'أنت على وشك إرسال',
+      'cmdCriticalWarningDefault': 'هذا الإجراء قد يؤثر على سلامة المركبة والسائق. تأكد من أن التنفيذ آمن.',
+      'cmdTypeToConfirm': 'للتأكيد، اكتب:',
+      'cmdExecuteCommand': 'تنفيذ الأمر',
+      'cmdDeviceOnline': 'الجهاز متصل',
+      'cmdDeviceOffline': 'الجهاز غير متصل',
+      'cmdLastUpdate': 'آخر تحديث:',
+      'cmdVehicleStopped': 'متوقف',
+      'cmdSentSuccess': 'تم الإرسال بنجاح.',
+      'cmdSentFailed': 'فشل',
+      'cmdQueuedMessage': 'تم وضع الأمر في قائمة الانتظار وسيتم تنفيذه عند إعادة اتصال الجهاز.',
+      'cmdErrorSavedNotFound': 'لم يتم العثور على أمر محفوظ لهذا الجهاز. يجب أن يقوم فني بتكوينه أولاً.',
+      'cmdErrorUnsupported': 'هذا الأمر غير مدعوم من هذا الجهاز.',
+      'cmdErrorTimeout': 'انتهت مهلة الاتصال. تحقق من اتصالك وحاول مرة أخرى.',
+      'cmdErrorUnauthorized': 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.',
+      'cmdErrorForbidden': 'ليس لديك صلاحية لهذه العملية.',
+      'cmdErrorNoConnection': 'لا يوجد اتصال بالإنترنت. تحقق من شبكتك وحاول مرة أخرى.',
+      'cmdErrorBadRequest': 'تعذر معالجة الأمر. تحقق من المعاملات وحاول مرة أخرى.',
+      'cmdErrorServer': 'خطأ في الخادم. يرجى المحاولة بعد قليل.',
+      'cmdErrorUnexpected': 'حدث خطأ غير متوقع. حاول مرة أخرى أو اتصل بالدعم.',
+      'cmdConfirmWord': 'تأكيد',
+      'cmdLoadFailed': 'فشل تحميل الأوامر',
+      'cmdRetry': 'إعادة المحاولة',
+      'vehicle': 'مركبة',
+      // Command Logs Screen
+      'commandHistory': 'السجل',
+      'commandHistoryEmpty': 'سيظهر السجل هنا بعد\nإرسال أول أمر.',
+      'clearHistoryConfirmMessage': 'سيتم حذف جميع سجلات الأوامر نهائياً.',
+      'delete': 'حذف',
+      'generalInfo': 'معلومات عامة',
+      'command': 'الأمر',
+      'systemType': 'نوع النظام',
+      'category': 'الفئة',
+      'risk': 'المخاطر',
+      'method': 'الطريقة',
+      'date': 'التاريخ',
+      'sentBy': 'أرسل بواسطة',
+      'userId': 'معرّف المستخدم',
+      'executionContext': 'سياق التنفيذ',
+      'connectionStatus': 'حالة الاتصال',
+      'online': 'متصل',
+      'speed': 'السرعة',
+      'device': 'الجهاز',
+      'errorMessage': 'رسالة الخطأ',
+      'message': 'الرسالة',
+      'technicalData': 'بيانات تقنية (فني/مدير)',
+      'technicalReason': 'السبب التقني',
+      'sentAttributes': 'السمات المرسلة',
+      'rawResponse': 'الاستجابة الأولية',
+      'copy': 'نسخ',
+      'noTechnicalData': 'لا توجد بيانات تقنية متاحة.',
       // Vehicle Detail
       'statusLabel': 'الحالة',
       'telemetryRealTime': 'قياسات مباشرة',
@@ -1185,6 +2269,54 @@ class AppLocalizations {
       'courseLabel': 'الاتجاه',
       'odometerLabel': 'عداد المسافة',
       'accuracyLabel': 'الدقة',
+      'routeIntelSpeedKmh': '{v} كم/س',
+      'routeIntelMinutesShort': '{n} د',
+      'routeIntelPreviewTitle': 'إعدادات تحليل المسار',
+      'routeIntelPreviewReadOnlyHint':
+          'معاينة للقراءة فقط. تُدمج القيم من الحساب والجهاز والمجموعة حيث ينطبق.',
+      'routeIntelPreviewLoadingLayers': 'جاري تحميل بعض طبقات الإعدادات…',
+      'routeIntelPreviewGroupLoadError':
+          'تعذّر تحميل إعدادات المجموعة؛ قد تكون المعاينة ناقصة.',
+      'routeIntelSettingsPreviewSection': 'تحليل المسار (معاينة)',
+      'routeIntelOverspeedThreshold': 'حد تجاوز السرعة',
+      'routeIntelStopEnter': 'سرعة دخول التوقف',
+      'routeIntelStopExit': 'سرعة خروج التوقف',
+      'routeIntelMinStopDuration': 'أقل مدة توقف',
+      'routeIntelDetectStops': 'اكتشاف التوقفات',
+      'routeIntelDetectOverspeed': 'اكتشاف تجاوز السرعة',
+      'routeIntelDetectIgnition': 'اكتشاف الإشعال',
+      'routeIntelSourceDevice': 'جهاز',
+      'routeIntelSourceGroup': 'مجموعة',
+      'routeIntelSourceUser': 'مستخدم',
+      'routeIntelSourceLocal': 'محلي',
+      'routeIntelSourceDefault': 'افتراضي',
+      'routeIntelEnabled': 'مفعّل',
+      'routeIntelDisabled': 'معطّل',
+      'routeIntelLocalEditorTitle': 'تعديل العتبات المحلية',
+      'routeIntelLocalParamsHeading': 'إعدادات محلية',
+      'routeIntelSave': 'حفظ',
+      'routeIntelResetLocalPrefsSettings': 'إعادة تعيين الإعدادات المحلية',
+      'routeIntelSavedSnack': 'تم الحفظ',
+      'routeIntelResetSnack': 'تمت إعادة التعيين',
+      'routeIntelInvalidValue': 'قيمة غير صالحة',
+      'routeIntelLocalOnlyCentralWarning':
+          'تُخزَّن هذه الإعدادات محليًا على هذا الجهاز ولا تُعدّل الإعدادات المركزية لـ ELMOGPS.',
+      'routeIntelVehicleEditTitle': 'تعديل عتبات المركبة',
+      'routeIntelVehicleEditSubtitle':
+          'يُحفظ في الإعدادات المركزية لهذه المركبة على المنصة.',
+      'routeIntelVehicleEditButton': 'تعديل عتبات المركبة',
+      'routeIntelVehicleSave': 'حفظ',
+      'routeIntelVehicleReset': 'إعادة ضبط عتبات المركبة',
+      'routeIntelVehicleSaved': 'تم حفظ إعدادات المركبة.',
+      'routeIntelVehicleResetDone': 'تمت إعادة ضبط إعدادات المركبة.',
+      'routeIntelVehicleSaveError': 'تعذر حفظ الإعدادات. حاول مرة أخرى.',
+      'routeIntelVehicleResetError':
+          'تعذر إعادة ضبط الإعدادات. حاول مرة أخرى.',
+      'routeIntelVehicleOnlyHint': 'هذه الإعدادات تطبّق على هذه المركبة فقط.',
+      'routeIntelVehicleNoPermissionHint':
+          'يمكنك عرض إعدادات تحليل المسار؛ تغيير الإعدادات المركزية للمركبة متاح لأدوار مخوّلة فقط.',
+      'routeIntelVehicleResetConfirmMessage':
+          'يُزال فقط تجاوز هذه المركبة على المنصة. إعدادات الأسطول والحساب والإعدادات المحلية لا تتغيّر.',
       // Maps
       'mapLoadingFleet': 'جارٍ تحميل الخريطة…',
       'mapLoadError': 'تعذّر تحميل بيانات المركبات',
@@ -1201,8 +2333,121 @@ class AppLocalizations {
       'freeLabel': 'حر',
       'routeLabel': 'المسار',
       'vehicleDetails': 'تفاصيل المركبة',
+      'todaySummaryTitle': 'نشاط اليوم',
+      'engineHoursLabel': 'ساعات المحرك',
+      'vehicleActionsTitle': 'الإجراءات',
+      'technicalInfoTitle': 'التفاصيل التقنية',
+      'noSummaryData': 'لا توجد بيانات نشاط لهذا اليوم.',
+      'noAlertsForVehicle': 'لا توجد تنبيهات لهذه المركبة.',
+      'alertsLoadError': 'تعذّر تحميل التنبيهات.',
+      'tripsLoadError': 'تعذّر تحميل الرحلات.',
+      'reportSheetTitle': 'إنشاء تقرير المركبة',
+      'selectReportType': 'نوع التقرير',
+      'selectPeriod': 'الفترة',
+      'startDateLabel': 'تاريخ البداية',
+      'endDateLabel': 'تاريخ النهاية',
+      'invalidDateRange': 'يجب أن يكون تاريخ البداية قبل تاريخ النهاية.',
+      'generateVehicleReport': 'إنشاء',
+      'replaySheetTitle': 'إعادة تشغيل مسار المركبة',
+      'selectReplayPeriod': 'اختر الفترة',
+      'startReplay': 'بدء التشغيل',
+      'replayRangeTooLong': 'النطاق يتجاوز 24 ساعة. قد يكون التشغيل بطيئاً مع بيانات كبيرة.',
+      'noReplayDataForPeriod': 'لا توجد بيانات مسار لهذه الفترة.',
+      'reportPdfSubjectPrefix': 'تقرير ELMOGPS',
+      'reportPdfTitlePrefix': 'تقرير',
       'todayRouteLabel': 'مسار اليوم',
+      'mapSearchVehicleHint': 'بحث: مركبة، لوحة، معرف…',
+      'filterAlertsMap': 'إنذار',
+      'mapEmptyFilteredState': 'لا توجد مركبات في هذه الحالة حالياً.',
+      'mapNoVehiclesEmpty': 'لا توجد مركبات لعرضها حالياً.',
+      'liveFollowRunningLabel': 'جاري التتبع المباشر',
+      'resumeVehicleFollow': 'العودة للتتبع',
+      'mapLayersTitle': 'طبقات الخريطة',
+      'mapLayerAlerts': 'عرض التنبيهات على الخريطة',
+      'mapLayerRoutesToday': 'مسار اليوم على الخريطة',
+      'mapTypeNormal': 'خريطة عادية',
+      'mapTypeSatellite': 'قمر صناعي',
+      'mapTypeTerrain': 'تضاريس',
+      'mapVehicleListTitle': 'قائمة المركبات',
+      'uniqueIdShortLabel': 'معرف الجهاز',
+      'mapLayersButton': 'طبقات',
+      'filterVehicles': 'تصفية المركبات',
+      'chooseVehicles': 'اختيار المركبات',
+      'chooseVehiclesHint': 'اختر مركبة واحدة أو أكثر لعرضها على الخريطة',
+      'showAllVehicles': 'عرض كل المركبات',
+      'showAllVehiclesOnMap': 'عرض كل المركبات على الخريطة',
+      'showVehicleOnMap': 'عرض المركبة على الخريطة',
+      'showSelectedVehiclesOnMap': 'عرض {count} مركبات على الخريطة',
+      'clearSelection': 'مسح الاختيار',
+      'selectedVehiclesCount': '{count} محددة',
+      'mapFilterSearchHint': 'بحث بالاسم أو اللوحة أو المعرّف…',
+      'onlineOnlyFilter': 'متصل فقط',
+      'movingOnlyFilter': 'متحرك فقط',
+      'vehiclesShownCount': '{count} مركبة معروضة',
+      'clearMapFilter': 'مسح التصفية',
+      'noVehiclesMatchFilter': 'لا توجد مركبات تطابق هذا التصفية.',
+      'selectVehiclesTitle': 'اختر المركبات',
+      'mapFilterActiveLabel': 'تصفية نشطة',
+      'mapFilterZeroVisible': 'لا مركبات ظاهرة — عدّل التصفية',
+      'selectMultipleVehiclesHint': 'اختر مركبة واحدة أو أكثر لعرضها على الخريطة',
+      'vehiclesSelectedCount': '{count} مركبة محددة',
+      'matchingVehiclesCount': '{count} مركبة مطابقة',
+      'noMatchingVehicles': 'لا توجد مركبات تطابق بحثك',
+      'vehicleComparisonTitle': 'مقارنة المركبات',
+      'compareVehicles': 'مقارنة المركبات',
+      'compareVehiclesCount': 'مقارنة {count} مركبات',
+      'comparedVehiclesCount': '{count} مركبات قيد المقارنة',
+      'selectAtLeastTwoVehicles': 'اختر مركبتين على الأقل للمقارنة.',
+      'todayComparison': 'اليوم',
+      'stopsToday': 'التوقفات اليوم',
+      'maxSpeed': 'أقصى سرعة',
+      'averageSpeed': 'متوسط السرعة',
+      'stopDuration': 'مدة التوقف',
+      'lastUpdate': 'آخر تحديث',
+      'highestDistance': 'أعلى مسافة',
+      'highestAlerts': 'أكثر تنبيهات',
+      'highestStopDuration': 'أطول وقت توقف',
+      'mostRecentUpdate': 'أحدث تحديث',
+      'removeFromComparison': 'إزالة من المقارنة',
+      'noComparisonData': 'لا توجد بيانات للمقارنة',
+      'comparisonLoadFailed': 'تعذر تحميل المقارنة',
+      'comparisonLoading': 'جاري تحميل المقارنة…',
+      'comparisonLoadingAnalyzing': 'جاري تحليل المركبات المحددة…',
+      'backToMap': 'العودة إلى الخريطة',
+      'multiVehicleReplayTitle': 'إعادة تشغيل متعددة',
+      'replaySelectedVehicles': 'إعادة تشغيل المركبات المحددة',
+      'replayVehiclesCount': 'إعادة تشغيل {count} مركبات',
+      'replayComparedVehicles': 'إعادة تشغيل المركبات المقارنة',
+      'selectAtLeastTwoVehiclesReplay':
+          'حدد مركبتين على الأقل لبدء إعادة التشغيل.',
+      'multiReplayLimitMessage': 'إعادة التشغيل المتعددة محدودة بـ 5 مركبات.',
+      'multiReplayLoading': 'جاري تحميل إعادة التشغيل المتعددة…',
+      'multiReplayNoData': 'لا توجد بيانات مسار للمركبات المحددة.',
+      'multiReplayLoadFailed': 'تعذر تحميل إعادة التشغيل.',
+      'routeDataUnavailable': 'لا توجد بيانات مسار',
+      'hideVehicle': 'إخفاء المركبة',
+      'showVehicle': 'إظهار المركبة',
+      'replayToday': 'اليوم',
+      'chooseReplayDate': 'اختر التاريخ',
+      'replayMultiVehicles': 'إعادة تشغيل متعددة',
+      'stopsCountLabel': 'التوقفات',
+      'alertsTodayLabel': 'تنبيهات اليوم',
+      'alertsForVehicle': 'تنبيهات هذه المركبة',
+      'alertsForVehicleName': 'تنبيهات {name}',
+      'tripDateFilter': 'تصفية الرحلات حسب التاريخ',
+      'clearDateFilter': 'مسح تصفية التاريخ',
+      'centerFleetTooltip': 'توسيط الأسطول',
+      'fleetSummaryBar': '{online}/{total} متصل · {moving} متحرك · {idle} خامل',
       'locationUnavailable': 'غير متاح',
+      'noLivePosition': 'لا يوجد موقع مباشر',
+      'positionMayBeOutdated': 'قد يكون الموقع قديماً',
+      'lastPositionIsOld': 'آخر موقع قديم',
+      'currentAddress': 'العنوان',
+      'liveTracking': 'تتبع مباشر',
+      'liveTrackingActive': 'مباشر',
+      'trackingDataStale': 'بيانات قديمة',
+      'trackingReconnecting': 'إعادة الاتصال',
+      'trackingOffline': 'غير متصل',
       'updateLocationFailed': 'تعذّر تحديث الموقع',
       'fleetOnlineCount': '{online}/{total} متصل · {moving} متحرك',
       'routePointsCount': '{n} نقطة',
@@ -1283,6 +2528,169 @@ class AppLocalizations {
       'routeAvgSpeedShort': 'متوسط',
       'routePointsShort': 'نقاط',
       'routeGpsPointsInfo': '{total} نقطة GPS · {drawn} نقطة معروضة',
+      'routeEventsTimelineTitle': 'أحداث المسار',
+      'routeEventsNoneDetected': 'لا توجد أحداث مسار',
+      'routeEventsSeeMore': 'عرض المزيد',
+      'routeEventsSeeLess': 'عرض أقل',
+      'routeEventFilterAll': 'الكل',
+      'routeEventFilterStops': 'التوقفات',
+      'routeEventFilterOverspeed': 'تجاوز السرعة',
+      'routeEventFilterIgnition': 'الإشعال',
+      'routeEventsFilterNoMatches': 'لا أحداث في هذا الفلتر',
+      'tripsTitle': 'الرحلات',
+      'tripLabel': 'رحلة',
+      'tripTitle': 'رحلة {n}',
+      'tripStart': 'البداية',
+      'tripEnd': 'النهاية',
+      'tripDuration': 'المدة',
+      'tripDistance': 'المسافة',
+      'tripStopsCount': '{n} توقف',
+      'tripOverspeedCount': '{n} تجاوز سرعة',
+      'tripMaxSpeed': 'أقصى سرعة',
+      'tripReplay': 'إعادة التشغيل',
+      'tripViewOnMap': 'عرض على الخريطة',
+      'tripsNoneDetected': 'لم يتم اكتشاف رحلات في هذه الفترة.',
+      'tripShort': 'رحلة قصيرة',
+      'tripKm': 'كم',
+      'tripMin': 'د',
+      'tripTimeArrow': '{from} → {to}',
+      'tripKmUnit': 'كم',
+      'tripIgnitionSummary': 'الإشعال: {on} تشغيل · {off} إطفاء',
+      'driverScoreLabel': 'التقييم',
+      'driverScoreExcellent': 'ممتاز',
+      'driverScoreGood': 'جيد',
+      'driverScoreModerate': 'متوسط',
+      'driverScoreHighRisk': 'يحتاج متابعة',
+      'driverScoreUnknown': 'غير معروف',
+      'driverScoreNotScorable': 'غير مقيّم',
+      'driverScoreTripTooShort': 'رحلة قصيرة جدًا',
+      'dailyScoreTitle': 'تقييم القيادة للفترة',
+      'dailyScorePeriodTitle': 'لهذه الفترة',
+      'dailyScoreNotScorable': 'غير مقيّم',
+      'dailyScoreInsufficientData': 'بيانات غير كافية لتقييم هذه الفترة',
+      'dailyScoreTripCount': '{n} رحلة',
+      'dailyScoreScorableTrips': '{scored} قابلة للتقييم · {total} رحلات',
+      'dailyScoreTotalDistance': 'إجمالي {km} كم',
+      'dailyScoreOverspeed': '{n} تجاوز سرعة',
+      'dailyScoreStops': '{n} توقف',
+      'dailyScoreBestTrip': 'أفضل رحلة: {name}',
+      'dailyScoreWorstTrip': 'تتطلب متابعة: {name}',
+      'dailyScoreNoTrips': 'لا توجد رحلات في هذه الفترة',
+      'dailyScoreDetailsTitle': 'تفاصيل تقييم القيادة',
+      'dailyScoreEvaluatedTrips': 'رحلات مُقيَّمة',
+      'dailyScoreUnscoredTrips': 'رحلات غير مُقيَّمة',
+      'dailyScoreTotalDuration': 'المدة الإجمالية',
+      'dailyScoreTotalStopDuration': 'مدة التوقفات الإجمالية',
+      'dailyScoreUnscoredExcludedHint':
+          'الرحلات غير المعروضة كمقيّمة هنا لا تُحتسب ضمن متوسط هذه الفترة.',
+      'dailyScoreNoEvaluatedTrips': 'لم يُقيَّم أي رحلة لهذه الفترة.',
+      'dailyScoreTapForDetails': 'اضغط للتفاصيل',
+      'dailyScoreBestTripLabel': 'أفضل رحلة',
+      'dailyScoreWorstTripLabel': 'رحلة تتطلّب متابعة',
+      'fleetIntelTitle': 'سلوك الأسطول',
+      'fleetIntelSubtitle': 'ملخص جودة القيادة لأسطول ELMOGPS (نافذة عيّنة).',
+      'fleetIntelScore': 'درجة الأسطول',
+      'fleetIntelNotScorable': 'غير مقيّمة',
+      'fleetIntelInsufficientData': 'البيانات غير كافية',
+      'fleetIntelVehicles': 'المركبات',
+      'fleetIntelActiveVehicles': 'نشطة',
+      'fleetIntelInactiveVehicles': 'غير نشطة',
+      'fleetIntelTrips': 'الرحلات',
+      'fleetIntelDistance': 'المسافة',
+      'fleetIntelOverspeed': 'تجاوز سرعة',
+      'fleetIntelStops': 'التوقّفات',
+      'fleetIntelBestVehicle': 'أفضل مركبة',
+      'fleetIntelWorstVehicle': 'تتطلّب متابعة (أدنى درجة)',
+      'fleetIntelMostActiveVehicle': 'الأكثر قيادة',
+      'fleetIntelMostOverspeedVehicle': 'أكثر تجاوزات سرعة',
+      'fleetIntelMostStoppedVehicle': 'أطول وقت توقّف',
+      'fleetIntelNeedsAttention': 'تتطلّب متابعة',
+      'fleetIntelRiskDistribution': 'توزيع الخطر',
+      'fleetIntelNoData': '—',
+      'fleetIntelLoading': 'جاري تحميل ملخص الأسطول…',
+      'fleetIntelError': 'تعذّر التحميل. اسحب للتحديث.',
+      'fleetIntelToday': 'اليوم',
+      'fleetIntelYesterday': 'أمس',
+      'fleetIntelLast7Days': 'آخر 7 أيام',
+      'fleetIntelNoTripsInPeriod': 'لا رحلات في هذه النافذة للعيّينة.',
+      'fleetIntelVehicleFallback': 'مركبة {id}',
+      'fleetIntelDrivingDuration': 'زمن القيادة: {value}',
+      'fleetIntelStopDuration': 'زمن التوقّف: {value}',
+      'fleetIntelSampleNote':
+          '{included}/{total} مركبات · يُحمَّل ما يصل إلى {cap} لكل تحديث (الأولوية للمتصل).',
+      'fleetIntelOpenTrackingTooltip': 'فتح التتبّع',
+      'fleetIntelDrivingTime': 'زمن القيادة',
+      'fleetIntelPartialRoutes':
+          'تعذّر تحميل بعض مسارات الأسطول؛ قد يكون الملخص غير كامل.',
+      'fleetIntelCustomPeriod': 'فترة مخصّصة',
+      'fleetIntelRefresh': 'تحديث',
+      'fleetIntelUpdatedAt': 'آخر تحديث · {time}',
+      'fleetIntelPartialData':
+          'بعض المؤشرات مبنية على بيانات جزئية من الأسطول.',
+      'fleetIntelAnalyzedVehicles':
+          'تُحمَّل مسارات {analyzed} من أصل {total} مركبات.',
+      'fleetIntelLimitedToVehicles':
+          'المنصّة تحمّل حتى {cap} مركبة لكل تحليل لحماية الأداء.',
+      'fleetAttentionTitle': 'مركبات تحتاج متابعة',
+      'fleetAttentionNone': 'لا توجد مركبات تحتاج متابعة لهذه الفترة.',
+      'fleetAttentionHighRisk': 'خطر مرتفع',
+      'fleetAttentionLowScore': 'درجة منخفضة',
+      'fleetAttentionManyOverspeed': 'تجاوزات سرعة متكررة',
+      'fleetAttentionManyStops': 'توقّفات كثيرة أو طويلة',
+      'fleetAttentionInactive': 'غير نشطة / لا رحلات',
+      'fleetAttentionInsufficientData': 'بيانات غير كافية',
+      'fleetAttentionOpenVehicle': 'فتح المركبة',
+      'fleetAttentionDetailsTitle': 'متابعة المركبة',
+      'fleetAttentionScore': 'درجة الفترة',
+      'fleetAttentionReasons': 'لماذا ظهرت في القائمة',
+      'fleetAttentionTrips': 'الرحلات',
+      'fleetAttentionDistance': 'المسافة',
+      'fleetAttentionOverspeed': 'لحظات تجاوز السرعة',
+      'fleetAttentionStops': 'التوقّفات',
+      'fleetAttentionOpenMap': 'فتح الخريطة',
+      'fleetAttentionOpenTrips': 'فتح الرحلات',
+      'fleetAttentionNoScore': 'لا درجة لهذه الفترة (لا رحلات موثوقة للتقييم).',
+      'driverScoreDetailsTitle': 'تفاصيل التقييم',
+      'driverScoreTripScoredYes': 'تم تقييم هذه الرحلة',
+      'driverScoreTripScoredNo': 'لم يُقيَّم هذا المسار',
+      'driverScoreFinalScore': 'الدرجة النهائية: {value}',
+      'driverScoreBaseScore': 'نقطة الانطلاق: {value}',
+      'driverScoreTotalPenalty': 'مجموع الخصومات: {value}',
+      'driverScoreSpeedPenalty': 'تجاوزات السرعة',
+      'driverScoreStopPenalty': 'التوقف ومدة السكون',
+      'driverScoreIgnitionPenalty': 'تغييرات الإشعال',
+      'driverScoreEfficiencyPenalty': 'تباطؤ عام في المسار',
+      'driverScoreFactorsTitle': 'ما الذي أثر على التقييم',
+      'driverScoreReasonOverspeed': 'لحظات تجاوز السرعة المسموحة',
+      'driverScoreReasonHeavyOverspeed': 'تجاوزات بسرعات مرتفعة',
+      'driverScoreReasonLongStops': 'مدد توقف طويلة نسبيًا',
+      'driverScoreReasonExcessiveStops': 'توقفات كثيرة بالنسبة للمسافة',
+      'driverScoreReasonIgnitionTransitions': 'تكرار تشغيل وإطفاء الإشعال',
+      'driverScoreReasonLowEfficiency': 'متوسط سرعة منخفض مع توقفات متكررة',
+      'driverScoreReasonCleanTrip': 'لا توجد ملاحظات بارزة في هذه الرحلة',
+      'driverScoreReasonShortTrip': 'المسار قصير أو قصير الزمن لنتيجة موثوقة.',
+      'driverScoreReliableEnough': 'الرحلة كانت كافية لإظهار تقييم معنوي.',
+      'driverScoreNotReliableEnough':
+          'لا يمكن عرض تقييم عادل لهذه الرحلة مع البيانات المتاحة.',
+      'driverScoreSteadyDriving': 'قيادة متزنة — دون خصومات ملحوظة.',
+      'driverScoreSeverityLow': 'تأثير خفيف',
+      'driverScoreSeverityMedium': 'تأثير متوسط',
+      'driverScoreSeverityHigh': 'تأثير قوي',
+      'driverScoreFactorOther': 'عامل آخر',
+      'driverScorePenaltyLine': '{name}: −{points}',
+      'driverScoreFactorOccurrences': '×{n}',
+      'routeEventDetailsTitle': 'تفاصيل الحدث',
+      'routeEventDetailsStop': 'توقف',
+      'routeEventDetailsOverspeed': 'سرعة زائدة',
+      'routeEventDetailsIgnitionOn': 'المحرك قيد التشغيل',
+      'routeEventDetailsIgnitionOff': 'المحرك متوقف',
+      'routeEventDetailsStartTime': 'وقت البداية',
+      'routeEventDetailsEndTime': 'وقت النهاية',
+      'routeEventDetailsDuration': 'المدة',
+      'routeEventDetailsTime': 'الوقت',
+      'routeEventDetailsMaxSpeed': 'أقصى سرعة',
+      'routeEventDetailsLocation': 'الموقع',
+      'routeEventDetailsRecenter': 'توسيط الخريطة',
       // Replay
       'replayRoute': 'إعادة تشغيل المسار',
       'replayPlay': 'تشغيل',
@@ -1291,12 +2699,29 @@ class AppLocalizations {
       'replaySpeed': 'سرعة التشغيل',
       'replayCurrentSpeed': 'السرعة الحالية',
       'replayCurrentTime': 'الوقت الحالي',
+      'replayRecenter': 'إعادة التمركز',
+      'replayVehicleHidden': 'مخفية',
+      'replayVehicleNoData': 'لا بيانات',
+      'replayVehicleActive': 'نشطة',
+      'replayPlaying': 'تشغيل',
+      'replayPaused': 'متوقف',
+      'replayShowLabels': 'إظهار التسميات',
+      'replayHideLabels': 'إخفاء التسميات',
+      'replayMapLegend': 'المركبات',
+      'replayPointsCount': '{count} نقطة',
       'replayProgress': 'التقدم',
       'loadingReplay': 'جارٍ تحميل إعادة التشغيل…',
       'errorLoadingReplay': 'حدث خطأ أثناء تحميل إعادة التشغيل.',
       'notEnoughDataForReplay': 'بيانات GPS غير كافية لإعادة التشغيل.',
       'routeCompleted': 'انتهى المسار',
       'viewReplay': 'عرض إعادة التشغيل',
+      'replayMissingGpsData': 'بيانات GPS ناقصة',
+      'replayMissingData': 'بيانات ناقصة',
+      'replayGapsDetected': 'بيانات ناقصة: {count}',
+      'replayGapStartLabel': 'آخر نقطة قبل الفجوة',
+      'replayGapEndLabel': 'أول نقطة بعد الفجوة',
+      'replayGapDurationLabel': 'مدة الفجوة',
+      'replayGapsSheetTitle': 'فجوات بيانات GPS',
       // Speed chart
       'speedChartTitle': 'رسم السرعة',
       'speedChartMax': 'السرعة القصوى',
@@ -1431,6 +2856,76 @@ class AppLocalizations {
           '{name}: انتهَت مهلة اعتبار رخصته سارية وفق الآجال',
       'reportFleetMaintenanceSoon': 'إصدار تقرير الصيانة — يُفعَّل لاحقاً',
       'reportFleetDriversSoon': 'تقرير السائقين — يتوفر خلال المرات القادمة',
+      'fleetIntelligenceTitle': 'ذكاء الأسطول',
+      'fleetIntelligenceDashboardSubtitle': 'مؤشرات الأداء والحالة الفورية',
+      'vehiclesOnline': 'متصلة',
+      'kpiDriversTotal': 'السائقون',
+      'kpiDriversActive': 'سائقون نشطون',
+      'maintenanceOverdueVehicles': 'مركبات بصيانة متأخرة',
+      'insufficientData': 'بيانات غير كافية',
+      'companyManagement': 'إدارة الشركات',
+      'distributors': 'الموزعون',
+      'companyManagementHint':
+          'ستُضاف إدارة الشركات والموزعين في مرحلة مخصّصة لاحقاً.',
+      'utilizationScore': 'معدل الاستعمال',
+      'mostActiveVehicles': 'أكثر المركبات نشاطاً',
+      'leastActiveVehicles': 'الأقل حركة / راكدة',
+      'driversToWatch': 'سائقون يحتاجون متابعة',
+      'vehicleActivitySection': 'نشاط المركبات',
+      'driverRankingSection': 'ترتيب السائقين',
+      'maintenanceOverviewSection': 'ملخص الصيانة',
+      'alertsOverviewSection': 'ملخص التنبيهات',
+      'vehicleUtilizationSection': 'استعمال المركبات',
+      'maintenanceUpcomingCount': 'قادمة',
+      'maintenanceSoonCount': 'قريبة',
+      'maintenanceOverdueCount': 'سجلات متأخرة',
+      'nextMaintenances': 'أقرب الصيانات',
+      'alertsTotalPeriod': 'الإجمالي (مهم)',
+      'alertsOverspeed': 'تجاوز السرعة',
+      'alertsGeofence': 'دخول/خروج منطقة',
+      'alertsOnlineOffline': 'متصل/غير متصل (أحداث)',
+      'lastImportantEvents': 'آخر الأحداث المهمة',
+      'periodTotalDistance': 'مسافة الفترة',
+      'vehiclesActiveInPeriod': 'مركبات لها رحلات',
+      'fleetIntelLiveStatusHint':
+          'حالة (متحركة / متوقفة / خامل / غير متصلة) تعكس لقطة الأسطول الحية.',
+      'exportDashboardReport': 'تصدير تقرير لوحة التحكم',
+      'driverRankEstimatedNote':
+          'الترتيب تقريبي ويُبنى على الرحلات والأحداث المرتبطة بمركبات السائق المعيّنة.',
+      'notAvailable': 'غير متوفر',
+      'fleetStatusProblem': 'يستحق المتابعة',
+      'adminDashboardLoadError': 'تعذّر تحميل لوحة التحكم.',
+      'adminDashboardTripsPartialError':
+          'تعذّر تحميل الرحلات/الأحداث لهذه الفترة. الأقسام الأخرى تستخدم البيانات المتاحة.',
+      'dashboardConnectionLive': 'مباشر',
+      'dashboardConnectionReconnecting': 'جارٍ إعادة الاتصال',
+      'dashboardConnectionOverview': 'غير متصل',
+      'dashboardConnectionDegraded': 'متصل · مزامنة متأخرة',
+      'dashboardConnectionLiveReconnecting': 'إعادة اتصال مباشر…',
+      'dashboardConnectionOffline': 'غير متصل',
+      'dashboardConnectionServerUnavailable': 'الخادم غير متاح',
+      'dashboardConnectionSessionExpired': 'انتهت الجلسة',
+      'dashboardConnectionChecking': 'جارٍ الاتصال…',
+      'dashboardSyncInProgress': 'جارٍ المزامنة…',
+      'dashboardDistanceQuietHint':
+          'ستتحدّث المسافة بمجرد بدء تحرّك المركبات.',
+      'dashboardNoActivityToday': 'لا نشاطًا يُذكر اليوم.',
+      'dashboardNoActivityPeriod': 'لا نشاطًا في هذه الفترة.',
+      'dashboardViewFullFleet': 'عرض الأسطول بالكامل',
+      'dashboardNoUrgentMaintenance': 'لا صيانة عاجلة.',
+      'dashboardNoImportantAlerts': 'لا تنبيهات مهمة.',
+      'dashboardImportantAlertsLabel': 'تنبيهات مهمة',
+      'dashboardVehicleActivityEmpty': 'لا توجد مركبات نشطة خلال هذه الفترة.',
+      'licenseAttentionTitle': 'الرخص — يستلزم المتابعة',
+      'fleetEvtOverspeed': 'تجاوز السرعة',
+      'fleetEvtGeofenceIn': 'دخول منطقة',
+      'fleetEvtGeofenceOut': 'خروج منطقة',
+      'fleetEvtOffline': 'غير متصل',
+      'fleetEvtOnline': 'متصل',
+      'fleetEvtAlarm': 'إنذار',
+      'fleetEvtIgnitionOn': 'تشغيل المحرك',
+      'fleetEvtIgnitionOff': 'إيقاف المحرك',
+      'fleetEvtMaintenance': 'صيانة',
       'validationRequired': 'هذا الحقل إلزامي',
       // PDF / Share
       'exportPdfLabel': 'تصدير PDF',
@@ -1464,6 +2959,8 @@ class AppLocalizations {
       'language': 'Langue',
       'appearance': 'Apparence',
       'aboutElmo': "À propos d'ELMO",
+      'aboutFleetTrackingSubtitle':
+          'Suivi GPS intelligent de flotte sur la plateforme ELMOGPS.',
       'signOut': 'Se déconnecter',
       'version': 'Version',
       'editProfile': 'Modifier le profil',
@@ -1537,6 +3034,7 @@ class AppLocalizations {
       'statusIdlePlural': 'Inactifs',
       'statusOfflinePlural': 'Hors ligne',
       'totalFleetCount': 'Flotte totale : {n} véhicule(s)',
+      'lastKnownData': 'Dernière donnée connue',
       // Alerts
       'allAlerts': 'Toutes les alertes',
       'smartAlerts': 'Alertes intelligentes',
@@ -1611,6 +3109,59 @@ class AppLocalizations {
       'statusRejected': 'Rejeté',
       'availableOf': '{available}/{total} disponible(s)',
       'errorLoadingData': 'Erreur de chargement: {error}',
+      'cmdConfirmRequired': 'Confirmation requise',
+      'cmdCriticalAction': 'Action critique',
+      'cmdConfirmSendMessage': 'Vous êtes sur le point d\'envoyer',
+      'cmdCriticalWarningDefault': 'Cette action peut affecter la sécurité du véhicule et du conducteur. Assurez-vous que l\'exécution est sûre.',
+      'cmdTypeToConfirm': 'Pour confirmer, saisissez :',
+      'cmdExecuteCommand': 'Exécuter la commande',
+      'cmdDeviceOnline': 'Appareil en ligne',
+      'cmdDeviceOffline': 'Appareil hors ligne',
+      'cmdLastUpdate': 'Dernière MAJ :',
+      'cmdVehicleStopped': 'Arrêté',
+      'cmdSentSuccess': 'envoyée avec succès.',
+      'cmdSentFailed': 'échouée',
+      'cmdQueuedMessage': 'La commande a été mise en file d\'attente et sera exécutée dès la reconnexion de l\'appareil.',
+      'cmdErrorSavedNotFound': 'Aucune commande sauvegardée trouvée pour cet appareil. Un technicien doit d\'abord la configurer.',
+      'cmdErrorUnsupported': 'Cette commande n\'est pas supportée par cet appareil.',
+      'cmdErrorTimeout': 'La connexion a expiré. Vérifiez votre connexion et réessayez.',
+      'cmdErrorUnauthorized': 'Session expirée. Veuillez vous reconnecter.',
+      'cmdErrorForbidden': 'Vous n\'avez pas les droits pour cette opération.',
+      'cmdErrorNoConnection': 'Aucune connexion Internet. Vérifiez votre réseau et réessayez.',
+      'cmdErrorBadRequest': 'La commande n\'a pas pu être traitée. Vérifiez les paramètres et réessayez.',
+      'cmdErrorServer': 'Erreur serveur. Veuillez réessayer dans quelques instants.',
+      'cmdErrorUnexpected': 'Une erreur inattendue s\'est produite. Réessayez ou contactez le support.',
+      'cmdConfirmWord': 'CONFIRMER',
+      'cmdLoadFailed': 'Échec du chargement des commandes',
+      'cmdRetry': 'Réessayer',
+      'vehicle': 'Véhicule',
+      // Command Logs Screen
+      'commandHistory': 'Historique',
+      'commandHistoryEmpty': "L'historique apparaîtra ici après\nl'envoi de la première commande.",
+      'clearHistoryConfirmMessage': 'Tous les journaux de commandes seront supprimés définitivement.',
+      'delete': 'Effacer',
+      'generalInfo': 'Informations générales',
+      'command': 'Commande',
+      'systemType': 'Type système',
+      'category': 'Catégorie',
+      'risk': 'Risque',
+      'method': 'Méthode',
+      'date': 'Date',
+      'sentBy': 'Envoyé par',
+      'userId': 'ID utilisateur',
+      'executionContext': "Contexte d'exécution",
+      'connectionStatus': 'État connexion',
+      'online': 'En ligne',
+      'speed': 'Vitesse',
+      'device': 'Appareil',
+      'errorMessage': "Message d'erreur",
+      'message': 'Message',
+      'technicalData': 'Données techniques (Technicien/Admin)',
+      'technicalReason': 'Raison technique',
+      'sentAttributes': 'Attributs envoyés',
+      'rawResponse': 'Réponse brute (rawResponse)',
+      'copy': 'Copier',
+      'noTechnicalData': 'Aucune donnée technique disponible.',
       // Vehicle Detail
       'statusLabel': 'Statut',
       'telemetryRealTime': 'Télémétrie en direct',
@@ -1641,6 +3192,56 @@ class AppLocalizations {
       'courseLabel': 'Direction',
       'odometerLabel': 'Compteur km',
       'accuracyLabel': 'Précision',
+      'routeIntelSpeedKmh': '{v} km/h',
+      'routeIntelMinutesShort': '{n} min',
+      'routeIntelPreviewTitle': 'Paramètres d’analyse du trajet',
+      'routeIntelPreviewReadOnlyHint':
+          'Aperçu lecture seule. Valeurs fusionnées depuis le compte, l’appareil et le groupe le cas échéant.',
+      'routeIntelPreviewLoadingLayers':
+          'Chargement de certaines couches de paramètres…',
+      'routeIntelPreviewGroupLoadError':
+          'Impossible de charger les paramètres du groupe ; aperçu peut être incomplet.',
+      'routeIntelSettingsPreviewSection':
+          'Analyse du trajet (aperçu — sans véhicule)',
+      'routeIntelOverspeedThreshold': 'Seuil de survitesse',
+      'routeIntelStopEnter': 'Début d’arrêt',
+      'routeIntelStopExit': 'Fin d’arrêt',      'routeIntelMinStopDuration': 'Durée minimale d’arrêt',
+      'routeIntelDetectStops': 'Détecter les arrêts',
+      'routeIntelDetectOverspeed': 'Détecter la survitesse',
+      'routeIntelDetectIgnition': 'Détecter le contact',      'routeIntelSourceDevice': 'Appareil',
+      'routeIntelSourceGroup': 'Groupe',
+      'routeIntelSourceUser': 'Utilisateur',
+      'routeIntelSourceLocal': 'Local',
+      'routeIntelSourceDefault': 'Défaut',
+      'routeIntelEnabled': 'Activé',
+      'routeIntelDisabled': 'Désactivé',
+      'routeIntelLocalEditorTitle': 'Modifier les seuils locaux',
+      'routeIntelLocalParamsHeading': 'Paramètres locaux',
+      'routeIntelSave': 'Enregistrer',
+      'routeIntelResetLocalPrefsSettings': 'Réinitialiser les paramètres locaux',
+      'routeIntelSavedSnack': 'Enregistré',
+      'routeIntelResetSnack': 'Réinitialisé',
+      'routeIntelInvalidValue': 'Valeur invalide',
+      'routeIntelLocalOnlyCentralWarning':
+          'Ces paramètres sont enregistrés localement sur cet appareil. Ils ne modifient pas la configuration centrale ELMOGPS.',
+      'routeIntelVehicleEditTitle': 'Seuils du véhicule',
+      'routeIntelVehicleEditSubtitle':
+          'Enregistrés dans la configuration centrale de ce véhicule sur la plateforme.',
+      'routeIntelVehicleEditButton': 'Modifier les seuils du véhicule',
+      'routeIntelVehicleSave': 'Enregistrer',
+      'routeIntelVehicleReset': 'Réinitialiser les seuils du véhicule',
+      'routeIntelVehicleSaved': 'Paramètres du véhicule enregistrés.',
+      'routeIntelVehicleResetDone': 'Paramètres du véhicule réinitialisés.',
+      'routeIntelVehicleSaveError':
+          'Impossible d’enregistrer les paramètres. Réessayez.',
+      'routeIntelVehicleResetError':
+          'Impossible de réinitialiser les paramètres. Réessayez.',
+      'routeIntelVehicleOnlyHint':
+          'Ces paramètres s’appliquent uniquement à ce véhicule.',
+      'routeIntelVehicleNoPermissionHint':
+          'Lecture seule possible ; seuls les profils autorisés peuvent modifier la configuration centrale du véhicule.',
+      'routeIntelVehicleResetConfirmMessage':
+          'Supprime uniquement les dérogations d’analyse de trajet pour ce véhicule sur la plateforme. Flotte, compte et paramètres locaux restent inchangés.',
       // Maps
       'mapLoadingFleet': 'Chargement de la carte…',
       'mapLoadError': 'Impossible de charger les véhicules',
@@ -1657,8 +3258,124 @@ class AppLocalizations {
       'freeLabel': 'Libre',
       'routeLabel': 'Itinéraire',
       'vehicleDetails': 'Détails du véhicule',
+      'todaySummaryTitle': 'Activité du jour',
+      'engineHoursLabel': 'Heures moteur',
+      'vehicleActionsTitle': 'Actions',
+      'technicalInfoTitle': 'Détails techniques',
+      'noSummaryData': "Aucune donnée d'activité pour aujourd'hui.",
+      'noAlertsForVehicle': 'Aucune alerte pour ce véhicule.',
+      'alertsLoadError': 'Impossible de charger les alertes.',
+      'tripsLoadError': 'Impossible de charger les trajets.',
+      'reportSheetTitle': 'Générer un rapport véhicule',
+      'selectReportType': 'Type de rapport',
+      'selectPeriod': 'Période',
+      'startDateLabel': 'Date de début',
+      'endDateLabel': 'Date de fin',
+      'invalidDateRange': 'La date de début doit être avant la date de fin.',
+      'generateVehicleReport': 'Générer',
+      'replaySheetTitle': 'Rejouer le trajet du véhicule',
+      'selectReplayPeriod': 'Sélectionner la période',
+      'startReplay': 'Lancer le replay',
+      'replayRangeTooLong': 'La plage dépasse 24 heures. Le replay peut être lent avec beaucoup de données.',
+      'noReplayDataForPeriod': 'Aucune donnée de trajet pour cette période.',
+      'reportPdfSubjectPrefix': 'Rapport ELMOGPS',
+      'reportPdfTitlePrefix': 'Rapport',
       'todayRouteLabel': 'Itinéraire du jour',
+      'mapSearchVehicleHint': 'Rechercher véhicule, plaque, ID…',
+      'filterAlertsMap': 'Alertes',
+      'mapEmptyFilteredState': 'Aucun véhicule dans cet état pour le moment.',
+      'mapNoVehiclesEmpty': 'Aucun véhicule à afficher pour le moment.',
+      'liveFollowRunningLabel': 'Suivi en cours…',
+      'resumeVehicleFollow': 'Reprendre le suivi',
+      'mapLayersTitle': 'Couches de carte',
+      'mapLayerAlerts': 'Afficher les alertes sur la carte',
+      'mapLayerRoutesToday': 'Trace du jour sur la carte',
+      'mapTypeNormal': 'Carte standard',
+      'mapTypeSatellite': 'Satellite',
+      'mapTypeTerrain': 'Relief',
+      'mapVehicleListTitle': 'Liste des véhicules',
+      'uniqueIdShortLabel': 'Identifiant appareil',
+      'mapLayersButton': 'Couches',
+      'filterVehicles': 'Filtrer les véhicules',
+      'chooseVehicles': 'Choisir les véhicules',
+      'chooseVehiclesHint': 'Sélectionnez un ou plusieurs véhicules à afficher sur la carte',
+      'showAllVehicles': 'Afficher tous les véhicules',
+      'showAllVehiclesOnMap': 'Afficher tous les véhicules sur la carte',
+      'showVehicleOnMap': 'Afficher le véhicule sur la carte',
+      'showSelectedVehiclesOnMap': 'Afficher {count} véhicules sur la carte',
+      'clearSelection': 'Effacer la sélection',
+      'selectedVehiclesCount': '{count} sélectionné(s)',
+      'mapFilterSearchHint': 'Rechercher nom, plaque ou ID…',
+      'onlineOnlyFilter': 'En ligne seulement',
+      'movingOnlyFilter': 'En mouvement seulement',
+      'vehiclesShownCount': '{count} véhicules affichés',
+      'clearMapFilter': 'Effacer le filtre',
+      'noVehiclesMatchFilter': 'Aucun véhicule ne correspond à ce filtre.',
+      'selectVehiclesTitle': 'Sélectionner des véhicules',
+      'mapFilterActiveLabel': 'Filtre actif',
+      'mapFilterZeroVisible': 'Aucun véhicule visible — ajustez le filtre',
+      'selectMultipleVehiclesHint': 'Sélectionnez un ou plusieurs véhicules à afficher sur la carte',
+      'vehiclesSelectedCount': '{count} véhicules sélectionnés',
+      'matchingVehiclesCount': '{count} véhicules correspondants',
+      'noMatchingVehicles': 'Aucun véhicule ne correspond à votre recherche',
+      'vehicleComparisonTitle': 'Comparaison des véhicules',
+      'compareVehicles': 'Comparer les véhicules',
+      'compareVehiclesCount': 'Comparer {count} véhicules',
+      'comparedVehiclesCount': '{count} véhicules comparés',
+      'selectAtLeastTwoVehicles':
+          'Sélectionnez au moins deux véhicules pour comparer.',
+      'todayComparison': "Aujourd'hui",
+      'stopsToday': 'Arrêts aujourd\'hui',
+      'maxSpeed': 'Vitesse max.',
+      'averageSpeed': 'Vitesse moyenne',
+      'stopDuration': 'Durée d\'arrêt',
+      'lastUpdate': 'Dernière mise à jour',
+      'highestDistance': 'Distance la plus élevée',
+      'highestAlerts': 'Plus d\'alertes',
+      'highestStopDuration': 'Temps d\'arrêt le plus élevé',
+      'mostRecentUpdate': 'Mise à jour la plus récente',
+      'removeFromComparison': 'Retirer de la comparaison',
+      'noComparisonData': 'Aucune donnée de comparaison',
+      'comparisonLoadFailed': 'Impossible de charger la comparaison',
+      'comparisonLoading': 'Chargement de la comparaison…',
+      'comparisonLoadingAnalyzing': 'Analyse des véhicules sélectionnés…',
+      'backToMap': 'Retour à la carte',
+      'multiVehicleReplayTitle': 'Replay multi-véhicules',
+      'replaySelectedVehicles': 'Replay multi-véhicules',
+      'replayVehiclesCount': 'Replay {count} véhicules',
+      'replayComparedVehicles': 'Replay des véhicules comparés',
+      'selectAtLeastTwoVehiclesReplay':
+          'Sélectionnez au moins deux véhicules pour lancer le replay.',
+      'multiReplayLimitMessage':
+          'Le replay multi-véhicules est limité à 5 véhicules.',
+      'multiReplayLoading': 'Chargement du replay multi-véhicules…',
+      'multiReplayNoData':
+          'Aucune donnée de trajet pour les véhicules sélectionnés.',
+      'multiReplayLoadFailed': 'Impossible de charger le replay.',
+      'routeDataUnavailable': 'Aucune donnée de trajet',
+      'hideVehicle': 'Masquer le véhicule',
+      'showVehicle': 'Afficher le véhicule',
+      'replayToday': 'Aujourd\'hui',
+      'chooseReplayDate': 'Choisir une date',
+      'replayMultiVehicles': 'Replay multi-véhicules',
+      'stopsCountLabel': 'Arrêts',
+      'alertsTodayLabel': "Alertes aujourd'hui",
+      'alertsForVehicle': 'Alertes pour ce véhicule',
+      'alertsForVehicleName': 'Alertes pour {name}',
+      'tripDateFilter': 'Filtrer les trajets par date',
+      'clearDateFilter': 'Effacer le filtre de date',
+      'centerFleetTooltip': 'Centrer la flotte',
+      'fleetSummaryBar': '{online}/{total} en ligne · {moving} en mouvement · {idle} au ralenti',
       'locationUnavailable': 'Indisponible',
+      'noLivePosition': 'Pas de position en direct',
+      'positionMayBeOutdated': 'Position possiblement obsolète',
+      'lastPositionIsOld': 'Dernière position ancienne',
+      'currentAddress': 'Adresse',
+      'liveTracking': 'Suivi en direct',
+      'liveTrackingActive': 'En direct',
+      'trackingDataStale': 'Données obsolètes',
+      'trackingReconnecting': 'Reconnexion',
+      'trackingOffline': 'Hors ligne',
       'updateLocationFailed': 'Échec de mise à jour',
       'fleetOnlineCount': '{online}/{total} en ligne · {moving} en mouvement',
       'routePointsCount': '{n} pts',
@@ -1739,6 +3456,176 @@ class AppLocalizations {
       'routeAvgSpeedShort': 'Vit. moy',
       'routePointsShort': 'Points',
       'routeGpsPointsInfo': '{total} pts GPS · {drawn} pts affichés',
+      'routeEventsTimelineTitle': 'Événements du trajet',
+      'routeEventsNoneDetected': 'Aucun événement détecté',
+      'routeEventsSeeMore': 'Voir plus',
+      'routeEventsSeeLess': 'Voir moins',
+      'routeEventFilterAll': 'Tous',
+      'routeEventFilterStops': 'Arrêts',
+      'routeEventFilterOverspeed': 'Survitesse',
+      'routeEventFilterIgnition': 'Contact',
+      'routeEventsFilterNoMatches': 'Aucun événement dans ce filtre',
+      'tripsTitle': 'Trajets',
+      'tripLabel': 'Trajet',
+      'tripTitle': 'Trajet {n}',
+      'tripStart': 'Départ',
+      'tripEnd': 'Arrivée',
+      'tripDuration': 'Durée',
+      'tripDistance': 'Distance',
+      'tripStopsCount': '{n} arrêts',
+      'tripOverspeedCount': '{n} survitesse',
+      'tripMaxSpeed': 'Vitesse max',
+      'tripReplay': 'Relecture',
+      'tripViewOnMap': 'Voir sur la carte',
+      'tripsNoneDetected': 'Aucun trajet détecté pour cette période.',
+      'tripShort': 'Trajet trop court',
+      'tripKm': 'km',
+      'tripMin': 'min',
+      'tripTimeArrow': '{from} → {to}',
+      'tripKmUnit': 'km',
+      'tripIgnitionSummary': 'Contact: {on} marche · {off} arrêt',
+      'driverScoreLabel': 'Score',
+      'driverScoreExcellent': 'Excellent',
+      'driverScoreGood': 'Bon',
+      'driverScoreModerate': 'Moyen',
+      'driverScoreHighRisk': 'À surveiller',
+      'driverScoreUnknown': 'Inconnu',
+      'driverScoreNotScorable': 'Non évalué',
+      'driverScoreTripTooShort': 'Trajet trop court',
+      'dailyScoreTitle': 'Score de conduite',
+      'dailyScorePeriodTitle': 'Pour cette période',
+      'dailyScoreNotScorable': 'Non évalué',
+      'dailyScoreInsufficientData': 'Données insuffisantes pour cette période',
+      'dailyScoreTripCount': '{n} trajets',
+      'dailyScoreScorableTrips': '{scored} notés · {total} trajets',
+      'dailyScoreTotalDistance': '{km} km au total',
+      'dailyScoreOverspeed': '{n} survitesses',
+      'dailyScoreStops': '{n} arrêts',
+      'dailyScoreBestTrip': 'Meilleur trajet : {name}',
+      'dailyScoreWorstTrip': 'À surveiller : {name}',
+      'dailyScoreNoTrips': 'Aucun trajet sur cette période',
+      'dailyScoreDetailsTitle': 'Détails du score de conduite',
+      'dailyScoreEvaluatedTrips': 'Trajets évalués',
+      'dailyScoreUnscoredTrips': 'Trajets non notés',
+      'dailyScoreTotalDuration': 'Durée totale',
+      'dailyScoreTotalStopDuration': 'Durée totale des arrêts',
+      'dailyScoreUnscoredExcludedHint':
+          'Les trajets qui ne sont pas indiqués comme notés ici ne sont pas inclus dans la moyenne de la période.',
+      'dailyScoreNoEvaluatedTrips': 'Aucun trajet n’a été noté pour cette période.',
+      'dailyScoreTapForDetails': 'Voir le détail',
+      'dailyScoreBestTripLabel': 'Meilleur trajet',
+      'dailyScoreWorstTripLabel': 'À surveiller',
+      'fleetIntelTitle': 'Comportement flotte',
+      'fleetIntelSubtitle':
+          'Résumé ELMOGPS de la qualité de conduite (fenêtre échantillon).',
+      'fleetIntelScore': 'Score flotte',
+      'fleetIntelNotScorable': 'Non évalué',
+      'fleetIntelInsufficientData': 'Données insuffisantes',
+      'fleetIntelVehicles': 'Véhicules',
+      'fleetIntelActiveVehicles': 'Actifs',
+      'fleetIntelInactiveVehicles': 'Inactifs',
+      'fleetIntelTrips': 'Trajets',
+      'fleetIntelDistance': 'Distance',
+      'fleetIntelOverspeed': 'Dépassements',
+      'fleetIntelStops': 'Arrêts',
+      'fleetIntelBestVehicle': 'Meilleur véhicule',
+      'fleetIntelWorstVehicle': 'À surveiller (score le plus bas)',
+      'fleetIntelMostActiveVehicle': 'Le plus roulé',
+      'fleetIntelMostOverspeedVehicle': 'Plus de dépassements',
+      'fleetIntelMostStoppedVehicle': 'Temps d’arrêt le plus long',
+      'fleetIntelNeedsAttention': 'À suivre',
+      'fleetIntelRiskDistribution': 'Répartition des risques',
+      'fleetIntelNoData': '—',
+      'fleetIntelLoading': 'Chargement du résumé…',
+      'fleetIntelError': 'Impossible de charger. Tirez pour réessayer.',
+      'fleetIntelToday': 'Aujourd’hui',
+      'fleetIntelYesterday': 'Hier',
+      'fleetIntelLast7Days': '7 derniers jours',
+      'fleetIntelNoTripsInPeriod':
+          'Aucun trajet sur cette fenêtre pour l’échantillon.',
+      'fleetIntelVehicleFallback': 'Véhicule {id}',
+      'fleetIntelDrivingDuration': 'Temps de conduite : {value}',
+      'fleetIntelStopDuration': 'Temps d’arrêt : {value}',
+      'fleetIntelSampleNote':
+          '{included}/{total} véhicules · jusqu’à {cap} chargés à chaque refresh (en ligne en priorité).',
+      'fleetIntelOpenTrackingTooltip': 'Ouvrir le suivi',
+      'fleetIntelDrivingTime': 'Temps de conduite',
+      'fleetIntelPartialRoutes':
+          'Certains parcours n’ont pas pu être chargés ; données partielles possibles.',
+      'fleetIntelCustomPeriod': 'Personnalisé',
+      'fleetIntelRefresh': 'Actualiser',
+      'fleetIntelUpdatedAt': 'Mis à jour · {time}',
+      'fleetIntelPartialData':
+          'Certains indicateurs reposent sur un échantillon partiel.',
+      'fleetIntelAnalyzedVehicles':
+          'Parcours chargés pour {analyzed} véhicules sur {total}.',
+      'fleetIntelLimitedToVehicles':
+          'La plateforme charge jusqu’à {cap} véhicules par analyse pour préserver les performances.',
+      'fleetAttentionTitle': 'Véhicules à suivre',
+      'fleetAttentionNone':
+          'Aucun véhicule à suivre pour cette période.',
+      'fleetAttentionHighRisk': 'Risque élevé',
+      'fleetAttentionLowScore': 'Score bas',
+      'fleetAttentionManyOverspeed': 'Nombreux dépassements',
+      'fleetAttentionManyStops': 'Nombreux ou longues immobilisations',
+      'fleetAttentionInactive': 'Inactif / sans trajets',
+      'fleetAttentionInsufficientData': 'Données insuffisantes',
+      'fleetAttentionOpenVehicle': 'Voir le véhicule',
+      'fleetAttentionDetailsTitle': 'Suivi',
+      'fleetAttentionScore': 'Score de la période',
+      'fleetAttentionReasons': 'Pourquoi ce véhicule est listé',
+      'fleetAttentionTrips': 'Trajets',
+      'fleetAttentionDistance': 'Distance',
+      'fleetAttentionOverspeed': 'Dépassements de vitesse',
+      'fleetAttentionStops': 'Arrêts',
+      'fleetAttentionOpenMap': 'Voir la carte',
+      'fleetAttentionOpenTrips': 'Voir les trajets',
+      'fleetAttentionNoScore':
+          'Pas de score pour cette période (pas assez de trajets exploitables).',
+      'driverScoreDetailsTitle': 'Détails du score',
+      'driverScoreTripScoredYes': 'Ce trajet est noté',
+      'driverScoreTripScoredNo': 'Ce trajet n’est pas noté',
+      'driverScoreFinalScore': 'Score final : {value}',
+      'driverScoreBaseScore': 'Score de départ : {value}',
+      'driverScoreTotalPenalty': 'Pénalités totales : {value}',
+      'driverScoreSpeedPenalty': 'Survitesse',
+      'driverScoreStopPenalty': 'Arrêts et immobilisation longue',
+      'driverScoreIgnitionPenalty': 'Changements de contact',
+      'driverScoreEfficiencyPenalty': 'Progression globale lente',
+      'driverScoreFactorsTitle': 'Éléments ayant influencé ce score',
+      'driverScoreReasonOverspeed': 'Dépassements de la limite de vitesse',
+      'driverScoreReasonHeavyOverspeed': 'Survitesse à haute vitesse',
+      'driverScoreReasonLongStops': 'Immobilisations prolongées',
+      'driverScoreReasonExcessiveStops': 'Nombreux arrêts par rapport à la distance',
+      'driverScoreReasonIgnitionTransitions': 'Allumages / extinctions fréquents',
+      'driverScoreReasonLowEfficiency': 'Faible vitesse moyenne avec arrêts répétés',
+      'driverScoreReasonCleanTrip': 'Aucun élément notable sur ce trajet',
+      'driverScoreReasonShortTrip':
+          'Trajet trop court ou trop bref pour une évaluation fiable.',
+      'driverScoreReliableEnough':
+          'Ce trajet suffit pour produire un score représentatif.',
+      'driverScoreNotReliableEnough':
+          'Un score équitable ne peut pas être affiché avec les données disponibles.',
+      'driverScoreSteadyDriving':
+          'Conduite régulière — pas de pénalités notables.',
+      'driverScoreSeverityLow': 'Impact faible',
+      'driverScoreSeverityMedium': 'Impact moyen',
+      'driverScoreSeverityHigh': 'Impact fort',
+      'driverScoreFactorOther': 'Autre facteur',
+      'driverScorePenaltyLine': '{name} : −{points}',
+      'driverScoreFactorOccurrences': '×{n}',
+      'routeEventDetailsTitle': "Détails de l'événement",
+      'routeEventDetailsStop': 'Arrêt',
+      'routeEventDetailsOverspeed': 'Survitesse',
+      'routeEventDetailsIgnitionOn': 'Contact activé',
+      'routeEventDetailsIgnitionOff': 'Contact coupé',
+      'routeEventDetailsStartTime': 'Heure de début',
+      'routeEventDetailsEndTime': 'Heure de fin',
+      'routeEventDetailsDuration': 'Durée',
+      'routeEventDetailsTime': 'Heure',
+      'routeEventDetailsMaxSpeed': 'Vitesse max.',
+      'routeEventDetailsLocation': 'Emplacement',
+      'routeEventDetailsRecenter': 'Recentrer sur la carte',
       // Replay
       'replayRoute': 'Rejouer le trajet',
       'replayPlay': 'Lecture',
@@ -1747,12 +3634,29 @@ class AppLocalizations {
       'replaySpeed': 'Vitesse de lecture',
       'replayCurrentSpeed': 'Vitesse actuelle',
       'replayCurrentTime': 'Heure actuelle',
+      'replayRecenter': 'Recentrer',
+      'replayVehicleHidden': 'Masqué',
+      'replayVehicleNoData': 'Aucune donnée',
+      'replayVehicleActive': 'Actif',
+      'replayPlaying': 'Lecture',
+      'replayPaused': 'En pause',
+      'replayShowLabels': 'Afficher les libellés',
+      'replayHideLabels': 'Masquer les libellés',
+      'replayMapLegend': 'Véhicules',
+      'replayPointsCount': '{count} points',
       'replayProgress': 'Progression',
       'loadingReplay': 'Chargement du replay…',
       'errorLoadingReplay': 'Erreur lors du chargement du replay.',
       'notEnoughDataForReplay': 'Données GPS insuffisantes pour le replay.',
       'routeCompleted': 'Trajet terminé',
       'viewReplay': 'Voir replay',
+      'replayMissingGpsData': 'Données GPS manquantes',
+      'replayMissingData': 'Données manquantes',
+      'replayGapsDetected': 'Données manquantes : {count}',
+      'replayGapStartLabel': 'Dernier point avant la coupure',
+      'replayGapEndLabel': 'Premier point après la coupure',
+      'replayGapDurationLabel': 'Durée de la coupure',
+      'replayGapsSheetTitle': 'Coupures de données GPS',
       // Speed chart
       'speedChartTitle': 'Graphique de vitesse',
       'speedChartMax': 'Vitesse maximale',
@@ -1890,6 +3794,77 @@ class AppLocalizations {
           'Rapport Maintenance — Disponible prochainement',
       'reportFleetDriversSoon':
           'Rapport Conducteurs — Disponible prochainement',
+      'fleetIntelligenceTitle': 'Intelligence flotte',
+      'fleetIntelligenceDashboardSubtitle': 'Indicateurs et état en direct',
+      'vehiclesOnline': 'En ligne',
+      'kpiDriversTotal': 'Conducteurs',
+      'kpiDriversActive': 'Conducteurs actifs',
+      'maintenanceOverdueVehicles': 'Véhicules — maintenance en retard',
+      'insufficientData': 'Données insuffisantes',
+      'companyManagement': 'Gestion des entreprises',
+      'distributors': 'Distributeurs',
+      'companyManagementHint':
+          'La gestion multi-entreprises et distributeurs sera ajoutée dans une phase dédiée.',
+      'utilizationScore': "Score d'utilisation",
+      'mostActiveVehicles': 'Véhicules les plus actifs',
+      'leastActiveVehicles': 'Les moins actifs / à l’arrêt',
+      'driversToWatch': 'Conducteurs à surveiller',
+      'vehicleActivitySection': 'Activité des véhicules',
+      'driverRankingSection': 'Classement des conducteurs',
+      'maintenanceOverviewSection': 'Aperçu maintenance',
+      'alertsOverviewSection': 'Aperçu des alertes',
+      'vehicleUtilizationSection': 'Utilisation des véhicules',
+      'maintenanceUpcomingCount': 'À venir',
+      'maintenanceSoonCount': 'Bientôt',
+      'maintenanceOverdueCount': 'En retard (fiches)',
+      'nextMaintenances': 'Prochaines maintenances',
+      'alertsTotalPeriod': 'Total (important)',
+      'alertsOverspeed': 'Excès de vitesse',
+      'alertsGeofence': 'Entrée/sortie de zone',
+      'alertsOnlineOffline': 'Hors ligne / en ligne (événements)',
+      'lastImportantEvents': 'Derniers événements importants',
+      'periodTotalDistance': 'Distance sur la période',
+      'vehiclesActiveInPeriod': 'Véhicules avec trajets',
+      'fleetIntelLiveStatusHint':
+          'Les états (en mouvement / arrêtés / au ralenti / hors ligne) reflètent le flux temps réel actuel.',
+      'exportDashboardReport': 'Exporter le rapport du tableau de bord',
+      'driverRankEstimatedNote':
+          'Classement approximatif d’après trajets/événements des véhicules assignés au conducteur.',
+      'notAvailable': 'Non disponible',
+      'fleetStatusProblem': 'À surveiller',
+      'adminDashboardLoadError': 'Échec du chargement du tableau de bord.',
+      'adminDashboardTripsPartialError':
+          'Impossible de charger trajets/événements pour cette période. Les autres sections restent disponibles.',
+      'dashboardConnectionLive': 'En direct',
+      'dashboardConnectionReconnecting': 'Reconnexion',
+      'dashboardConnectionOverview': 'Hors ligne',
+      'dashboardConnectionDegraded': 'Connecté · Synchronisation retardée',
+      'dashboardConnectionLiveReconnecting': 'Reconnexion du direct…',
+      'dashboardConnectionOffline': 'Hors ligne',
+      'dashboardConnectionServerUnavailable': 'Serveur indisponible',
+      'dashboardConnectionSessionExpired': 'Session expirée',
+      'dashboardConnectionChecking': 'Connexion…',
+      'dashboardSyncInProgress': 'Synchronisation…',
+      'dashboardDistanceQuietHint':
+          'La distance se mettra à jour dès les premiers déplacements.',
+      'dashboardNoActivityToday': 'Aucune activité détectée aujourd\'hui.',
+      'dashboardNoActivityPeriod': 'Aucune activité sur cette période.',
+      'dashboardViewFullFleet': 'Voir toute la flotte',
+      'dashboardNoUrgentMaintenance': 'Aucune maintenance urgente.',
+      'dashboardNoImportantAlerts': 'Aucune alerte importante.',
+      'dashboardImportantAlertsLabel': 'Alertes importantes',
+      'dashboardVehicleActivityEmpty':
+          'Aucun véhicule actif sur cette période.',
+      'licenseAttentionTitle': 'Permis — suivi requis',
+      'fleetEvtOverspeed': 'Excès de vitesse',
+      'fleetEvtGeofenceIn': 'Entrée zone',
+      'fleetEvtGeofenceOut': 'Sortie zone',
+      'fleetEvtOffline': 'Hors ligne',
+      'fleetEvtOnline': 'En ligne',
+      'fleetEvtAlarm': 'Alarme',
+      'fleetEvtIgnitionOn': 'Contact mis',
+      'fleetEvtIgnitionOff': 'Contact coupé',
+      'fleetEvtMaintenance': 'Maintenance',
       'validationRequired': 'Champ obligatoire',
       // PDF / Partage
       'exportPdfLabel': 'Exporter PDF',
@@ -1923,6 +3898,8 @@ class AppLocalizations {
       'language': 'Idioma',
       'appearance': 'Apariencia',
       'aboutElmo': 'Acerca de ELMO',
+      'aboutFleetTrackingSubtitle':
+          'Seguimiento GPS inteligente de flota en la plataforma ELMOGPS.',
       'signOut': 'Cerrar sesión',
       'version': 'Versión',
       'editProfile': 'Editar perfil',
@@ -1997,6 +3974,7 @@ class AppLocalizations {
       'statusIdlePlural': 'Inactivos',
       'statusOfflinePlural': 'Sin conexión',
       'totalFleetCount': 'Flota total: {n} vehículo(s)',
+      'lastKnownData': 'Último dato conocido',
       // Alerts
       'allAlerts': 'Todas las alertas',
       'smartAlerts': 'Alertas inteligentes',
@@ -2070,6 +4048,59 @@ class AppLocalizations {
       'statusRejected': 'Rechazado',
       'availableOf': '{available}/{total} disponible(s)',
       'errorLoadingData': 'Error: {error}',
+      'cmdConfirmRequired': 'Confirmación requerida',
+      'cmdCriticalAction': 'Acción crítica',
+      'cmdConfirmSendMessage': 'Está a punto de enviar',
+      'cmdCriticalWarningDefault': 'Esta acción puede afectar la seguridad del vehículo y del conductor. Asegúrese de que la ejecución sea segura.',
+      'cmdTypeToConfirm': 'Para confirmar, escriba:',
+      'cmdExecuteCommand': 'Ejecutar comando',
+      'cmdDeviceOnline': 'Dispositivo en línea',
+      'cmdDeviceOffline': 'Dispositivo fuera de línea',
+      'cmdLastUpdate': 'Última actualización:',
+      'cmdVehicleStopped': 'Detenido',
+      'cmdSentSuccess': 'enviado con éxito.',
+      'cmdSentFailed': 'fallido',
+      'cmdQueuedMessage': 'El comando ha sido puesto en cola y se ejecutará cuando el dispositivo se reconecte.',
+      'cmdErrorSavedNotFound': 'No se encontró un comando guardado para este dispositivo. Un técnico debe configurarlo primero.',
+      'cmdErrorUnsupported': 'Este comando no es compatible con este dispositivo.',
+      'cmdErrorTimeout': 'La conexión ha expirado. Verifique su conexión e intente de nuevo.',
+      'cmdErrorUnauthorized': 'Sesión expirada. Por favor, inicie sesión de nuevo.',
+      'cmdErrorForbidden': 'No tiene permisos para esta operación.',
+      'cmdErrorNoConnection': 'Sin conexión a Internet. Verifique su red e intente de nuevo.',
+      'cmdErrorBadRequest': 'El comando no pudo ser procesado. Verifique los parámetros e intente de nuevo.',
+      'cmdErrorServer': 'Error del servidor. Intente de nuevo en un momento.',
+      'cmdErrorUnexpected': 'Ocurrió un error inesperado. Intente de nuevo o contacte al soporte.',
+      'cmdConfirmWord': 'CONFIRMAR',
+      'cmdLoadFailed': 'Error al cargar los comandos',
+      'cmdRetry': 'Reintentar',
+      'vehicle': 'Vehículo',
+      // Command Logs Screen
+      'commandHistory': 'Historial',
+      'commandHistoryEmpty': 'El historial aparecerá aquí después\nde enviar el primer comando.',
+      'clearHistoryConfirmMessage': 'Todos los registros de comandos serán eliminados permanentemente.',
+      'delete': 'Borrar',
+      'generalInfo': 'Información general',
+      'command': 'Comando',
+      'systemType': 'Tipo de sistema',
+      'category': 'Categoría',
+      'risk': 'Riesgo',
+      'method': 'Método',
+      'date': 'Fecha',
+      'sentBy': 'Enviado por',
+      'userId': 'ID de usuario',
+      'executionContext': 'Contexto de ejecución',
+      'connectionStatus': 'Estado de conexión',
+      'online': 'En línea',
+      'speed': 'Velocidad',
+      'device': 'Dispositivo',
+      'errorMessage': 'Mensaje de error',
+      'message': 'Mensaje',
+      'technicalData': 'Datos técnicos (Técnico/Admin)',
+      'technicalReason': 'Razón técnica',
+      'sentAttributes': 'Atributos enviados',
+      'rawResponse': 'Respuesta sin procesar',
+      'copy': 'Copiar',
+      'noTechnicalData': 'No hay datos técnicos disponibles.',
       // Vehicle Detail
       'statusLabel': 'Estado',
       'telemetryRealTime': 'Telemetría en tiempo real',
@@ -2100,6 +4131,57 @@ class AppLocalizations {
       'courseLabel': 'Dirección',
       'odometerLabel': 'Cuentakilómetros',
       'accuracyLabel': 'Precisión',
+      'routeIntelSpeedKmh': '{v} km/h',
+      'routeIntelMinutesShort': '{n} min',
+      'routeIntelPreviewTitle': 'Ajustes de análisis de ruta',
+      'routeIntelPreviewReadOnlyHint':
+          'Vista previa solo lectura. Valores combinados desde la cuenta, el dispositivo y el grupo cuando aplica.',
+      'routeIntelPreviewLoadingLayers':
+          'Cargando algunas capas de configuración…',
+      'routeIntelPreviewGroupLoadError':
+          'No se pudieron cargar los valores del grupo; la vista puede estar incompleta.',
+      'routeIntelSettingsPreviewSection': 'Análisis de ruta (vista previa)',
+      'routeIntelOverspeedThreshold': 'Umbral de exceso de velocidad',
+      'routeIntelStopEnter': 'Velocidad de entrada en parada',
+      'routeIntelStopExit': 'Velocidad de salida de parada',
+      'routeIntelMinStopDuration': 'Duración mínima de parada',
+      'routeIntelDetectStops': 'Detectar paradas',
+      'routeIntelDetectOverspeed': 'Detectar exceso de velocidad',
+      'routeIntelDetectIgnition': 'Detectar contacto',
+      'routeIntelSourceDevice': 'Dispositivo',
+      'routeIntelSourceGroup': 'Grupo',
+      'routeIntelSourceUser': 'Usuario',
+      'routeIntelSourceLocal': 'Local',
+      'routeIntelSourceDefault': 'Predeterminado',
+      'routeIntelEnabled': 'Activado',
+      'routeIntelDisabled': 'Desactivado',
+      'routeIntelLocalEditorTitle': 'Editar umbrales locales',
+      'routeIntelLocalParamsHeading': 'Parámetros locales',
+      'routeIntelSave': 'Guardar',
+      'routeIntelResetLocalPrefsSettings': 'Restablecer ajustes locales',
+      'routeIntelSavedSnack': 'Guardado',
+      'routeIntelResetSnack': 'Restablecido',
+      'routeIntelInvalidValue': 'Valor no válido',
+      'routeIntelLocalOnlyCentralWarning':
+          'Estos ajustes se guardan solo en este dispositivo. No modifican la configuración central de ELMOGPS.',
+      'routeIntelVehicleEditTitle': 'Umbrales del vehículo',
+      'routeIntelVehicleEditSubtitle':
+          'Se guardan en la configuración central de este vehículo en la plataforma.',
+      'routeIntelVehicleEditButton': 'Editar umbrales del vehículo',
+      'routeIntelVehicleSave': 'Guardar',
+      'routeIntelVehicleReset': 'Restablecer umbrales del vehículo',
+      'routeIntelVehicleSaved': 'Ajustes del vehículo guardados.',
+      'routeIntelVehicleResetDone': 'Ajustes del vehículo restablecidos.',
+      'routeIntelVehicleSaveError':
+          'No se pudieron guardar los ajustes. Inténtalo de nuevo.',
+      'routeIntelVehicleResetError':
+          'No se pudieron restablecer los ajustes. Inténtalo de nuevo.',
+      'routeIntelVehicleOnlyHint':
+          'Estos ajustes se aplican solo a este vehículo.',
+      'routeIntelVehicleNoPermissionHint':
+          'Solo lectura; solo los perfiles autorizados pueden cambiar la configuración central del vehículo.',
+      'routeIntelVehicleResetConfirmMessage':
+          'Elimina solo las anulaciones de análisis de ruta de este vehículo en la plataforma. Flota, cuenta y ajustes locales no cambian.',
       // Maps
       'mapLoadingFleet': 'Cargando mapa…',
       'mapLoadError': 'Error al cargar vehículos',
@@ -2116,8 +4198,124 @@ class AppLocalizations {
       'freeLabel': 'Libre',
       'routeLabel': 'Ruta',
       'vehicleDetails': 'Detalles del vehículo',
+      'todaySummaryTitle': 'Actividad de hoy',
+      'engineHoursLabel': 'Horas de motor',
+      'vehicleActionsTitle': 'Acciones',
+      'technicalInfoTitle': 'Detalles técnicos',
+      'noSummaryData': 'No hay datos de actividad para hoy.',
+      'noAlertsForVehicle': 'No hay alertas para este vehículo.',
+      'alertsLoadError': 'No se pudieron cargar las alertas.',
+      'tripsLoadError': 'No se pudieron cargar los viajes.',
+      'reportSheetTitle': 'Generar informe del vehículo',
+      'selectReportType': 'Tipo de informe',
+      'selectPeriod': 'Período',
+      'startDateLabel': 'Fecha de inicio',
+      'endDateLabel': 'Fecha de fin',
+      'invalidDateRange': 'La fecha de inicio debe ser anterior a la fecha de fin.',
+      'generateVehicleReport': 'Generar',
+      'replaySheetTitle': 'Reproducir ruta del vehículo',
+      'selectReplayPeriod': 'Seleccionar período',
+      'startReplay': 'Iniciar reproducción',
+      'replayRangeTooLong': 'El rango supera las 24 horas. La reproducción puede ser lenta con muchos datos.',
+      'noReplayDataForPeriod': 'No hay datos de ruta para este período.',
+      'reportPdfSubjectPrefix': 'Informe ELMOGPS',
+      'reportPdfTitlePrefix': 'Informe',
       'todayRouteLabel': 'Ruta de hoy',
+      'mapSearchVehicleHint': 'Buscar vehículo, matrícula, ID…',
+      'filterAlertsMap': 'Alertas',
+      'mapEmptyFilteredState': 'No hay vehículos en este estado ahora.',
+      'mapNoVehiclesEmpty': 'No hay vehículos para mostrar.',
+      'liveFollowRunningLabel': 'Siguiendo en vivo…',
+      'resumeVehicleFollow': 'Volver al seguimiento',
+      'mapLayersTitle': 'Capas del mapa',
+      'mapLayerAlerts': 'Mostrar alertas en el mapa',
+      'mapLayerRoutesToday': 'Trazado del día en el mapa',
+      'mapTypeNormal': 'Mapa estándar',
+      'mapTypeSatellite': 'Satélite',
+      'mapTypeTerrain': 'Terreno',
+      'mapVehicleListTitle': 'Lista de vehículos',
+      'uniqueIdShortLabel': 'ID del dispositivo',
+      'mapLayersButton': 'Capas',
+      'filterVehicles': 'Filtrar vehículos',
+      'chooseVehicles': 'Elegir vehículos',
+      'chooseVehiclesHint': 'Seleccione uno o más vehículos para mostrar en el mapa',
+      'showAllVehicles': 'Mostrar todos los vehículos',
+      'showAllVehiclesOnMap': 'Mostrar todos los vehículos en el mapa',
+      'showVehicleOnMap': 'Mostrar vehículo en el mapa',
+      'showSelectedVehiclesOnMap': 'Mostrar {count} vehículos en el mapa',
+      'clearSelection': 'Borrar selección',
+      'selectedVehiclesCount': '{count} seleccionados',
+      'mapFilterSearchHint': 'Buscar nombre, matrícula o ID…',
+      'onlineOnlyFilter': 'Solo en línea',
+      'movingOnlyFilter': 'Solo en movimiento',
+      'vehiclesShownCount': '{count} vehículos mostrados',
+      'clearMapFilter': 'Borrar filtro',
+      'noVehiclesMatchFilter': 'Ningún vehículo coincide con este filtro.',
+      'selectVehiclesTitle': 'Seleccionar vehículos',
+      'mapFilterActiveLabel': 'Filtro activo',
+      'mapFilterZeroVisible': 'Ningún vehículo visible — ajuste el filtro',
+      'selectMultipleVehiclesHint': 'Seleccione uno o más vehículos para mostrar en el mapa',
+      'vehiclesSelectedCount': '{count} vehículos seleccionados',
+      'matchingVehiclesCount': '{count} vehículos coincidentes',
+      'noMatchingVehicles': 'Ningún vehículo coincide con su búsqueda',
+      'vehicleComparisonTitle': 'Comparación de vehículos',
+      'compareVehicles': 'Comparar vehículos',
+      'compareVehiclesCount': 'Comparar {count} vehículos',
+      'comparedVehiclesCount': '{count} vehículos comparados',
+      'selectAtLeastTwoVehicles':
+          'Seleccione al menos dos vehículos para comparar.',
+      'todayComparison': 'Hoy',
+      'stopsToday': 'Paradas hoy',
+      'maxSpeed': 'Velocidad máx.',
+      'averageSpeed': 'Velocidad media',
+      'stopDuration': 'Duración de parada',
+      'lastUpdate': 'Última actualización',
+      'highestDistance': 'Mayor distancia',
+      'highestAlerts': 'Más alertas',
+      'highestStopDuration': 'Mayor tiempo de parada',
+      'mostRecentUpdate': 'Actualización más reciente',
+      'removeFromComparison': 'Quitar de la comparación',
+      'noComparisonData': 'Sin datos de comparación',
+      'comparisonLoadFailed': 'No se pudo cargar la comparación',
+      'comparisonLoading': 'Cargando comparación…',
+      'comparisonLoadingAnalyzing': 'Analizando vehículos seleccionados…',
+      'backToMap': 'Volver al mapa',
+      'multiVehicleReplayTitle': 'Reproducción multi-vehículo',
+      'replaySelectedVehicles': 'Reproducir vehículos seleccionados',
+      'replayVehiclesCount': 'Reproducir {count} vehículos',
+      'replayComparedVehicles': 'Reproducir vehículos comparados',
+      'selectAtLeastTwoVehiclesReplay':
+          'Seleccione al menos dos vehículos para iniciar la reproducción.',
+      'multiReplayLimitMessage':
+          'La reproducción multi-vehículo está limitada a 5 vehículos.',
+      'multiReplayLoading': 'Cargando reproducción multi-vehículo…',
+      'multiReplayNoData':
+          'No hay datos de ruta para los vehículos seleccionados.',
+      'multiReplayLoadFailed': 'No se pudo cargar la reproducción.',
+      'routeDataUnavailable': 'Sin datos de ruta',
+      'hideVehicle': 'Ocultar vehículo',
+      'showVehicle': 'Mostrar vehículo',
+      'replayToday': 'Hoy',
+      'chooseReplayDate': 'Elegir fecha',
+      'replayMultiVehicles': 'Reproducción multi-vehículo',
+      'stopsCountLabel': 'Paradas',
+      'alertsTodayLabel': 'Alertas hoy',
+      'alertsForVehicle': 'Alertas de este vehículo',
+      'alertsForVehicleName': 'Alertas de {name}',
+      'tripDateFilter': 'Filtrar viajes por fecha',
+      'clearDateFilter': 'Borrar filtro de fecha',
+      'centerFleetTooltip': 'Centrar flota',
+      'fleetSummaryBar': '{online}/{total} en línea · {moving} en marcha · {idle} en ralentí',
       'locationUnavailable': 'No disponible',
+      'noLivePosition': 'Sin posición en vivo',
+      'positionMayBeOutdated': 'La posición puede estar desactualizada',
+      'lastPositionIsOld': 'Última posición es antigua',
+      'currentAddress': 'Dirección',
+      'liveTracking': 'Seguimiento en vivo',
+      'liveTrackingActive': 'En vivo',
+      'trackingDataStale': 'Datos obsoletos',
+      'trackingReconnecting': 'Reconectando',
+      'trackingOffline': 'Sin conexión',
       'updateLocationFailed': 'Error de actualización',
       'fleetOnlineCount': '{online}/{total} en línea · {moving} en marcha',
       'routePointsCount': '{n} puntos',
@@ -2198,6 +4396,175 @@ class AppLocalizations {
       'routeAvgSpeedShort': 'Vel. med',
       'routePointsShort': 'Puntos',
       'routeGpsPointsInfo': '{total} pts GPS · {drawn} pts mostrados',
+      'routeEventsTimelineTitle': 'Eventos del trayecto',
+      'routeEventsNoneDetected': 'No se detectaron eventos',
+      'routeEventsSeeMore': 'Ver más',
+      'routeEventsSeeLess': 'Ver menos',
+      'routeEventFilterAll': 'Todos',
+      'routeEventFilterStops': 'Paradas',
+      'routeEventFilterOverspeed': 'Exceso de velocidad',
+      'routeEventFilterIgnition': 'Contacto',
+      'routeEventsFilterNoMatches': 'Sin eventos en este filtro',
+      'tripsTitle': 'Trayectos',
+      'tripLabel': 'Trayecto',
+      'tripTitle': 'Trayecto {n}',
+      'tripStart': 'Inicio',
+      'tripEnd': 'Fin',
+      'tripDuration': 'Duración',
+      'tripDistance': 'Distancia',
+      'tripStopsCount': '{n} paradas',
+      'tripOverspeedCount': '{n} exceso de velocidad',
+      'tripMaxSpeed': 'Velocidad máxima',
+      'tripReplay': 'Reproducción',
+      'tripViewOnMap': 'Ver en el mapa',
+      'tripsNoneDetected': 'No se detectaron trayectos en este período.',
+      'tripShort': 'Trayecto corto',
+      'tripKm': 'km',
+      'tripMin': 'min',
+      'tripTimeArrow': '{from} → {to}',
+      'tripKmUnit': 'km',
+      'tripIgnitionSummary': 'Contacto: {on} ON · {off} OFF',
+      'driverScoreLabel': 'Puntuación',
+      'driverScoreExcellent': 'Excelente',
+      'driverScoreGood': 'Bueno',
+      'driverScoreModerate': 'Medio',
+      'driverScoreHighRisk': 'Requiere atención',
+      'driverScoreUnknown': 'Desconocido',
+      'driverScoreNotScorable': 'No evaluado',
+      'driverScoreTripTooShort': 'Trayecto demasiado corto',
+      'dailyScoreTitle': 'Puntuación de conducción',
+      'dailyScorePeriodTitle': 'En este período',
+      'dailyScoreNotScorable': 'No evaluado',
+      'dailyScoreInsufficientData': 'Datos insuficientes para evaluar este período',
+      'dailyScoreTripCount': '{n} trayectos',
+      'dailyScoreScorableTrips': '{scored} evaluados · {total} trayectos',
+      'dailyScoreTotalDistance': '{km} km en total',
+      'dailyScoreOverspeed': '{n} excesos de velocidad',
+      'dailyScoreStops': '{n} paradas',
+      'dailyScoreBestTrip': 'Mejor trayecto: {name}',
+      'dailyScoreWorstTrip': 'Requiere atención: {name}',
+      'dailyScoreNoTrips': 'Sin trayectos en este período',
+      'dailyScoreDetailsTitle': 'Detalles de la puntuación de conducción',
+      'dailyScoreEvaluatedTrips': 'Trayectos evaluados',
+      'dailyScoreUnscoredTrips': 'Trayectos sin evaluar',
+      'dailyScoreTotalDuration': 'Duración total',
+      'dailyScoreTotalStopDuration': 'Duración total en paradas',
+      'dailyScoreUnscoredExcludedHint':
+          'Los trayectos que no aparecen aquí como evaluados no se incluyen en el promedio del período.',
+      'dailyScoreNoEvaluatedTrips': 'No se evaluó ningún trayecto en este período.',
+      'dailyScoreTapForDetails': 'Pulsa para ver detalles',
+      'dailyScoreBestTripLabel': 'Mejor trayecto',
+      'dailyScoreWorstTripLabel': 'Requiere atención',
+      'fleetIntelTitle': 'Comportamiento de flota',
+      'fleetIntelSubtitle':
+          'Resumen ELMOGPS de calidad de conducción (ventana muestral).',
+      'fleetIntelScore': 'Puntuación flota',
+      'fleetIntelNotScorable': 'Sin evaluar',
+      'fleetIntelInsufficientData': 'Datos insuficientes',
+      'fleetIntelVehicles': 'Vehículos',
+      'fleetIntelActiveVehicles': 'Activos',
+      'fleetIntelInactiveVehicles': 'Inactivos',
+      'fleetIntelTrips': 'Viajes',
+      'fleetIntelDistance': 'Distancia',
+      'fleetIntelOverspeed': 'Excesos',
+      'fleetIntelStops': 'Paradas',
+      'fleetIntelBestVehicle': 'Mejor vehículo',
+      'fleetIntelWorstVehicle': 'Requiere seguimiento (menor puntaje)',
+      'fleetIntelMostActiveVehicle': 'Más tiempo en marcha',
+      'fleetIntelMostOverspeedVehicle': 'Más excesos de velocidad',
+      'fleetIntelMostStoppedVehicle': 'Más tiempo detenido',
+      'fleetIntelNeedsAttention': 'Requiere seguimiento',
+      'fleetIntelRiskDistribution': 'Mezcla de riesgos',
+      'fleetIntelNoData': '—',
+      'fleetIntelLoading': 'Cargando resumen…',
+      'fleetIntelError': 'No se pudo cargar. Desliza para reintentar.',
+      'fleetIntelToday': 'Hoy',
+      'fleetIntelYesterday': 'Ayer',
+      'fleetIntelLast7Days': 'Últimos 7 días',
+      'fleetIntelNoTripsInPeriod':
+          'Sin viajes en esta ventana para la muestra.',
+      'fleetIntelVehicleFallback': 'Vehículo {id}',
+      'fleetIntelDrivingDuration': 'Tiempo conduciendo: {value}',
+      'fleetIntelStopDuration': 'Tiempo en paradas: {value}',
+      'fleetIntelSampleNote':
+          '{included}/{total} vehículos · hasta {cap} por actualización (conectados primero).',
+      'fleetIntelOpenTrackingTooltip': 'Abrir seguimiento',
+      'fleetIntelDrivingTime': 'Tiempo en marcha',
+      'fleetIntelPartialRoutes':
+          'No se pudieron cargar algunas rutas; el resumen puede estar incompleto.',
+      'fleetIntelCustomPeriod': 'Personalizado',
+      'fleetIntelRefresh': 'Actualizar',
+      'fleetIntelUpdatedAt': 'Actualizado · {time}',
+      'fleetIntelPartialData':
+          'Algunos indicadores se basan en datos parciales de la flota.',
+      'fleetIntelAnalyzedVehicles':
+          'Rutas cargadas para {analyzed} de {total} vehículos.',
+      'fleetIntelLimitedToVehicles':
+          'La plataforma carga hasta {cap} vehículos por análisis para proteger el rendimiento.',
+      'fleetAttentionTitle': 'Vehículos a seguir',
+      'fleetAttentionNone': 'Ningún vehículo requiere seguimiento en este periodo.',
+      'fleetAttentionHighRisk': 'Alto riesgo',
+      'fleetAttentionLowScore': 'Puntuación baja',
+      'fleetAttentionManyOverspeed': 'Muchos excesos de velocidad',
+      'fleetAttentionManyStops': 'Muchas paradas o paradas largas',
+      'fleetAttentionInactive': 'Inactivo / sin viajes',
+      'fleetAttentionInsufficientData': 'Datos insuficientes',
+      'fleetAttentionOpenVehicle': 'Abrir vehículo',
+      'fleetAttentionDetailsTitle': 'Seguimiento',
+      'fleetAttentionScore': 'Puntuación del periodo',
+      'fleetAttentionReasons': 'Por qué aparece este vehículo',
+      'fleetAttentionTrips': 'Viajes',
+      'fleetAttentionDistance': 'Distancia',
+      'fleetAttentionOverspeed': 'Excesos de velocidad',
+      'fleetAttentionStops': 'Paradas',
+      'fleetAttentionOpenMap': 'Abrir mapa',
+      'fleetAttentionOpenTrips': 'Abrir viajes',
+      'fleetAttentionNoScore':
+          'Sin puntuación en este periodo (no hay viajes suficientemente fiables).',
+      'driverScoreDetailsTitle': 'Detalles de la puntuación',
+      'driverScoreTripScoredYes': 'Este trayecto sí tiene puntuación',
+      'driverScoreTripScoredNo': 'Este trayecto no tiene puntuación',
+      'driverScoreFinalScore': 'Puntuación final: {value}',
+      'driverScoreBaseScore': 'Puntuación inicial: {value}',
+      'driverScoreTotalPenalty': 'Penalizaciones totales: {value}',
+      'driverScoreSpeedPenalty': 'Excesos de velocidad',
+      'driverScoreStopPenalty': 'Paradas y paradas largas',
+      'driverScoreIgnitionPenalty': 'Cambios de contacto',
+      'driverScoreEfficiencyPenalty': 'Avance general lento',
+      'driverScoreFactorsTitle': 'Qué influyó en esta puntuación',
+      'driverScoreReasonOverspeed': 'Momentos por encima del límite',
+      'driverScoreReasonHeavyOverspeed': 'Excesos a alta velocidad',
+      'driverScoreReasonLongStops': 'Paradas prolongadas',
+      'driverScoreReasonExcessiveStops': 'Muchas paradas para la distancia',
+      'driverScoreReasonIgnitionTransitions': 'Encendidos/apagados frecuentes',
+      'driverScoreReasonLowEfficiency': 'Velocidad media baja con paradas repetidas',
+      'driverScoreReasonCleanTrip': 'Sin observaciones destacadas en este trayecto',
+      'driverScoreReasonShortTrip':
+          'El trayecto es demasiado corto o breve para una puntuación fiable.',
+      'driverScoreReliableEnough':
+          'El trayecto es suficiente para una puntuación representativa.',
+      'driverScoreNotReliableEnough':
+          'No puede mostrarse una puntuación justa con los datos disponibles.',
+      'driverScoreSteadyDriving':
+          'Conducción uniforme — sin penalizaciones destacables.',
+      'driverScoreSeverityLow': 'Impacto bajo',
+      'driverScoreSeverityMedium': 'Impacto medio',
+      'driverScoreSeverityHigh': 'Impacto alto',
+      'driverScoreFactorOther': 'Otro factor',
+      'driverScorePenaltyLine': '{name}: −{points}',
+      'driverScoreFactorOccurrences': '×{n}',
+      'routeEventDetailsTitle': 'Detalles del evento',
+      'routeEventDetailsStop': 'Parada',
+      'routeEventDetailsOverspeed': 'Exceso de velocidad',
+      'routeEventDetailsIgnitionOn': 'Contacto encendido',
+      'routeEventDetailsIgnitionOff': 'Contacto apagado',
+      'routeEventDetailsStartTime': 'Hora de inicio',
+      'routeEventDetailsEndTime': 'Hora de fin',
+      'routeEventDetailsDuration': 'Duración',
+      'routeEventDetailsTime': 'Hora',
+      'routeEventDetailsMaxSpeed': 'Velocidad máx.',
+      'routeEventDetailsLocation': 'Ubicación',
+      'routeEventDetailsRecenter': 'Centrar en el mapa',
       // Replay
       'replayRoute': 'Reproducir ruta',
       'replayPlay': 'Reproducir',
@@ -2206,12 +4573,29 @@ class AppLocalizations {
       'replaySpeed': 'Velocidad de reproducción',
       'replayCurrentSpeed': 'Velocidad actual',
       'replayCurrentTime': 'Hora actual',
+      'replayRecenter': 'Recentrar',
+      'replayVehicleHidden': 'Oculto',
+      'replayVehicleNoData': 'Sin datos',
+      'replayVehicleActive': 'Activo',
+      'replayPlaying': 'Reproduciendo',
+      'replayPaused': 'En pausa',
+      'replayShowLabels': 'Mostrar etiquetas',
+      'replayHideLabels': 'Ocultar etiquetas',
+      'replayMapLegend': 'Vehículos',
+      'replayPointsCount': '{count} puntos',
       'replayProgress': 'Progreso',
       'loadingReplay': 'Cargando reproducción…',
       'errorLoadingReplay': 'Error al cargar la reproducción.',
       'notEnoughDataForReplay': 'Datos GPS insuficientes para reproducir la ruta.',
       'routeCompleted': 'Ruta finalizada',
       'viewReplay': 'Ver replay',
+      'replayMissingGpsData': 'Datos GPS faltantes',
+      'replayMissingData': 'Datos faltantes',
+      'replayGapsDetected': 'Datos faltantes: {count}',
+      'replayGapStartLabel': 'Último punto antes de la brecha',
+      'replayGapEndLabel': 'Primer punto después de la brecha',
+      'replayGapDurationLabel': 'Duración de la brecha',
+      'replayGapsSheetTitle': 'Brechas de datos GPS',
       // Speed chart
       'speedChartTitle': 'Gráfico de velocidad',
       'speedChartMax': 'Velocidad máxima',
@@ -2346,6 +4730,77 @@ class AppLocalizations {
           'Informe de mantenimiento — Disponible próximamente',
       'reportFleetDriversSoon':
           'Informe de conductores — Disponible próximamente',
+      'fleetIntelligenceTitle': 'Inteligencia de flota',
+      'fleetIntelligenceDashboardSubtitle': 'Indicadores y estado en vivo',
+      'vehiclesOnline': 'En línea',
+      'kpiDriversTotal': 'Conductores',
+      'kpiDriversActive': 'Conductores activos',
+      'maintenanceOverdueVehicles': 'Vehículos — mantenimiento vencido',
+      'insufficientData': 'Datos insuficientes',
+      'companyManagement': 'Gestión de empresas',
+      'distributors': 'Distribuidores',
+      'companyManagementHint':
+          'La gestión de empresas y distribuidores se añadirá en una fase dedicada.',
+      'utilizationScore': 'Puntuación de uso',
+      'mostActiveVehicles': 'Vehículos más activos',
+      'leastActiveVehicles': 'Menos activos / inactivos',
+      'driversToWatch': 'Conductores a vigilar',
+      'vehicleActivitySection': 'Actividad de vehículos',
+      'driverRankingSection': 'Clasificación de conductores',
+      'maintenanceOverviewSection': 'Resumen de mantenimiento',
+      'alertsOverviewSection': 'Resumen de alertas',
+      'vehicleUtilizationSection': 'Uso de vehículos',
+      'maintenanceUpcomingCount': 'Próximas',
+      'maintenanceSoonCount': 'Pronto',
+      'maintenanceOverdueCount': 'Atrasadas (registros)',
+      'nextMaintenances': 'Próximos mantenimientos',
+      'alertsTotalPeriod': 'Total (importantes)',
+      'alertsOverspeed': 'Exceso de velocidad',
+      'alertsGeofence': 'Entrada/salida de zona',
+      'alertsOnlineOffline': 'En línea / fuera de línea (eventos)',
+      'lastImportantEvents': 'Eventos importantes recientes',
+      'periodTotalDistance': 'Distancia del período',
+      'vehiclesActiveInPeriod': 'Vehículos con trayectos',
+      'fleetIntelLiveStatusHint':
+          'El estado (en movimiento / detenidos / ralentí / fuera de línea) refleja la flota en tiempo real.',
+      'exportDashboardReport': 'Exportar informe del panel',
+      'driverRankEstimatedNote':
+          'Clasificación aproximada según trayectos/eventos de los vehículos asignados al conductor.',
+      'notAvailable': 'No disponible',
+      'fleetStatusProblem': 'Requiere seguimiento',
+      'adminDashboardLoadError': 'No se pudo cargar el panel.',
+      'adminDashboardTripsPartialError':
+          'No se pudieron cargar trayectos/eventos para este período. Otras secciones siguen disponibles.',
+      'dashboardConnectionLive': 'En directo',
+      'dashboardConnectionReconnecting': 'Reconectando',
+      'dashboardConnectionOverview': 'Fuera de línea',
+      'dashboardConnectionDegraded': 'Conectado · Sincronización retrasada',
+      'dashboardConnectionLiveReconnecting': 'Reconectando en vivo…',
+      'dashboardConnectionOffline': 'Fuera de línea',
+      'dashboardConnectionServerUnavailable': 'Servidor no disponible',
+      'dashboardConnectionSessionExpired': 'Sesión expirada',
+      'dashboardConnectionChecking': 'Conectando…',
+      'dashboardSyncInProgress': 'Sincronizando…',
+      'dashboardDistanceQuietHint':
+          'La distancia se actualizará cuando los vehículos comiencen a moverse.',
+      'dashboardNoActivityToday': 'No hay actividad detectada hoy.',
+      'dashboardNoActivityPeriod': 'No hay actividad en este período.',
+      'dashboardViewFullFleet': 'Ver toda la flota',
+      'dashboardNoUrgentMaintenance': 'Sin mantenimiento urgente.',
+      'dashboardNoImportantAlerts': 'Sin alertas importantes.',
+      'dashboardImportantAlertsLabel': 'Alertas importantes',
+      'dashboardVehicleActivityEmpty':
+          'No hay vehículos activos en este período.',
+      'licenseAttentionTitle': 'Licencia — requiere seguimiento',
+      'fleetEvtOverspeed': 'Exceso de velocidad',
+      'fleetEvtGeofenceIn': 'Entrada de zona',
+      'fleetEvtGeofenceOut': 'Salida de zona',
+      'fleetEvtOffline': 'Fuera de línea',
+      'fleetEvtOnline': 'En línea',
+      'fleetEvtAlarm': 'Alarma',
+      'fleetEvtIgnitionOn': 'Encendido',
+      'fleetEvtIgnitionOff': 'Apagado',
+      'fleetEvtMaintenance': 'Mantenimiento',
       'validationRequired': 'Campo obligatorio',
       // PDF / Compartir
       'exportPdfLabel': 'Exportar PDF',

@@ -111,7 +111,7 @@ class _AnimatedLiveNumberState extends State<AnimatedLiveNumber>
   @override
   Widget build(BuildContext context) {
     final effectiveFlash =
-        (widget.flashColor ?? Colors.white).withOpacity(0.15);
+        (widget.flashColor ?? Colors.white).withValues(alpha: 0.15);
 
     return Stack(
       alignment: Alignment.center,

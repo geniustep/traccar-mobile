@@ -39,8 +39,12 @@ class CommandCatalog {
     ),
     labelFr: 'Demander la position',
     labelAr: 'طلب الموقع الحالي',
+    labelEn: 'Request position',
+    labelEs: 'Solicitar posición',
     descriptionFr: 'Force une mise à jour immédiate de la position GPS.',
     descriptionAr: 'يطلب تحديثاً فورياً للموقع.',
+    descriptionEn: 'Forces an immediate GPS position update.',
+    descriptionEs: 'Fuerza una actualización inmediata de la posición GPS.',
     icon: Icons.my_location_rounded,
   );
 
@@ -62,8 +66,12 @@ class CommandCatalog {
     ),
     labelFr: 'Rapport d\'état',
     labelAr: 'تقرير الحالة',
+    labelEn: 'Status report',
+    labelEs: 'Informe de estado',
     descriptionFr: 'Demande un rapport complet de l\'état du véhicule.',
     descriptionAr: 'يطلب تقريراً شاملاً عن حالة المركبة.',
+    descriptionEn: 'Requests a full vehicle status report.',
+    descriptionEs: 'Solicita un informe completo del estado del vehículo.',
     icon: Icons.assessment_rounded,
   );
 
@@ -84,8 +92,12 @@ class CommandCatalog {
     ),
     labelFr: 'Version firmware',
     labelAr: 'إصدار الفيرمور',
+    labelEn: 'Firmware version',
+    labelEs: 'Versión de firmware',
     descriptionFr: 'Demande la version du firmware du traceur.',
     descriptionAr: 'يطلب إصدار برنامج الجهاز.',
+    descriptionEn: 'Requests the tracker firmware version.',
+    descriptionEs: 'Solicita la versión del firmware del rastreador.',
     icon: Icons.info_outline_rounded,
   );
 
@@ -102,8 +114,12 @@ class CommandCatalog {
     ),
     labelFr: 'Identification appareil',
     labelAr: 'معرّف الجهاز (IMEI)',
+    labelEn: 'Device identification',
+    labelEs: 'Identificación del dispositivo',
     descriptionFr: 'Demande l\'identifiant unique de l\'appareil (IMEI).',
     descriptionAr: 'يطلب المعرّف الفريد للجهاز.',
+    descriptionEn: 'Requests the unique device identifier (IMEI).',
+    descriptionEs: 'Solicita el identificador único del dispositivo (IMEI).',
     icon: Icons.badge_rounded,
   );
 
@@ -121,8 +137,12 @@ class CommandCatalog {
     ),
     labelFr: 'État E/S numériques',
     labelAr: 'حالة المداخل/المخارج',
+    labelEn: 'I/O status',
+    labelEs: 'Estado de E/S',
     descriptionFr: 'Lit l\'état de toutes les entrées/sorties digitales (Teltonika).',
     descriptionAr: 'يقرأ حالة المداخل والمخارج الرقمية (Teltonika فقط).',
+    descriptionEn: 'Reads the current state of digital inputs/outputs.',
+    descriptionEs: 'Lee el estado actual de las entradas/salidas digitales.',
     icon: Icons.device_hub_rounded,
   );
 
@@ -140,8 +160,12 @@ class CommandCatalog {
     ),
     labelFr: 'Diagnostic GPS',
     labelAr: 'تشخيص GPS',
+    labelEn: 'GPS data',
+    labelEs: 'Datos GPS',
     descriptionFr: 'Lit les paramètres GPS (satellites, signal) — Teltonika.',
     descriptionAr: 'يقرأ معاملات GPS (أقمار، إشارة) — Teltonika فقط.',
+    descriptionEn: 'Returns raw GPS signal data and fix quality.',
+    descriptionEs: 'Devuelve los datos brutos de señal GPS y calidad de fijación.',
     icon: Icons.satellite_alt_rounded,
   );
 
@@ -159,8 +183,12 @@ class CommandCatalog {
     ),
     labelFr: 'Diagnostic GSM',
     labelAr: 'تشخيص GSM',
+    labelEn: 'GSM info',
+    labelEs: 'Info GSM',
     descriptionFr: 'Lit les paramètres réseau cellulaire — Teltonika.',
     descriptionAr: 'يقرأ معاملات شبكة الجوال — Teltonika فقط.',
+    descriptionEn: 'Returns GSM network and SIM card information.',
+    descriptionEs: 'Devuelve información de la red GSM y tarjeta SIM.',
     icon: Icons.signal_cellular_alt_rounded,
   );
 
@@ -177,8 +205,12 @@ class CommandCatalog {
     ),
     labelFr: 'Niveau de signal',
     labelAr: 'مستوى الإشارة',
+    labelEn: 'Signal strength',
+    labelEs: 'Intensidad de señal',
     descriptionFr: 'Demande le niveau du signal GSM/cellulaire.',
     descriptionAr: 'يطلب مستوى إشارة الشبكة الخلوية.',
+    descriptionEn: 'Checks modem signal quality.',
+    descriptionEs: 'Verifica la calidad de señal del módem.',
     icon: Icons.network_cell_rounded,
   );
 
@@ -201,8 +233,12 @@ class CommandCatalog {
     ),
     labelFr: 'Suivi périodique',
     labelAr: 'تتبع دوري',
+    labelEn: 'Periodic reporting',
+    labelEs: 'Reporte periódico',
     descriptionFr: 'Active l\'envoi périodique de la position (fréquence en sec.).',
     descriptionAr: 'يفعّل إرسال الموقع بشكل دوري (التردد بالثواني).',
+    descriptionEn: 'Starts periodic position reporting at set intervals.',
+    descriptionEs: 'Inicia el reporte periódico de posición a intervalos definidos.',
     icon: Icons.repeat_rounded,
   );
 
@@ -219,8 +255,12 @@ class CommandCatalog {
     ),
     labelFr: 'Arrêter le suivi périodique',
     labelAr: 'إيقاف التتبع الدوري',
+    labelEn: 'Stop reporting',
+    labelEs: 'Detener reporte',
     descriptionFr: 'Désactive l\'envoi périodique automatique de la position.',
     descriptionAr: 'يوقف إرسال الموقع الدوري التلقائي.',
+    descriptionEn: 'Stops periodic position reporting.',
+    descriptionEs: 'Detiene el reporte periódico de posición.',
     icon: Icons.stop_circle_outlined,
   );
 
@@ -239,8 +279,12 @@ class CommandCatalog {
     ),
     labelFr: 'Définir l\'intervalle',
     labelAr: 'تعيين فترة الإرسال',
+    labelEn: 'Set interval',
+    labelEs: 'Configurar intervalo',
     descriptionFr: 'Définit l\'intervalle d\'envoi de position (secondes).',
     descriptionAr: 'يحدد فترة إرسال الموقع بالثواني.',
+    descriptionEn: 'Changes the tracking data transmission interval.',
+    descriptionEs: 'Cambia el intervalo de transmisión de datos de rastreo.',
     icon: Icons.timer_rounded,
   );
 
@@ -261,8 +305,12 @@ class CommandCatalog {
     ),
     labelFr: 'Mode veille',
     labelAr: 'وضع السكون',
+    labelEn: 'Sleep mode',
+    labelEs: 'Modo reposo',
     descriptionFr: 'Active le mode économie d\'énergie (peut causer des déconnexions).',
     descriptionAr: 'يفعّل وضع توفير الطاقة (قد يسبب انقطاعات).',
+    descriptionEn: 'Puts the device into power-saving sleep mode.',
+    descriptionEs: 'Pone el dispositivo en modo de ahorro de energía.',
     icon: Icons.bedtime_rounded,
   );
 
@@ -280,8 +328,12 @@ class CommandCatalog {
     ),
     labelFr: 'Réveiller l\'appareil',
     labelAr: 'إيقاظ الجهاز',
+    labelEn: 'Wake up',
+    labelEs: 'Despertar',
     descriptionFr: 'Envoie une demande de position pour réveiller l\'appareil.',
     descriptionAr: 'يرسل طلب موقع لإيقاظ الجهاز من وضع السكون.',
+    descriptionEn: 'Wakes the device from sleep mode.',
+    descriptionEs: 'Despierta el dispositivo del modo de reposo.',
     icon: Icons.alarm_rounded,
   );
 
@@ -298,8 +350,12 @@ class CommandCatalog {
     ),
     labelFr: 'Alarme de mouvement',
     labelAr: 'تنبيه الحركة',
+    labelEn: 'Movement alarm',
+    labelEs: 'Alarma de movimiento',
     descriptionFr: 'Active l\'alarme de détection de mouvement (dépend du protocole).',
     descriptionAr: 'يفعّل تنبيه الحركة (يعتمد على البروتوكول).',
+    descriptionEn: 'Configures the movement detection alarm.',
+    descriptionEs: 'Configura la alarma de detección de movimiento.',
     icon: Icons.directions_run_rounded,
   );
 
@@ -321,8 +377,12 @@ class CommandCatalog {
     ),
     labelFr: 'Activer l\'alarme',
     labelAr: 'تفعيل المنبّه',
+    labelEn: 'Arm alarm',
+    labelEs: 'Activar alarma',
     descriptionFr: 'Active le système d\'alarme du véhicule.',
     descriptionAr: 'يفعّل نظام الإنذار في المركبة.',
+    descriptionEn: 'Arms the security alarm system.',
+    descriptionEs: 'Activa el sistema de alarma de seguridad.',
     icon: Icons.notifications_active_rounded,
   );
 
@@ -340,8 +400,12 @@ class CommandCatalog {
     ),
     labelFr: 'Désactiver l\'alarme',
     labelAr: 'تعطيل المنبّه',
+    labelEn: 'Disarm alarm',
+    labelEs: 'Desactivar alarma',
     descriptionFr: 'Désactive le système d\'alarme du véhicule.',
     descriptionAr: 'يوقف نظام الإنذار في المركبة.',
+    descriptionEn: 'Disarms the security alarm system.',
+    descriptionEs: 'Desactiva el sistema de alarma de seguridad.',
     icon: Icons.notifications_off_rounded,
   );
 
@@ -360,8 +424,12 @@ class CommandCatalog {
     ),
     labelFr: 'Activer alerte vitesse',
     labelAr: 'تفعيل تنبيه التجاوز',
+    labelEn: 'Enable speed alert',
+    labelEs: 'Activar alerta de velocidad',
     descriptionFr: 'Active l\'alerte de dépassement de vitesse (seuil en km/h).',
     descriptionAr: 'يفعّل تنبيه تجاوز السرعة (الحد بكم/ساعة).',
+    descriptionEn: 'Enables alerts when the speed limit is exceeded.',
+    descriptionEs: 'Activa alertas al exceder el límite de velocidad.',
     icon: Icons.speed_rounded,
   );
 
@@ -379,8 +447,12 @@ class CommandCatalog {
     ),
     labelFr: 'Désactiver alerte vitesse',
     labelAr: 'إلغاء تنبيه التجاوز',
+    labelEn: 'Disable speed alert',
+    labelEs: 'Desactivar alerta de velocidad',
     descriptionFr: 'Désactive l\'alerte de dépassement de vitesse.',
     descriptionAr: 'يلغي تنبيه تجاوز السرعة.',
+    descriptionEn: 'Disables overspeed alerts.',
+    descriptionEs: 'Desactiva las alertas de exceso de velocidad.',
     icon: Icons.speed_rounded,
   );
 
@@ -397,8 +469,12 @@ class CommandCatalog {
     ),
     labelFr: 'Activer alerte vibration',
     labelAr: 'تفعيل تنبيه الاهتزاز',
+    labelEn: 'Enable vibration alert',
+    labelEs: 'Activar alerta de vibración',
     descriptionFr: 'Active la détection de vibration/choc.',
     descriptionAr: 'يفعّل كشف الاهتزاز والصدمة.',
+    descriptionEn: 'Enables vibration detection alert.',
+    descriptionEs: 'Activa la alerta de detección de vibración.',
     icon: Icons.vibration_rounded,
   );
 
@@ -416,8 +492,12 @@ class CommandCatalog {
     ),
     labelFr: 'Désactiver alerte vibration',
     labelAr: 'تعطيل تنبيه الاهتزاز',
+    labelEn: 'Disable vibration alert',
+    labelEs: 'Desactivar alerta de vibración',
     descriptionFr: 'Désactive la détection de vibration.',
     descriptionAr: 'يوقف كشف الاهتزاز.',
+    descriptionEn: 'Disables vibration alert.',
+    descriptionEs: 'Desactiva la alerta de vibración.',
     icon: Icons.vibration_rounded,
   );
 
@@ -435,8 +515,12 @@ class CommandCatalog {
     ),
     labelFr: 'Activer alerte porte',
     labelAr: 'تفعيل تنبيه الباب',
+    labelEn: 'Enable door alert',
+    labelEs: 'Activar alerta de puerta',
     descriptionFr: 'Active l\'alerte d\'ouverture de porte.',
     descriptionAr: 'يفعّل تنبيه فتح الباب.',
+    descriptionEn: 'Enables alerts when a door is opened.',
+    descriptionEs: 'Activa alertas cuando se abre una puerta.',
     icon: Icons.sensor_door_rounded,
   );
 
@@ -455,8 +539,12 @@ class CommandCatalog {
     ),
     labelFr: 'Désactiver alerte porte',
     labelAr: 'تعطيل تنبيه الباب',
+    labelEn: 'Disable door alert',
+    labelEs: 'Desactivar alerta de puerta',
     descriptionFr: 'Désactive l\'alerte d\'ouverture de porte.',
     descriptionAr: 'يوقف تنبيه فتح الباب.',
+    descriptionEn: 'Disables door open alerts.',
+    descriptionEs: 'Desactiva las alertas de apertura de puerta.',
     icon: Icons.sensor_door_rounded,
   );
 
@@ -474,8 +562,12 @@ class CommandCatalog {
     ),
     labelFr: 'Définir numéro SOS',
     labelAr: 'تعيين رقم SOS',
+    labelEn: 'Set authorized phone',
+    labelEs: 'Configurar teléfono autorizado',
     descriptionFr: 'Définit le numéro de téléphone autorisé pour les alertes SOS.',
     descriptionAr: 'يحدد رقم الهاتف المصرّح للتنبيهات.',
+    descriptionEn: 'Sets the authorized phone number for SMS commands.',
+    descriptionEs: 'Configura el número de teléfono autorizado para comandos SMS.',
     icon: Icons.phone_in_talk_rounded,
   );
 
@@ -493,8 +585,12 @@ class CommandCatalog {
     ),
     labelFr: 'Activer bouton SOS',
     labelAr: 'تفعيل زر SOS',
+    labelEn: 'Enable SOS',
+    labelEs: 'Activar SOS',
     descriptionFr: 'Active la fonction bouton SOS.',
     descriptionAr: 'يفعّل وظيفة زر الاستغاثة.',
+    descriptionEn: 'Enables the SOS emergency button feature.',
+    descriptionEs: 'Activa la función del botón de emergencia SOS.',
     icon: Icons.sos_rounded,
   );
 
@@ -523,11 +619,17 @@ class CommandCatalog {
     ),
     labelFr: 'Couper le moteur',
     labelAr: 'قطع المحرك',
+    labelEn: 'Stop engine',
+    labelEs: 'Detener motor',
     descriptionFr:
         'Coupe l\'alimentation moteur via relais ou immobiliseur. '
         'Appareil DOIT être en ligne.',
     descriptionAr:
         'يقطع تغذية المحرك عبر الـ Relay أو Immobilizer. الجهاز يجب أن يكون متصلاً.',
+    descriptionEn:
+        'Cuts the engine fuel supply remotely. Use only when the vehicle is stationary.',
+    descriptionEs:
+        'Corta el suministro de combustible del motor de forma remota. Usar solo con el vehículo estacionado.',
     icon: Icons.power_off_rounded,
   );
 
@@ -547,11 +649,15 @@ class CommandCatalog {
     ),
     labelFr: 'Rétablir le moteur',
     labelAr: 'استعادة المحرك',
+    labelEn: 'Restore engine',
+    labelEs: 'Restaurar motor',
     descriptionFr:
         'Rétablit l\'alimentation moteur via relais ou immobiliseur. '
         'Appareil DOIT être en ligne.',
     descriptionAr:
         'يعيد تغذية المحرك عبر الـ Relay أو Immobilizer. الجهاز يجب أن يكون متصلاً.',
+    descriptionEn: 'Restores the engine fuel supply.',
+    descriptionEs: 'Restaura el suministro de combustible del motor.',
     icon: Icons.power_rounded,
   );
 
@@ -570,8 +676,12 @@ class CommandCatalog {
     ),
     labelFr: 'Sortie 1 — Activer',
     labelAr: 'تشغيل Output 1',
+    labelEn: 'Output 1 ON',
+    labelEs: 'Salida 1 ON',
     descriptionFr: 'Active la sortie digitale n°1.',
     descriptionAr: 'يشغّل المخرج الرقمي رقم 1.',
+    descriptionEn: 'Activates digital output relay 1.',
+    descriptionEs: 'Activa el relé de salida digital 1.',
     icon: Icons.toggle_on_rounded,
   );
 
@@ -590,8 +700,12 @@ class CommandCatalog {
     ),
     labelFr: 'Sortie 1 — Désactiver',
     labelAr: 'إيقاف Output 1',
+    labelEn: 'Output 1 OFF',
+    labelEs: 'Salida 1 OFF',
     descriptionFr: 'Désactive la sortie digitale n°1.',
     descriptionAr: 'يوقف المخرج الرقمي رقم 1.',
+    descriptionEn: 'Deactivates digital output relay 1.',
+    descriptionEs: 'Desactiva el relé de salida digital 1.',
     icon: Icons.toggle_off_rounded,
   );
 
@@ -610,8 +724,12 @@ class CommandCatalog {
     ),
     labelFr: 'Sortie 2 — Activer',
     labelAr: 'تشغيل Output 2',
+    labelEn: 'Output 2 ON',
+    labelEs: 'Salida 2 ON',
     descriptionFr: 'Active la sortie digitale n°2.',
     descriptionAr: 'يشغّل المخرج الرقمي رقم 2.',
+    descriptionEn: 'Activates digital output relay 2.',
+    descriptionEs: 'Activa el relé de salida digital 2.',
     icon: Icons.toggle_on_rounded,
   );
 
@@ -630,8 +748,12 @@ class CommandCatalog {
     ),
     labelFr: 'Sortie 2 — Désactiver',
     labelAr: 'إيقاف Output 2',
+    labelEn: 'Output 2 OFF',
+    labelEs: 'Salida 2 OFF',
     descriptionFr: 'Désactive la sortie digitale n°2.',
     descriptionAr: 'يوقف المخرج الرقمي رقم 2.',
+    descriptionEn: 'Deactivates digital output relay 2.',
+    descriptionEs: 'Desactiva el relé de salida digital 2.',
     icon: Icons.toggle_off_rounded,
   );
 
@@ -650,8 +772,12 @@ class CommandCatalog {
     ),
     labelFr: 'Relais — Activer',
     labelAr: 'تشغيل Relay',
+    labelEn: 'Relay ON',
+    labelEs: 'Relé ON',
     descriptionFr: 'Active le relais (sortie 1 câblée au relais).',
     descriptionAr: 'يشغّل الـ Relay المتصل بالمخرج 1.',
+    descriptionEn: 'Activates the main relay (engine cut).',
+    descriptionEs: 'Activa el relé principal (corte de motor).',
     icon: Icons.electrical_services_rounded,
   );
 
@@ -670,8 +796,12 @@ class CommandCatalog {
     ),
     labelFr: 'Relais — Désactiver',
     labelAr: 'إيقاف Relay',
+    labelEn: 'Relay OFF',
+    labelEs: 'Relé OFF',
     descriptionFr: 'Désactive le relais.',
     descriptionAr: 'يوقف الـ Relay.',
+    descriptionEn: 'Deactivates the main relay (engine restore).',
+    descriptionEs: 'Desactiva el relé principal (restaurar motor).',
     icon: Icons.electrical_services_rounded,
   );
 
@@ -694,8 +824,12 @@ class CommandCatalog {
     ),
     labelFr: 'Immobiliser le véhicule',
     labelAr: 'تفعيل الإيموبلايزر',
+    labelEn: 'Immobilizer ON',
+    labelEs: 'Inmovilizador ON',
     descriptionFr: 'Active l\'immobiliseur — Admin uniquement.',
     descriptionAr: 'يفعّل الـ Immobilizer — للمدير فقط.',
+    descriptionEn: 'Activates the immobilizer. Vehicle will not start.',
+    descriptionEs: 'Activa el inmovilizador. El vehículo no arrancará.',
     icon: Icons.lock_rounded,
   );
 
@@ -715,8 +849,12 @@ class CommandCatalog {
     ),
     labelFr: 'Désimmobiliser le véhicule',
     labelAr: 'تعطيل الإيموبلايزر',
+    labelEn: 'Immobilizer OFF',
+    labelEs: 'Inmovilizador OFF',
     descriptionFr: 'Désactive l\'immobiliseur — Admin uniquement.',
     descriptionAr: 'يوقف الـ Immobilizer — للمدير فقط.',
+    descriptionEn: 'Deactivates the immobilizer.',
+    descriptionEs: 'Desactiva el inmovilizador.',
     icon: Icons.lock_open_rounded,
   );
 
@@ -737,8 +875,12 @@ class CommandCatalog {
     ),
     labelFr: 'Redémarrer le traceur',
     labelAr: 'إعادة تشغيل الجهاز',
+    labelEn: 'Reboot device',
+    labelEs: 'Reiniciar dispositivo',
     descriptionFr: 'Force le redémarrage du traceur GPS.',
     descriptionAr: 'يُجبر جهاز GPS على إعادة التشغيل.',
+    descriptionEn: 'Reboots the tracker device.',
+    descriptionEs: 'Reinicia el dispositivo rastreador.',
     icon: Icons.restart_alt_rounded,
   );
 
@@ -755,8 +897,12 @@ class CommandCatalog {
     ),
     labelFr: 'Effacer les alarmes',
     labelAr: 'مسح التنبيهات',
+    labelEn: 'Clear alarms',
+    labelEs: 'Borrar alarmas',
     descriptionFr: 'Efface les alarmes actives du traceur (dépend du modèle).',
     descriptionAr: 'يمسح التنبيهات النشطة في الجهاز (يعتمد على الموديل).',
+    descriptionEn: 'Clears all active alarms on the device.',
+    descriptionEs: 'Borra todas las alarmas activas del dispositivo.',
     icon: Icons.notification_important_rounded,
   );
 
@@ -775,8 +921,12 @@ class CommandCatalog {
     ),
     labelFr: 'Définir le fuseau horaire',
     labelAr: 'تعيين المنطقة الزمنية',
+    labelEn: 'Set timezone',
+    labelEs: 'Configurar zona horaria',
     descriptionFr: 'Définit le fuseau horaire du traceur.',
     descriptionAr: 'يحدد المنطقة الزمنية للجهاز.',
+    descriptionEn: 'Sets the device timezone.',
+    descriptionEs: 'Configura la zona horaria del dispositivo.',
     icon: Icons.access_time_rounded,
   );
 
@@ -798,8 +948,15 @@ class CommandCatalog {
     ),
     labelFr: 'Changer l\'adresse serveur',
     labelAr: 'تغيير عنوان السيرفر',
-    descriptionFr: 'Modifie l\'IP/host et le port du serveur Traccar — Admin uniquement.',
-    descriptionAr: 'يغيّر عنوان وبورت سيرفر Traccar — للمدير فقط.',
+    labelEn: 'Set server address',
+    labelEs: 'Configurar dirección del servidor',
+    descriptionFr:
+        'Modifie l\'IP/host et le port du serveur ELMOGPS — Admin uniquement.',
+    descriptionAr: 'يغيّر عنوان الاستضافة وبورت خادوم ELMOGPS — للمدير فقط.',
+    descriptionEn:
+        'Changes the tracking server address. Incorrect values may disconnect the device.',
+    descriptionEs:
+        'Cambia la dirección del servidor de rastreo. Valores incorrectos pueden desconectar el dispositivo.',
     icon: Icons.dns_rounded,
   );
 
@@ -821,8 +978,14 @@ class CommandCatalog {
     ),
     labelFr: 'Modifier les paramètres APN',
     labelAr: 'تعديل إعدادات APN',
+    labelEn: 'Configure APN',
+    labelEs: 'Configurar APN',
     descriptionFr: 'Met à jour les paramètres APN cellulaire — Admin uniquement.',
     descriptionAr: 'يحدّث إعدادات الـ APN — للمدير فقط.',
+    descriptionEn:
+        'Sets the mobile data APN settings. Incorrect values may prevent data connection.',
+    descriptionEs:
+        'Configura los ajustes APN de datos móviles. Valores incorrectos pueden impedir la conexión de datos.',
     icon: Icons.sim_card_rounded,
   );
 
@@ -842,8 +1005,12 @@ class CommandCatalog {
     ),
     labelFr: 'Réinitialisation usine',
     labelAr: 'إعادة ضبط المصنع',
+    labelEn: 'Factory reset',
+    labelEs: 'Restablecer de fábrica',
     descriptionFr: 'Réinitialise le traceur aux paramètres d\'usine — IRRÉVERSIBLE.',
     descriptionAr: 'يعيد الجهاز لإعدادات المصنع — لا يمكن التراجع عنه.',
+    descriptionEn: 'Resets the device to factory defaults. All settings will be lost.',
+    descriptionEs: 'Restablece el dispositivo a los valores de fábrica. Se perderán todos los ajustes.',
     icon: Icons.factory_rounded,
   );
 
@@ -867,8 +1034,12 @@ class CommandCatalog {
     ),
     labelFr: 'Commande personnalisée',
     labelAr: 'أمر مخصص',
+    labelEn: 'Custom command',
+    labelEs: 'Comando personalizado',
     descriptionFr: 'Envoie une commande SMS/GPRS personnalisée (technicien+).',
     descriptionAr: 'يرسل أمراً مخصصاً عبر SMS/GPRS (للتقنيين فقط).',
+    descriptionEn: 'Sends a custom text command to the device.',
+    descriptionEs: 'Envía un comando de texto personalizado al dispositivo.',
     icon: Icons.terminal_rounded,
   );
 
@@ -889,8 +1060,12 @@ class CommandCatalog {
     ),
     labelFr: 'Commande brute (texte)',
     labelAr: 'أمر خام (نص)',
+    labelEn: 'Raw command',
+    labelEs: 'Comando raw',
     descriptionFr: 'Envoie un texte brut directement au traceur — Admin uniquement.',
     descriptionAr: 'يرسل نصاً خاماً مباشرة للجهاز — للمدير فقط.',
+    descriptionEn: 'Sends a raw protocol command. For advanced users only.',
+    descriptionEs: 'Envía un comando de protocolo sin procesar. Solo para usuarios avanzados.',
     icon: Icons.code_rounded,
   );
 
@@ -910,8 +1085,12 @@ class CommandCatalog {
     ),
     labelFr: 'Commande HEX',
     labelAr: 'أمر HEX',
+    labelEn: 'Hex command',
+    labelEs: 'Comando hexadecimal',
     descriptionFr: 'Envoie une commande en format hexadécimal — Admin uniquement.',
     descriptionAr: 'يرسل أمراً بصيغة Hex — للمدير فقط.',
+    descriptionEn: 'Sends a hexadecimal command. For advanced users only.',
+    descriptionEs: 'Envía un comando hexadecimal. Solo para usuarios avanzados.',
     icon: Icons.memory_rounded,
   );
 
@@ -928,8 +1107,13 @@ class CommandCatalog {
     ),
     labelFr: 'Commande sauvegardée',
     labelAr: 'أمر محفوظ',
-    descriptionFr: 'Exécute une commande pré-configurée dans Traccar.',
-    descriptionAr: 'ينفّذ أمراً تم إعداده مسبقاً في Traccar.',
+    labelEn: 'Saved command',
+    labelEs: 'Comando guardado',
+    descriptionFr:
+        'Exécute une commande pré-configurée dans la configuration centrale.',
+    descriptionAr: 'ينفّذ أمراً تمّ إعداده مسبقاً في الإعدادات المركزية.',
+    descriptionEn: 'Executes a pre-configured command saved on the server.',
+    descriptionEs: 'Ejecuta un comando preconfigurado guardado en el servidor.',
     icon: Icons.bookmark_rounded,
   );
 

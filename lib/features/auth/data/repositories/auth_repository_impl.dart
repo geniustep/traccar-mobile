@@ -4,6 +4,7 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../models/user_model.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../../../core/constants/storage_keys.dart';
 
@@ -57,15 +58,29 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> ensureTraccarSocketSession() async {
-    if (await _storage.getJsessionId() != null) return;
+    final existing = await _storage.getJsessionId();
+    if (existing != null && existing.isNotEmpty) {
+      AppLogger.auth('JSESSIONID already present — skipping POST /session');
+      return;
+    }
     final email = await _storage.getEmail();
     final password = await _storage.getPassword();
-    if (email == null || password == null) return;
+    if (email == null || password == null) {
+      AppLogger.auth('No stored credentials — cannot create socket session');
+      return;
+    }
     try {
+      AppLogger.auth('Creating socket session via POST /session');
       final r = await _dataSource.login(email, password);
       await _storage.saveJsessionId(r.jsessionId);
-    } catch (_) {
-      // WebSocket will still use Basic auth if possible.
+      AppLogger.auth(
+        'Socket session ready — JSESSIONID: ${r.jsessionId != null ? "present" : "missing"}',
+      );
+    } catch (e) {
+      AppLogger.authError(
+        'POST /session failed for socket session — '
+        'WebSocket will not connect without a valid session',
+      );
     }
   }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/elmo_card.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/entities/insight.dart';
 
@@ -32,45 +31,96 @@ class InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
     final color = _severityColor(insight.severity);
     final icon = _iconFor(insight.icon);
 
-    return ElmoCard(
+    return GestureDetector(
       onTap: onTap,
-      borderColor: color.withOpacity(0.2),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          border: Border.all(
+            color: color.withValues(alpha: isDark ? 0.22 : 0.16),
+            width: 0.8,
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          color: isDark
+              ? AppColors.surface.withValues(alpha: 0.9)
+              : Colors.white.withValues(alpha: 0.95),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: isDark ? 0.08 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    insight.title,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    insight.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.3,
+                      color: cs.onSurface.withValues(alpha: 0.52),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(insight.title, style: AppTextStyles.labelLarge),
-                const SizedBox(height: 2),
                 Text(
-                  insight.description,
-                  style: AppTextStyles.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  DateFormatter.toRelative(insight.createdAt),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface.withValues(alpha: 0.38),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.8),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            DateFormatter.toRelative(insight.createdAt),
-            style: AppTextStyles.labelSmall,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+
+import '../../logging/app_logger.dart';
 import '../../storage/secure_storage_service.dart';
 
 /// Attaches `Authorization: Basic <base64(email:password)>` to every request.
@@ -36,6 +38,10 @@ class AuthInterceptor extends Interceptor {
     final isLoginPath = err.requestOptions.path.contains('/session') &&
         err.requestOptions.method == 'POST';
     if (err.response?.statusCode == 401 && !isLoginPath) {
+      AppLogger.auth(
+        'Unauthorized (401) on ${err.requestOptions.method} '
+        '${err.requestOptions.uri.path} — session cleared',
+      );
       await _storage.clearAll();
     }
     handler.next(err);

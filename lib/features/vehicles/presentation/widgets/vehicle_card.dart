@@ -17,7 +17,6 @@ class VehicleCard extends StatefulWidget {
 
   final VehicleEntity vehicle;
   final VoidCallback? onTap;
-  /// ملخص المرحلة الخامسة (سائق/صيانة/وثائق)؛ قد يكون تامًّا وحُمِّل خارج البطاقة لتفادي إعادة جلب ثقيلة.
   final FleetVehicleBrief? fleetBrief;
 
   @override
@@ -60,29 +59,30 @@ class _VehicleCardState extends State<VehicleCard>
   }
 
   Color get _statusColor => switch (widget.vehicle.status) {
-        'moving' => AppColors.statusMoving,
+        'moving'  => AppColors.statusMoving,
         'stopped' => AppColors.statusStopped,
-        'idle' => AppColors.statusIdle,
-        _ => AppColors.statusOffline,
+        'idle'    => AppColors.statusIdle,
+        _         => AppColors.statusOffline,
       };
 
   IconData get _vehicleIcon => switch (widget.vehicle.type.toLowerCase()) {
-        'truck' => Icons.local_shipping_rounded,
-        'van' => Icons.airport_shuttle_rounded,
-        'bus' => Icons.directions_bus_rounded,
+        'truck'      => Icons.local_shipping_rounded,
+        'van'        => Icons.airport_shuttle_rounded,
+        'bus'        => Icons.directions_bus_rounded,
         'motorcycle' => Icons.two_wheeler_rounded,
-        _ => Icons.directions_car_rounded,
+        _            => Icons.directions_car_rounded,
       };
 
   @override
   Widget build(BuildContext context) {
-    final v = widget.vehicle;
-    final l10n = context.l10n;
-    final color = _statusColor;
+    final v      = widget.vehicle;
+    final l10n   = context.l10n;
+    final color  = _statusColor;
     final status = StatusBadge.fromString(v.status);
-    final fb = widget.fleetBrief;
+    final fb     = widget.fleetBrief;
     final String? rawDriverHint =
         fb != null ? fb.driverLine : v.driverName?.trim();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
       color: Colors.transparent,
@@ -93,14 +93,21 @@ class _VehicleCardState extends State<VehicleCard>
         highlightColor: color.withValues(alpha: 0.04),
         child: Ink(
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
+            color: AppColors.cardBackgroundOf(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.14), width: 1),
+            border: Border.all(
+              color: isDark
+                  ? color.withValues(alpha: 0.14)
+                  : color.withValues(alpha: 0.22),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.06),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
+                color: isDark
+                    ? color.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.04),
+                blurRadius: isDark ? 14 : 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -117,8 +124,8 @@ class _VehicleCardState extends State<VehicleCard>
                       width: 4,
                       decoration: BoxDecoration(
                         color: v.isMoving
-                            ? color
-                                .withValues(alpha: 0.45 + 0.55 * _pulseAnim.value)
+                            ? color.withValues(
+                                alpha: 0.45 + 0.55 * _pulseAnim.value)
                             : color,
                       ),
                     ),
@@ -127,7 +134,7 @@ class _VehicleCardState extends State<VehicleCard>
                   // ── Card content ───────────────────────────────────────────
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 13, 0, 13),
+                      padding: const EdgeInsets.fromLTRB(12, 10, 0, 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -146,14 +153,14 @@ class _VehicleCardState extends State<VehicleCard>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Name + badge
                                     Row(
                                       children: [
                                         Expanded(
                                           child: Text(
                                             v.name,
-                                            style: const TextStyle(
-                                              color: AppColors.textPrimary,
+                                            style: TextStyle(
+                                              color: AppColors.textPrimaryOf(
+                                                  context),
                                               fontSize: 15,
                                               fontWeight: FontWeight.w700,
                                               height: 1.2,
@@ -166,24 +173,25 @@ class _VehicleCardState extends State<VehicleCard>
                                       ],
                                     ),
                                     const SizedBox(height: 5),
-                                    // Plate + driver/summary driver line
                                     Row(
                                       children: [
                                         _PlateBadge(plate: v.plateNumber),
                                         if (rawDriverHint != null &&
                                             rawDriverHint.isNotEmpty) ...[
                                           const SizedBox(width: 8),
-                                          const Icon(
+                                          Icon(
                                             Icons.person_rounded,
                                             size: 11,
-                                            color: AppColors.textMuted,
+                                            color:
+                                                AppColors.textMutedOf(context),
                                           ),
                                           const SizedBox(width: 3),
                                           Expanded(
                                             child: Text(
                                               rawDriverHint,
-                                              style: const TextStyle(
-                                                color: AppColors.textMuted,
+                                              style: TextStyle(
+                                                color: AppColors.textMutedOf(
+                                                    context),
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -200,12 +208,38 @@ class _VehicleCardState extends State<VehicleCard>
                             ],
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
 
                           // ── Divider ───────────────────────────────────────
-                          Container(height: 1, color: AppColors.divider),
+                          Container(
+                              height: 1,
+                              color: AppColors.dividerOf(context)),
 
-                          const SizedBox(height: 11),
+                          const SizedBox(height: 9),
+
+                          // ── Offline microcopy ──────────────────────────────
+                          if (v.isOffline) ...[
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.history_rounded,
+                                  size: 10,
+                                  color: AppColors.textMutedOf(context),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l10n.lastKnownData,
+                                  style: TextStyle(
+                                    color: AppColors.textMutedOf(context),
+                                    fontSize: 9.5,
+                                    fontStyle: FontStyle.italic,
+                                    letterSpacing: 0.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                          ],
 
                           // ── Row 2: Telemetry ──────────────────────────────
                           Row(
@@ -216,11 +250,13 @@ class _VehicleCardState extends State<VehicleCard>
                                 icon: Icons.speed_rounded,
                                 label: l10n.speedLabel,
                                 value: FormatUtils.speed(v.speed),
-                                color: v.isMoving && v.speed > 0
-                                    ? AppColors.statusMoving
-                                    : AppColors.textSecondary,
+                                color: v.isOffline
+                                    ? AppColors.textMutedOf(context)
+                                    : (v.isMoving && v.speed > 0
+                                        ? AppColors.statusMoving
+                                        : AppColors.textSecondaryOf(context)),
                               ),
-                              _dividerV(),
+                              _dividerV(context),
                               // Ignition
                               _TelemetryItem(
                                 icon: Icons.power_settings_new_rounded,
@@ -228,12 +264,14 @@ class _VehicleCardState extends State<VehicleCard>
                                 value: v.ignition
                                     ? l10n.ignitionOnLabel
                                     : l10n.ignitionOffLabel,
-                                color: v.ignition
-                                    ? AppColors.statusMoving
-                                    : AppColors.textMuted,
+                                color: v.isOffline
+                                    ? AppColors.textMutedOf(context)
+                                    : (v.ignition
+                                        ? AppColors.statusMoving
+                                        : AppColors.textMutedOf(context)),
                               ),
                               if (v.fuelLevel != null) ...[
-                                _dividerV(),
+                                _dividerV(context),
                                 Expanded(
                                   child: _FuelBar(
                                       fuelLevel: v.fuelLevel!, l10n: l10n),
@@ -241,7 +279,7 @@ class _VehicleCardState extends State<VehicleCard>
                               ] else
                                 const Spacer(),
                               if (v.batteryVoltage != null) ...[
-                                _dividerV(),
+                                _dividerV(context),
                                 _TelemetryItem(
                                   icon: Icons.battery_charging_full_rounded,
                                   label: l10n.batteryVoltageLabel,
@@ -257,15 +295,15 @@ class _VehicleCardState extends State<VehicleCard>
                                   b.hasMaintenanceOverdue ||
                                   b.insuranceLine.isNotEmpty ||
                                   b.techLine.isNotEmpty) ...[
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 9),
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
-                                vertical: 8,
+                                vertical: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceElevated
+                                color: AppColors.surfaceElevatedOf(context)
                                     .withValues(alpha: 0.85),
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -283,7 +321,8 @@ class _VehicleCardState extends State<VehicleCard>
                                         fontWeight: FontWeight.w600,
                                         color: b.hasMaintenanceOverdue
                                             ? AppColors.error
-                                            : AppColors.textSecondary,
+                                            : AppColors.textSecondaryOf(
+                                                context),
                                       ),
                                     ),
                                   if (b.insuranceLine.isNotEmpty) ...[
@@ -320,22 +359,22 @@ class _VehicleCardState extends State<VehicleCard>
                           // ── Row 3: Address + time ─────────────────────────
                           if ((v.address != null && v.address!.isNotEmpty) ||
                               v.lastUpdate != null) ...[
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 9),
                             Row(
                               children: [
                                 if (v.address != null &&
                                     v.address!.isNotEmpty) ...[
-                                  const Icon(
+                                  Icon(
                                     Icons.location_on_rounded,
                                     size: 12,
-                                    color: AppColors.textMuted,
+                                    color: AppColors.textMutedOf(context),
                                   ),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
                                       v.address!,
-                                      style: const TextStyle(
-                                        color: AppColors.textMuted,
+                                      style: TextStyle(
+                                        color: AppColors.textMutedOf(context),
                                         fontSize: 11,
                                         height: 1.3,
                                       ),
@@ -347,16 +386,16 @@ class _VehicleCardState extends State<VehicleCard>
                                   const Spacer(),
                                 if (v.lastUpdate != null) ...[
                                   const SizedBox(width: 8),
-                                  const Icon(
+                                  Icon(
                                     Icons.access_time_rounded,
                                     size: 11,
-                                    color: AppColors.textMuted,
+                                    color: AppColors.textMutedOf(context),
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
                                     DateFormatter.toRelative(v.lastUpdate!),
-                                    style: const TextStyle(
-                                      color: AppColors.textMuted,
+                                    style: TextStyle(
+                                      color: AppColors.textMutedOf(context),
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -390,11 +429,11 @@ class _VehicleCardState extends State<VehicleCard>
     );
   }
 
-  Widget _dividerV() => Container(
+  Widget _dividerV(BuildContext context) => Container(
         width: 1,
         height: 28,
         margin: const EdgeInsets.symmetric(horizontal: 12),
-        color: AppColors.divider,
+        color: AppColors.dividerOf(context),
       );
 
   Color _batteryColor(double? v) {
@@ -449,7 +488,7 @@ class _VehicleIconWidget extends StatelessWidget {
                       .withValues(alpha: 0.5 + 0.5 * pulseAnim.value),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.cardBackground,
+                    color: AppColors.cardBackgroundOf(context),
                     width: 2,
                   ),
                   boxShadow: [
@@ -481,14 +520,14 @@ class _PlateBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surfaceElevatedOf(context),
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: AppColors.borderOf(context), width: 0.8),
       ),
       child: Text(
         plate,
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: AppColors.textSecondaryOf(context),
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.8,
@@ -526,8 +565,8 @@ class _TelemetryItem extends StatelessWidget {
             const SizedBox(width: 3),
             Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textMuted,
+              style: TextStyle(
+                color: AppColors.textMutedOf(context),
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.2,
@@ -566,7 +605,7 @@ class _FuelBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pct = (fuelLevel / 100).clamp(0.0, 1.0);
+    final pct   = (fuelLevel / 100).clamp(0.0, 1.0);
     final color = _color;
 
     return Column(
@@ -581,7 +620,7 @@ class _FuelBar extends StatelessWidget {
             Text(
               l10n.fuelLabel,
               style: TextStyle(
-                color: AppColors.textMuted,
+                color: AppColors.textMutedOf(context),
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.2,
@@ -603,7 +642,7 @@ class _FuelBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: pct,
-            backgroundColor: AppColors.border,
+            backgroundColor: AppColors.borderOf(context),
             valueColor: AlwaysStoppedAnimation(color),
             minHeight: 5,
           ),

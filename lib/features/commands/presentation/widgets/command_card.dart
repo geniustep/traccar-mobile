@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -26,6 +27,7 @@ class CommandCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final cmd = resolved.command;
     final status = resolved.status;
     final isExecutable = status.isExecutable;
@@ -45,7 +47,8 @@ class CommandCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: borderColor, width: isLoading ? 1.0 : 0.5),
+            border:
+                Border.all(color: borderColor, width: isLoading ? 1.0 : 0.5),
           ),
           child: Row(
             children: [
@@ -66,7 +69,7 @@ class CommandCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            cmd.labelFr,
+                            cmd.label(l10n.locale),
                             style: AppTextStyles.labelLarge.copyWith(
                               color: isDisabled
                                   ? AppColors.textMuted
@@ -81,12 +84,11 @@ class CommandCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      _subtitle(resolved),
+                      _subtitle(resolved, l10n.locale),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: _subtitleColor(status),
-                        fontStyle: isDisabled
-                            ? FontStyle.italic
-                            : FontStyle.normal,
+                        fontStyle:
+                            isDisabled ? FontStyle.italic : FontStyle.normal,
                         fontSize: 11,
                       ),
                       maxLines: 2,
@@ -114,43 +116,47 @@ class CommandCard extends StatelessWidget {
 
   Color _borderColor(
       DeviceCommand cmd, CommandCapabilityStatus status, bool loading) {
-    if (loading) return cmd.riskLevel.color.withOpacity(0.6);
+    if (loading) return cmd.riskLevel.color.withValues(alpha: 0.6);
     if (status.isDisabled) return AppColors.border;
     if (status == CommandCapabilityStatus.offlineQueued) {
-      return AppColors.warning.withOpacity(0.3);
+      return AppColors.warning.withValues(alpha: 0.3);
     }
     return switch (cmd.riskLevel) {
-      CommandRiskLevel.high => AppColors.error.withOpacity(0.3),
-      CommandRiskLevel.medium => AppColors.warning.withOpacity(0.2),
+      CommandRiskLevel.high => AppColors.error.withValues(alpha: 0.3),
+      CommandRiskLevel.medium => AppColors.warning.withValues(alpha: 0.2),
       CommandRiskLevel.low => AppColors.border,
     };
   }
 
   Color _bgColor(
       DeviceCommand cmd, CommandCapabilityStatus status, bool loading) {
-    if (loading) return cmd.riskLevel.color.withOpacity(0.06);
+    if (loading) return cmd.riskLevel.color.withValues(alpha: 0.06);
     if (status == CommandCapabilityStatus.offlineQueued) {
-      return AppColors.warning.withOpacity(0.05);
+      return AppColors.warning.withValues(alpha: 0.05);
     }
     return AppColors.cardBackground;
   }
 
   Color _iconColor(DeviceCommand cmd, CommandCapabilityStatus status) {
     if (status.isDisabled) return AppColors.textMuted;
-    if (status == CommandCapabilityStatus.offlineQueued) return AppColors.warning;
+    if (status == CommandCapabilityStatus.offlineQueued) {
+      return  AppColors.warning;
+    }
     return cmd.riskLevel.color;
   }
 
   Color _subtitleColor(CommandCapabilityStatus status) {
-    if (status == CommandCapabilityStatus.offlineQueued) return AppColors.warning;
+    if (status == CommandCapabilityStatus.offlineQueued) {
+      return AppColors.warning;
+    }
     if (status.isDisabled) return AppColors.textMuted;
     return AppColors.textSecondary;
   }
 
-  String _subtitle(ResolvedDeviceCommand r) {
+  String _subtitle(ResolvedDeviceCommand r, Locale locale) {
     if (r.disableReason != null) return r.disableReason!;
     if (r.queueMessage != null) return r.queueMessage!;
-    return r.command.descriptionFr;
+    return r.command.description(locale);
   }
 }
 
@@ -173,9 +179,9 @@ class _IconBadge extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.25), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.5),
       ),
       child: isLoading
           ? Padding(
@@ -202,22 +208,23 @@ class _RightIndicator extends StatelessWidget {
 
     return switch (status) {
       CommandCapabilityStatus.available => riskLevel == CommandRiskLevel.high
-          ? _RiskChip(label: 'HIGH', color: AppColors.error)
+          ? const _RiskChip(label: 'HIGH', color: AppColors.error)
           : riskLevel == CommandRiskLevel.medium
-              ? _RiskChip(label: 'MED', color: AppColors.warning)
-              : Icon(Icons.chevron_right_rounded,
+              ? const _RiskChip(label: 'MED', color: AppColors.warning)
+              : const Icon(Icons.chevron_right_rounded,
                   size: 20, color: AppColors.textMuted),
       CommandCapabilityStatus.availableViaCustom =>
-        _RiskChip(label: 'CUSTOM', color: AppColors.accent),
+        const _RiskChip(label: 'CUSTOM', color: AppColors.accent),
       CommandCapabilityStatus.availableViaSaved =>
-        _RiskChip(label: 'SAVED', color: const Color(0xFF9C27B0)),
+        const _RiskChip(label: 'SAVED', color: Color(0xFF9C27B0)),
       CommandCapabilityStatus.offlineQueued =>
-        _RiskChip(label: 'QUEUE', color: AppColors.warning),
+        const _RiskChip(label: 'QUEUE', color: AppColors.warning),
       CommandCapabilityStatus.notInstalled =>
         const Icon(Icons.build_outlined, size: 16, color: AppColors.textMuted),
-      CommandCapabilityStatus.permissionDenied =>
-        const Icon(Icons.lock_outline_rounded,
-            size: 16, color: AppColors.textMuted),
+      CommandCapabilityStatus.permissionDenied => const Icon(
+          Icons.lock_outline_rounded,
+          size: 16,
+          color: AppColors.textMuted),
       CommandCapabilityStatus.offlineBlocked =>
         const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.error),
       CommandCapabilityStatus.blockedBySpeed =>
@@ -235,10 +242,10 @@ class _MethodBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (status == CommandCapabilityStatus.availableViaCustom) {
-      return _Chip(label: 'CUSTOM', color: AppColors.accent);
+      return const _Chip(label: 'CUSTOM', color: AppColors.accent);
     }
     if (status == CommandCapabilityStatus.availableViaSaved) {
-      return _Chip(label: 'SAVED', color: const Color(0xFF9C27B0));
+      return const _Chip(label: 'SAVED', color: Color(0xFF9C27B0));
     }
     return const SizedBox.shrink();
   }
@@ -263,9 +270,9 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
       ),
       child: Text(
         label,

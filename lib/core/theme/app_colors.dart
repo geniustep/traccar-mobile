@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // ── Primary palette ────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF0D1B2A);
-  static const Color primaryLight = Color(0xFF1A2E44);
-  static const Color primaryDark = Color(0xFF060D14);
+  // ── Primary palette (deep navy — Elmo GPS dark background) ────────────────
+  static const Color primary = Color(0xFF0A1628);
+  static const Color primaryLight = Color(0xFF172540);
+  static const Color primaryDark = Color(0xFF040B14);
 
-  // ── Accent / electric cyan ─────────────────────────────────────────────────
-  static const Color accent = Color(0xFF00B4D8);
-  static const Color accentLight = Color(0xFF48CAE4);
-  static const Color accentDark = Color(0xFF0096B7);
+  // ── Accent / electric blue (matches Elmo GPS brand) ────────────────────────
+  static const Color accent = Color(0xFF0096FF);
+  static const Color accentLight = Color(0xFF38B6FF);
+  static const Color accentDark = Color(0xFF0073CC);
 
   // ── Purple / analytics accent ──────────────────────────────────────────────
   static const Color purple = Color(0xFF7C3AED);
@@ -34,11 +34,11 @@ class AppColors {
   static const Color roseLight = Color(0xFFFB7185);
   static const Color roseDark = Color(0xFFE11D48);
 
-  // ── Background layers ──────────────────────────────────────────────────────
-  static const Color background = Color(0xFF080C18);
-  static const Color surface = Color(0xFF0E1521);
-  static const Color surfaceElevated = Color(0xFF14202F);
-  static const Color cardBackground = Color(0xFF111827);
+  // ── Background layers (deep navy dark theme) ───────────────────────────────
+  static const Color background = Color(0xFF060D1A);
+  static const Color surface = Color(0xFF0B1628);
+  static const Color surfaceElevated = Color(0xFF122035);
+  static const Color cardBackground = Color(0xFF0F1C2E);
 
   // ── Glass / overlay ────────────────────────────────────────────────────────
   static const Color glassLight = Color(0x14FFFFFF);
@@ -46,33 +46,33 @@ class AppColors {
   static const Color glassBorder = Color(0x1AFFFFFF);
 
   // ── Dividers / borders ─────────────────────────────────────────────────────
-  static const Color divider = Color(0xFF1A2A3A);
-  static const Color border = Color(0xFF1E2D40);
+  static const Color divider = Color(0xFF182436);
+  static const Color border = Color(0xFF1C2D42);
 
   // ── Semantic ───────────────────────────────────────────────────────────────
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFFF4757);
-  static const Color info = Color(0xFF00B4D8);
+  static const Color info = Color(0xFF0096FF);
 
   // ── Text ───────────────────────────────────────────────────────────────────
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF8FA3B1);
   static const Color textMuted = Color(0xFF4A5C6A);
-  static const Color textAccent = Color(0xFF00B4D8);
+  static const Color textAccent = Color(0xFF0096FF);
 
   // ── Vehicle status ─────────────────────────────────────────────────────────
   static const Color statusMoving = Color(0xFF10B981);
   static const Color statusStopped = Color(0xFFF59E0B);
   static const Color statusOffline = Color(0xFF4A5C6A);
-  static const Color statusIdle = Color(0xFF48CAE4);
+  static const Color statusIdle = Color(0xFF38B6FF);
 
   // ── Alert severity ─────────────────────────────────────────────────────────
   static const Color severityCritical = Color(0xFFFF4757);
   static const Color severityHigh = Color(0xFFFF6B35);
   static const Color severityMedium = Color(0xFFF59E0B);
   static const Color severityLow = Color(0xFF10B981);
-  static const Color severityInfo = Color(0xFF00B4D8);
+  static const Color severityInfo = Color(0xFF0096FF);
 
   // ── Light theme palette ────────────────────────────────────────────────────
   static const Color lightBackground     = Color(0xFFF0F4F8);
@@ -90,33 +90,33 @@ class AppColors {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0D1B2A), Color(0xFF162030)],
+    colors: [Color(0xFF0A1628), Color(0xFF132238)],
   );
 
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF00B4D8), Color(0xFF0096B7)],
+    colors: [Color(0xFF0096FF), Color(0xFF0073CC)],
   );
 
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF131C2B), Color(0xFF0F1724)],
+    colors: [Color(0xFF0F1C2E), Color(0xFF0A1424)],
   );
 
-  /// Ocean: cyan → deep blue — used for map / live tracking
+  /// Ocean: electric blue → deep navy — used for map / live tracking
   static const LinearGradient oceanGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0EA5E9), Color(0xFF0D1B2A)],
+    colors: [Color(0xFF0096FF), Color(0xFF0A1628)],
   );
 
-  /// Aurora: purple → cyan — used for analytics / insights
+  /// Aurora: purple → electric blue — used for analytics / insights
   static const LinearGradient auroraGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF7C3AED), Color(0xFF00B4D8)],
+    colors: [Color(0xFF7C3AED), Color(0xFF0096FF)],
   );
 
   /// Sunset: amber → rose — used for alerts / warnings
@@ -133,18 +133,18 @@ class AppColors {
     colors: [Color(0xFF10B981), Color(0xFF0E9488)],
   );
 
-  /// Midnight: dark navy with subtle purple tint — hero background
+  /// Midnight: deep navy — hero background
   static const LinearGradient midnightGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF080C18), Color(0xFF0E1128)],
+    colors: [Color(0xFF060D1A), Color(0xFF0B1628)],
   );
 
   /// Glow: accent glow overlay for cards
   static const LinearGradient glowGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0x1A00B4D8), Color(0x0500B4D8)],
+    colors: [Color(0x1A0096FF), Color(0x050096FF)],
   );
 
   // ── Light gradients ────────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ class AppColors {
   // ── Radial glow helpers ────────────────────────────────────────────────────
 
   static const RadialGradient accentRadialGlow = RadialGradient(
-    colors: [Color(0x3300B4D8), Color(0x0000B4D8)],
+    colors: [Color(0x330096FF), Color(0x000096FF)],
     radius: 0.8,
   );
 

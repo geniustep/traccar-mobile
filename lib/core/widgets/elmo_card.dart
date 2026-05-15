@@ -28,7 +28,7 @@ class ElmoCard extends StatelessWidget {
 
   Color _resolveBorder(BuildContext context) {
     if (borderColor != null) return borderColor!;
-    return Theme.of(context).colorScheme.outline.withOpacity(0.6);
+    return Theme.of(context).colorScheme.outline.withValues(alpha: 0.6);
   }
 
   @override
@@ -71,16 +71,17 @@ class ElmoAccentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseBg = isDark ? AppColors.cardBackground : AppColors.lightCardBackground;
+    final baseBg =
+        isDark ? AppColors.cardBackground : AppColors.lightCardBackground;
     return ElmoCard(
       onTap: onTap,
       padding: padding,
-      borderColor: AppColors.accent.withOpacity(0.3),
+      borderColor: AppColors.accent.withValues(alpha: 0.3),
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppColors.accent.withOpacity(0.08),
+          AppColors.accent.withValues(alpha: 0.08),
           baseBg,
         ],
       ),
