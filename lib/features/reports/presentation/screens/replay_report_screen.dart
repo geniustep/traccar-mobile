@@ -20,11 +20,19 @@ import '../../../map/core/map_zoom_policy.dart';
 import '../../../map/core/route_event_analyzer.dart';
 import '../../../map/core/route_event_models.dart';
 import '../../../map/core/route_event_timeline_models.dart';
-import '../../../map/core/route_event_ui.dart';
 import '../../../map/core/route_intelligence_thresholds.dart';
 import '../../../map/core/route_polyline_builder.dart';
+import '../../core/replay_motion_helper.dart';
 import '../../core/replay_route_gap.dart';
+import '../widgets/replay_events_sheet.dart';
 import '../widgets/replay_gaps_sheet.dart';
+import '../widgets/replay_snapshot_panel.dart';
+import '../../core/replay_point_snapshot.dart';
+import '../../core/replay_external_event.dart';
+import '../../core/replay_external_event_mapper.dart';
+import '../../core/replay_timeline_helpers.dart';
+import '../providers/replay_period_events_provider.dart';
+import '../widgets/replay_external_event_markers.dart';
 import '../../../map/core/route_stop_address_enrichment.dart';
 import '../../../map/presentation/widgets/route_event_details_sheet.dart';
 import '../../../map/presentation/widgets/route_event_timeline.dart';
@@ -54,7 +62,8 @@ class ReplayReportScreen extends ConsumerStatefulWidget {
       _ReplayReportScreenState();
 }
 
-class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
+class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen>
+    with TickerProviderStateMixin {
   GoogleMapController? _mapController;
   bool _hasFitted = false;
   bool _mapReady = false;
@@ -89,7 +98,12 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
   /// Phase R1 — gaps on full route (not replay subsample).
   List<ReplayRouteGap> _replayGaps = [];
   List<RouteEventTimelineItem> _replayGapTimelineItems = [];
+  List<RouteEventTimelineItem> _replaySupplementalTimelineItems = [];
+  List<RouteEventTimelineItem> _replayExternalTimelineItems = [];
+  List<ReplayExternalEvent>? _pendingExternalEvents;
+  ReplayExternalTimelineBundle? _replayExternalBundle;
   Set<Marker> _gapMarkers = {};
+  Set<Marker> _externalMarkers = {};
 
   // All raw route points — kept for chart stats + start/end markers.
   List<RoutePoint> _allPoints = [];
@@ -103,6 +117,12 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 
   // Guards against duplicate initialisation when build() fires many times.
   bool _initStarted = false;
+
+  /// Visual marker glide between fixes (Phase R5); snapshot uses real index only.
+  AnimationController? _markerGlideController;
+  Animation<double>? _markerGlideT;
+  RoutePoint? _markerGlideFrom;
+  RoutePoint? _markerGlideTo;
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
@@ -122,6 +142,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 
   @override
   void dispose() {
+    _cancelMarkerGlide();
     _mapController?.dispose();
     super.dispose();
   }
@@ -130,6 +151,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
   void didUpdateWidget(covariant ReplayReportScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.params != widget.params) {
+      _cancelMarkerGlide();
       ref.read(replayControllerProvider.notifier).pause();
       _initStarted = false;
       _hasFitted = false;
@@ -140,7 +162,12 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
       _polylines = {};
       _replayGaps = [];
       _replayGapTimelineItems = [];
+      _replaySupplementalTimelineItems = [];
+      _replayExternalTimelineItems = [];
+      _pendingExternalEvents = null;
+      _replayExternalBundle = null;
       _gapMarkers = {};
+      _externalMarkers = {};
       _vehicleMarker = null;
       _allPoints = [];
       _cameraZoom = MapConfig.defaultZoom;
@@ -312,6 +339,86 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
         ),
       );
 
+  void _cancelMarkerGlide() {
+    final c = _markerGlideController;
+    if (c != null) {
+      c.removeListener(_onMarkerGlideTick);
+      if (c.isAnimating) {
+        c.stop();
+      }
+      c.dispose();
+    }
+    _markerGlideController = null;
+    _markerGlideT = null;
+    _markerGlideFrom = null;
+    _markerGlideTo = null;
+  }
+
+  Duration _markerGlideDuration() {
+    final speed = ref.read(replayControllerProvider).playbackSpeed;
+    final ms =
+        (ReplayController.baseTickMs / speed.multiplier * 0.75).round();
+    return Duration(milliseconds: ms.clamp(80, 380));
+  }
+
+  void _onReplayIndexChanged(int? fromIndex, int toIndex) {
+    final pts = ref.read(replayControllerProvider).points;
+    if (pts.isEmpty || toIndex >= pts.length) return;
+
+    final toPt = pts[toIndex];
+
+    final canGlide = fromIndex != null &&
+        fromIndex >= 0 &&
+        fromIndex < pts.length &&
+        fromIndex != toIndex &&
+        canInterpolateBetween(
+          pts[fromIndex],
+          pts[toIndex],
+          knownGaps: _replayGaps,
+        );
+
+    if (!canGlide) {
+      _cancelMarkerGlide();
+      setState(() => _vehicleMarker = _makeVehicleMarker(toPt));
+      _maybeFollowCamera(toPt.position, snap: true);
+      return;
+    }
+
+    _cancelMarkerGlide();
+    _markerGlideFrom = pts[fromIndex!];
+    _markerGlideTo = toPt;
+    _markerGlideController = AnimationController(
+      vsync: this,
+      duration: _markerGlideDuration(),
+    );
+    _markerGlideT = CurvedAnimation(
+      parent: _markerGlideController!,
+      curve: Curves.easeInOut,
+    );
+    _markerGlideController!.addListener(_onMarkerGlideTick);
+    _markerGlideController!.forward().whenComplete(() {
+      if (!mounted) return;
+      _cancelMarkerGlide();
+      setState(() => _vehicleMarker = _makeVehicleMarker(toPt));
+      _maybeFollowCamera(toPt.position, snap: true);
+    });
+    _onMarkerGlideTick();
+  }
+
+  void _onMarkerGlideTick() {
+    final from = _markerGlideFrom;
+    final to = _markerGlideTo;
+    final t = _markerGlideT?.value;
+    if (from == null || to == null || t == null) return;
+    final visual = interpolateRoutePoint(from, to, t);
+    setState(() => _vehicleMarker = _makeVehicleMarker(visual));
+  }
+
+  void _maybeFollowCamera(LatLng target, {required bool snap}) {
+    if (!_followVehicle) return;
+    _mapController?.moveCamera(CameraUpdate.newLatLng(target));
+  }
+
   Set<Marker> _buildBaseMarkers(List<RoutePoint> pts) {
     if (pts.isEmpty) return {};
     final m = <Marker>{};
@@ -340,6 +447,41 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
       ));
     }
     return m;
+  }
+
+  void _applyExternalEvents(List<ReplayExternalEvent> events) {
+    if (_allPoints.isEmpty) {
+      _pendingExternalEvents = events;
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final bundle = ReplayExternalEventMapper.toTimelineBundle(
+      events,
+      _allPoints,
+      l10n,
+    );
+    setState(() {
+      _pendingExternalEvents = null;
+      _replayExternalBundle = bundle;
+      _replayExternalTimelineItems = bundle.items;
+      _rebuildExternalMarkers();
+    });
+  }
+
+  void _rebuildExternalMarkers() {
+    final bundle = _replayExternalBundle;
+    if (bundle == null || bundle.mapEligibleEvents.isEmpty) {
+      _externalMarkers = {};
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    _externalMarkers = ReplayExternalEventMarkers.build(
+      bundle: bundle,
+      l10n: l10n,
+      vehicleId: widget.params.vehicleId,
+      onMarkerTap: _onReplayTimelineTap,
+      selectedEventKey: _selectedRouteEventKey,
+    );
   }
 
   void _rebuildReplayGapMarkers() {
@@ -374,6 +516,11 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 
     final l10n = AppLocalizations.of(context);
     final gapTimeline = buildReplayGapTimelineItems(gaps, l10n);
+    final supplemental = buildReplaySupplementalTimelineItems(
+      allPoints: allPts,
+      gaps: gaps,
+      l10n: l10n,
+    );
 
     final base = _buildBaseMarkers(allPts);
     final polys = RoutePolylineBuilder.buildReplaySpeedColoredPolylinesRespectingGaps(
@@ -386,6 +533,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
       _allPoints = allPts;
       _replayGaps = gaps;
       _replayGapTimelineItems = gapTimeline;
+      _replaySupplementalTimelineItems = supplemental;
       _baseMarkers = base;
       _polylines = polys;
       _vehicleMarker = vm;
@@ -395,58 +543,69 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 
     _scheduleReplayStopAddressPrefetch();
 
+    final pending = _pendingExternalEvents;
+    if (pending != null) {
+      _applyExternalEvents(pending);
+    }
+
     if (!_hasFitted && _mapReady) {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _fitRoute(allPts));
     }
   }
 
-  /// BUG FIX: only updates the vehicle marker object (cheap setState).
-  /// Parent does NOT watch currentPoint, so only this method triggers rebuild.
-  void _refreshVehicleMarker(int index) {
-    final pts = ref.read(replayControllerProvider).points;
-    if (pts.isEmpty || index >= pts.length) return;
-    final pt = pts[index];
-    setState(() {
-      _vehicleMarker = _makeVehicleMarker(pt);
-    });
-    // Instant camera move avoids animation lag at x4/x8.
-    if (_followVehicle && ref.read(replayControllerProvider).isPlaying) {
-      _mapController?.moveCamera(CameraUpdate.newLatLng(pt.position));
-    }
+  /// Updates vehicle marker for [index] (with optional glide from previous index).
+  void _refreshVehicleMarker(int index, {int? fromIndex}) {
+    _onReplayIndexChanged(fromIndex, index);
   }
 
   /// Zoom + seek replay to timeline event; disables vehicle follow until re-enabled.
   void _onReplayTimelineTap(RouteEventTimelineItem item) {
-    if (!routeEventTimelineValidPosition(item.position)) return;
     setState(() {
       _followVehicle = false;
       _selectedRouteEventKey = item.selectionKey;
       _rebuildReplayIntelMarkers();
       _rebuildReplayGapMarkers();
+      _rebuildExternalMarkers();
     });
 
     final pts = ref.read(replayControllerProvider).points;
+    var cameraTarget = routeEventTimelineValidPosition(item.position)
+        ? item.position
+        : null;
+
     if (pts.isNotEmpty) {
-      final seekTime = item.kind == RouteTimelineEntryKind.dataGap &&
-              item.stopEndTime != null
-          ? item.stopEndTime!
-          : item.sortTime;
-      var bestI = 0;
-      var bestDelta =
-          (pts[0].fixTime.difference(seekTime)).inMilliseconds.abs();
-      for (var i = 1; i < pts.length; i++) {
-        final d = (pts[i].fixTime.difference(seekTime)).inMilliseconds.abs();
-        if (d < bestDelta) {
-          bestDelta = d;
-          bestI = i;
+      final notifier = ref.read(replayControllerProvider.notifier);
+      if (item.kind == RouteTimelineEntryKind.routeStart) {
+        notifier.seekTo(0);
+        cameraTarget ??= pts.first.position;
+      } else if (item.kind == RouteTimelineEntryKind.routeEnd) {
+        notifier.seekTo(pts.length - 1);
+        cameraTarget ??= pts.last.position;
+      } else {
+        final seekTime = replayTimelineSeekTimeForItem(item);
+        var bestI = 0;
+        var bestDelta =
+            (pts[0].fixTime.difference(seekTime)).inMilliseconds.abs();
+        for (var i = 1; i < pts.length; i++) {
+          final d = (pts[i].fixTime.difference(seekTime)).inMilliseconds.abs();
+          if (d < bestDelta) {
+            bestDelta = d;
+            bestI = i;
+          }
         }
+        notifier.seekTo(bestI);
+        cameraTarget ??= pts[bestI].position;
       }
-      ref.read(replayControllerProvider.notifier).seekTo(bestI);
     }
 
+    if (cameraTarget == null) return;
+
     _mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(item.position, RouteEventTimeline.focusZoomHint),
+      CameraUpdate.newLatLngZoom(
+        cameraTarget,
+        RouteEventTimeline.focusZoomHint,
+      ),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -506,6 +665,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
         ..._baseMarkers,
         ..._intelMarkers,
         ..._gapMarkers,
+        ..._externalMarkers,
         if (_vehicleMarker != null) _vehicleMarker!,
       };
 
@@ -519,6 +679,17 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
             MediaQuery.platformBrightnessOf(context) == Brightness.dark);
 
     final routeAsync = ref.watch(reportRouteProvider(widget.params));
+    ref.watch(replayPeriodExternalEventsProvider(widget.params));
+
+    ref.listen<AsyncValue<List<ReplayExternalEvent>>>(
+      replayPeriodExternalEventsProvider(widget.params),
+      (_, next) {
+        next.whenData((events) {
+          if (!mounted) return;
+          _applyExternalEvents(events);
+        });
+      },
+    );
 
     // BUG FIX: use ref.listen instead of routeAsync.whenData inside build().
     // This fires at most once when the data transitions to loaded, not on every
@@ -552,7 +723,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
     // The parent does NOT watch currentPoint — only _ReplayControls does.
     ref.listen<int>(
       replayControllerProvider.select((s) => s.currentIndex),
-      (_, idx) => _refreshVehicleMarker(idx),
+      (prev, idx) => _refreshVehicleMarker(idx, fromIndex: prev),
     );
 
     ref.listen<RouteIntelligenceThresholds>(
@@ -572,9 +743,6 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
     );
 
     final navBottom = MediaQuery.paddingOf(context).bottom;
-    final routeIntelSummary =
-        formatRouteIntelSummaryLine(_replayIntel, context.l10n);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -695,10 +863,14 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
               allPoints: _allPoints,
               replayGapCount: _replayGaps.length,
               onReplayGapsTap: _showReplayGapsSheet,
-              routeIntelSummary: routeIntelSummary,
               routeIntelKey: _replayIntelKey,
               routeIntel: _replayIntel,
+              replaySupplementalTimelineItems: _replaySupplementalTimelineItems,
+              replayExternalTimelineItems: _replayExternalTimelineItems,
               replayGapTimelineItems: _replayGapTimelineItems,
+              replayGaps: _replayGaps,
+              ignitionDataLikelyPresent:
+                  _replayIntel?.ignitionDataLikelyPresent ?? false,
               selectedTimelineItemKey: _selectedRouteEventKey,
               timelineFilter: _replayTimelineFilter,
               onTimelineFilterChanged: (f) =>
@@ -717,8 +889,9 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen> {
 }
 
 // Heights used to position overlay elements above the bottom panel.
-const double _basePanelHeight = 336;
-const double _chartPanelHeight  = 180;
+/// Space reserved above map overlays for the map-first replay panel (no chart).
+const double _basePanelHeight = 200;
+const double _chartPanelHeight  = 160;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _ReplayControls — separate ConsumerWidget so only it rebuilds on tick,
@@ -733,10 +906,13 @@ class _ReplayControls extends ConsumerWidget {
     required this.allPoints,
     required this.replayGapCount,
     required this.onReplayGapsTap,
-    this.routeIntelSummary,
     required this.routeIntelKey,
     this.routeIntel,
     this.replayGapTimelineItems = const [],
+    this.replaySupplementalTimelineItems = const [],
+    this.replayExternalTimelineItems = const [],
+    this.replayGaps = const [],
+    this.ignitionDataLikelyPresent = false,
     this.selectedTimelineItemKey,
     required this.timelineFilter,
     required this.onTimelineFilterChanged,
@@ -751,10 +927,13 @@ class _ReplayControls extends ConsumerWidget {
   final List<RoutePoint> allPoints;
   final int replayGapCount;
   final VoidCallback onReplayGapsTap;
-  final String? routeIntelSummary;
   final String routeIntelKey;
   final RouteEventAnalysisResult? routeIntel;
   final List<RouteEventTimelineItem> replayGapTimelineItems;
+  final List<RouteEventTimelineItem> replaySupplementalTimelineItems;
+  final List<RouteEventTimelineItem> replayExternalTimelineItems;
+  final List<ReplayRouteGap> replayGaps;
+  final bool ignitionDataLikelyPresent;
   final String? selectedTimelineItemKey;
   final RouteEventTimelineFilter timelineFilter;
   final ValueChanged<RouteEventTimelineFilter> onTimelineFilterChanged;
@@ -769,10 +948,24 @@ class _ReplayControls extends ConsumerWidget {
 
     if (!state.hasData) return const SizedBox.shrink();
 
-    final pt       = state.currentPoint;
-    final timeStr  = pt != null ? DateFormat('HH:mm:ss').format(pt.fixTime) : '--:--:--';
-    final speedStr = pt != null ? FormatUtils.speed(pt.speed) : '-- km/h';
-    final progress = (state.progress * 100).toStringAsFixed(0);
+    final pt = state.currentPoint;
+    final snapshot = pt == null
+        ? null
+        : ReplayPointSnapshotBuilder.fromRoutePoint(
+            point: pt,
+            l10n: l10n,
+            progress: state.progress,
+            showIgnition: ignitionDataLikelyPresent,
+            gaps: replayGaps,
+          );
+
+    final eventCount = buildReplayMergedTimelineItems(
+      analysisKey: routeIntelKey,
+      analysis: routeIntel,
+      l10n: l10n,
+      supplementalTimelineItems: replaySupplementalTimelineItems,
+      externalTimelineItems: replayExternalTimelineItems,
+    ).length;
 
     return Container(
       decoration: BoxDecoration(
@@ -820,50 +1013,25 @@ class _ReplayControls extends ConsumerWidget {
           ),
 
           Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + navBottom),
+            padding: EdgeInsets.fromLTRB(16, 6, 16, 6 + navBottom),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Info row ─────────────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _InfoChip(
-                      icon: Icons.schedule_rounded,
-                      label: l10n.replayCurrentTime,
-                      value: timeStr,
-                      color: AppColors.accent,
-                    ),
-                    _InfoChip(
-                      icon: Icons.speed_rounded,
-                      label: l10n.replayCurrentSpeed,
-                      value: speedStr,
-                      color: AppColors.emerald,
-                    ),
-                    _InfoChip(
-                      icon: Icons.linear_scale_rounded,
-                      label: l10n.replayProgress,
-                      value: '$progress%',
-                      color: AppColors.purple,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-
-                if (routeIntelSummary != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      routeIntelSummary!,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 10,
-                        color: AppColors.textSecondaryOf(context),
-                      ),
+                if (pt != null) ...[
+                  _ReplayCurrentPointBar(
+                    label: l10n.replayCurrentPoint,
+                    dateTimeText: formatReplayCurrentPointDateTime(
+                      pt.fixTime,
+                      l10n.locale,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                ],
+
+                if (snapshot != null) ...[
+                  ReplaySnapshotPanel(snapshot: snapshot, compact: true),
+                  const SizedBox(height: 6),
+                ],
 
                 if (replayGapCount > 0)
                   Padding(
@@ -906,77 +1074,103 @@ class _ReplayControls extends ConsumerWidget {
                   ),
 
                 if (allPoints.length >= 2) ...[
-                  const SizedBox(height: 6),
-                  RepaintBoundary(
-                    child: RouteEventTimeline(
-                      analysisKey: routeIntelKey,
-                      analysis: routeIntel,
-                      supplementalTimelineItems: replayGapTimelineItems,
-                      compact: true,
-                      reportStyle: true,
-                      showEmptyState: true,
-                      collapsedItemLimit: 4,
-                      listHeightOverride: 120,
-                      selectedItemKey: selectedTimelineItemKey,
-                      filter: timelineFilter,
-                      onFilterChanged: onTimelineFilterChanged,
-                      onItemTap: onTimelineItemTap,
+                  _ReplayEventsSummaryRow(
+                    title: l10n.routeEventsTimelineTitle,
+                    eventCount: eventCount,
+                    seeAllLabel: l10n.routeEventsSeeMore,
+                    onSeeAll: () => showReplayEventsBottomSheet(
+                      context,
+                      routeIntelKey: routeIntelKey,
+                      routeIntel: routeIntel,
+                      supplementalTimelineItems:
+                          replaySupplementalTimelineItems,
+                      externalTimelineItems: replayExternalTimelineItems,
+                      timelineFilter: timelineFilter,
+                      onTimelineFilterChanged: onTimelineFilterChanged,
+                      onTimelineItemTap: onTimelineItemTap,
+                      selectedTimelineItemKey: selectedTimelineItemKey,
                     ),
                   ),
+                  const SizedBox(height: 4),
                 ],
 
-                // ── Completion banner ────────────────────────────────────────
-                if (state.isCompleted)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
-                    margin: const EdgeInsets.only(bottom: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.check_circle_outline_rounded,
-                            size: 14, color: AppColors.success),
-                        const SizedBox(width: 6),
-                        Text(l10n.routeCompleted,
-                            style: const TextStyle(
-                                fontSize: 12,
+                // ── Progress + optional completed chip ─────────────────────
+                Row(
+                  children: [
+                    if (state.isCompleted) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_outline_rounded,
+                              size: 12,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.replayCompletedChip,
+                              style: const TextStyle(
+                                fontSize: 10,
                                 color: AppColors.success,
-                                fontWeight: FontWeight.w600)),
-                      ],
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 3,
+                          activeTrackColor: AppColors.accent,
+                          inactiveTrackColor:
+                              AppColors.accent.withValues(alpha: 0.2),
+                          thumbColor: AppColors.accent,
+                          overlayColor:
+                              AppColors.accent.withValues(alpha: 0.15),
+                        ),
+                        child: Slider(
+                          value: state.currentIndex.toDouble(),
+                          min: 0,
+                          max: (state.points.length - 1).toDouble(),
+                          onChanged: (v) => ref
+                              .read(replayControllerProvider.notifier)
+                              .seekTo(v.round()),
+                        ),
+                      ),
                     ),
-                  ),
-
-                // ── Slider ───────────────────────────────────────────────────
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 3,
-                    activeTrackColor: AppColors.accent,
-                    inactiveTrackColor:
-                        AppColors.accent.withValues(alpha: 0.2),
-                    thumbColor: AppColors.accent,
-                    overlayColor: AppColors.accent.withValues(alpha: 0.15),
-                  ),
-                  child: Slider(
-                    value: state.currentIndex.toDouble(),
-                    min: 0,
-                    max: (state.points.length - 1).toDouble(),
-                    onChanged: (v) => ref
-                        .read(replayControllerProvider.notifier)
-                        .seekTo(v.round()),
-                  ),
+                  ],
                 ),
 
-                // ── Buttons row ──────────────────────────────────────────────
+                // ── Transport controls ───────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Restart
+                    _ControlBtn(
+                      icon: Icons.skip_previous_rounded,
+                      tooltip: l10n.replayStepPrevious,
+                      enabled: ref
+                          .read(replayControllerProvider.notifier)
+                          .canStepPrevious,
+                      onTap: () => ref
+                          .read(replayControllerProvider.notifier)
+                          .stepPrevious(),
+                    ),
+                    const SizedBox(width: 3),
                     _ControlBtn(
                       icon: Icons.replay_rounded,
                       tooltip: l10n.replayRestart,
@@ -984,9 +1178,7 @@ class _ReplayControls extends ConsumerWidget {
                           .read(replayControllerProvider.notifier)
                           .restart(),
                     ),
-                    const SizedBox(width: 6),
-
-                    // Play / Pause
+                    const SizedBox(width: 3),
                     GestureDetector(
                       onTap: () {
                         final n =
@@ -994,17 +1186,17 @@ class _ReplayControls extends ConsumerWidget {
                         state.isPlaying ? n.pause() : n.play();
                       },
                       child: Container(
-                        width: 52,
-                        height: 52,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: AppColors.accent,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
                               color:
-                                  AppColors.accent.withValues(alpha: 0.4),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
+                                  AppColors.accent.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -1013,13 +1205,22 @@ class _ReplayControls extends ConsumerWidget {
                               ? Icons.pause_rounded
                               : Icons.play_arrow_rounded,
                           color: Colors.white,
-                          size: 30,
+                          size: 28,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-
-                    // Follow toggle
+                    const SizedBox(width: 3),
+                    _ControlBtn(
+                      icon: Icons.skip_next_rounded,
+                      tooltip: l10n.replayStepNext,
+                      enabled: ref
+                          .read(replayControllerProvider.notifier)
+                          .canStepNext,
+                      onTap: () => ref
+                          .read(replayControllerProvider.notifier)
+                          .stepNext(),
+                    ),
+                    const SizedBox(width: 3),
                     _ControlBtn(
                       icon: followVehicle
                           ? Icons.gps_fixed_rounded
@@ -1030,19 +1231,13 @@ class _ReplayControls extends ConsumerWidget {
                       active: followVehicle,
                       onTap: onFollowToggle,
                     ),
-                    const SizedBox(width: 6),
-
-                    // Chart toggle
-                    _ControlBtn(
-                      icon: Icons.show_chart_rounded,
-                      tooltip: l10n.speedChartTitle,
-                      active: showMiniChart,
-                      onTap: onChartToggle,
+                    const SizedBox(width: 3),
+                    _ReplaySpeedControl(current: state.playbackSpeed),
+                    const SizedBox(width: 3),
+                    _ReplayMoreMenu(
+                      showMiniChart: showMiniChart,
+                      onChartToggle: onChartToggle,
                     ),
-                    const SizedBox(width: 8),
-
-                    // Playback speed selector
-                    _SpeedSelector(current: state.playbackSpeed),
                   ],
                 ),
               ],
@@ -1055,98 +1250,264 @@ class _ReplayControls extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _SpeedSelector
+// Map-first replay chrome (UI-2)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SpeedSelector extends ConsumerWidget {
-  const _SpeedSelector({required this.current});
-  final PlaybackSpeed current;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: PlaybackSpeed.values.map((s) {
-        final active = s == current;
-        return GestureDetector(
-          onTap: () => ref
-              .read(replayControllerProvider.notifier)
-              .setPlaybackSpeed(s),
-          child: Container(
-            margin: const EdgeInsets.only(left: 4),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-            decoration: BoxDecoration(
-              color: active
-                  ? AppColors.accent
-                  : AppColors.surfaceElevatedOf(context),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: active
-                    ? AppColors.accent
-                    : AppColors.borderOf(context),
-              ),
-            ),
-            child: Text(
-              s.label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: active
-                    ? Colors.white
-                    : AppColors.textSecondaryOf(context),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _InfoChip
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
+class _ReplayCurrentPointBar extends StatelessWidget {
+  const _ReplayCurrentPointBar({
     required this.label,
-    required this.value,
-    required this.color,
+    required this.dateTimeText,
   });
 
-  final IconData icon;
   final String label;
-  final String value;
-  final Color color;
+  final String dateTimeText;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: AppColors.accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w800, color: color),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-                fontSize: 9, color: AppColors.textMutedOf(context)),
+          Icon(Icons.schedule_rounded, size: 15, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.25,
+                  color: AppColors.textPrimaryOf(context),
+                ),
+                children: [
+                  TextSpan(
+                    text: '$label: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondaryOf(context),
+                    ),
+                  ),
+                  TextSpan(
+                    text: dateTimeText,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ReplayEventsSummaryRow extends StatelessWidget {
+  const _ReplayEventsSummaryRow({
+    required this.title,
+    required this.eventCount,
+    required this.seeAllLabel,
+    required this.onSeeAll,
+  });
+
+  final String title;
+  final int eventCount;
+  final String seeAllLabel;
+  final VoidCallback onSeeAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceElevatedOf(context),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onSeeAll,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.borderOf(context)),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.timeline_rounded,
+                size: 16,
+                color: AppColors.textMutedOf(context),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$title · $eventCount',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimaryOf(context),
+                  ),
+                ),
+              ),
+              Text(
+                seeAllLabel,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.accent,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReplaySpeedControl extends ConsumerWidget {
+  const _ReplaySpeedControl({required this.current});
+
+  final PlaybackSpeed current;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return PopupMenuButton<PlaybackSpeed>(
+      tooltip: l10n.replaySpeedShort,
+      padding: EdgeInsets.zero,
+      offset: const Offset(0, -148),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (s) => ref
+          .read(replayControllerProvider.notifier)
+          .setPlaybackSpeed(s),
+      itemBuilder: (ctx) => PlaybackSpeed.values
+          .map(
+            (s) => PopupMenuItem(
+              value: s,
+              child: Row(
+                children: [
+                  if (s == current)
+                    Icon(Icons.check_rounded,
+                        size: 16, color: AppColors.accent)
+                  else
+                    const SizedBox(width: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    s.label,
+                    style: TextStyle(
+                      fontWeight:
+                          s == current ? FontWeight.w800 : FontWeight.w600,
+                      color: s == current
+                          ? AppColors.accent
+                          : AppColors.textPrimaryOf(ctx),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 44),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              current.label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppColors.accent,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              l10n.replaySpeedShort,
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMutedOf(context),
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReplayMoreMenu extends StatelessWidget {
+  const _ReplayMoreMenu({
+    required this.showMiniChart,
+    required this.onChartToggle,
+  });
+
+  final bool showMiniChart;
+  final VoidCallback onChartToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return PopupMenuButton<String>(
+      tooltip: l10n.replayMoreActions,
+      padding: EdgeInsets.zero,
+      icon: Icon(
+        Icons.more_horiz_rounded,
+        color: AppColors.textSecondaryOf(context),
+        size: 22,
+      ),
+      onSelected: (v) {
+        if (v == 'chart') onChartToggle();
+      },
+      itemBuilder: (ctx) => [
+        PopupMenuItem(
+          value: 'chart',
+          child: Row(
+            children: [
+              Icon(
+                showMiniChart
+                    ? Icons.show_chart_rounded
+                    : Icons.show_chart_outlined,
+                size: 18,
+                color: showMiniChart
+                    ? AppColors.accent
+                    : AppColors.textSecondaryOf(ctx),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                l10n.speedChartTitle,
+                style: TextStyle(
+                  fontWeight:
+                      showMiniChart ? FontWeight.w700 : FontWeight.w500,
+                  color: showMiniChart
+                      ? AppColors.accent
+                      : AppColors.textPrimaryOf(ctx),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1161,39 +1522,44 @@ class _ControlBtn extends StatelessWidget {
     required this.tooltip,
     required this.onTap,
     this.active = false,
+    this.enabled = true,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
   final bool active;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = !enabled
+        ? AppColors.textMutedOf(context)
+        : active
+            ? AppColors.accent
+            : AppColors.textSecondaryOf(context);
+
     return Tooltip(
       message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: active
-                ? AppColors.accent.withValues(alpha: 0.15)
-                : AppColors.surfaceElevatedOf(context),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
+      child: Opacity(
+        opacity: enabled ? 1 : 0.38,
+        child: GestureDetector(
+          onTap: enabled ? onTap : null,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
               color: active
-                  ? AppColors.accent.withValues(alpha: 0.5)
-                  : AppColors.borderOf(context),
+                  ? AppColors.accent.withValues(alpha: 0.15)
+                  : AppColors.surfaceElevatedOf(context),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: active
+                    ? AppColors.accent.withValues(alpha: 0.5)
+                    : AppColors.borderOf(context),
+              ),
             ),
-          ),
-          child: Icon(
-            icon,
-            size: 19,
-            color: active
-                ? AppColors.accent
-                : AppColors.textSecondaryOf(context),
+            child: Icon(icon, size: 17, color: iconColor),
           ),
         ),
       ),

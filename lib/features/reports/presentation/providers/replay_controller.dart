@@ -79,7 +79,7 @@ class ReplayController extends StateNotifier<ReplayState> {
   Timer? _timer;
 
   /// Base tick interval in milliseconds at x1 speed.
-  static const int _baseTickMs = 400;
+  static const int baseTickMs = 400;
 
   /// Max replay points — too many points cause unnecessary redraws.
   static const int _maxReplayPoints = 1200;
@@ -134,11 +134,32 @@ class ReplayController extends StateNotifier<ReplayState> {
   void seekTo(int index) {
     if (state.points.isEmpty) return;
     final clamped = index.clamp(0, state.points.length - 1);
-    final wasCompleted = state.isCompleted;
+    final atEnd = clamped == state.points.length - 1;
     state = state.copyWith(
       currentIndex: clamped,
-      isCompleted: wasCompleted && clamped == state.points.length - 1,
+      isCompleted: atEnd && state.isCompleted,
     );
+  }
+
+  bool get canStepPrevious =>
+      state.points.isNotEmpty && state.currentIndex > 0;
+
+  bool get canStepNext =>
+      state.points.isNotEmpty &&
+      state.currentIndex < state.points.length - 1;
+
+  /// Advances one replay fix; pauses playback (Phase R5).
+  void stepNext() {
+    if (!canStepNext) return;
+    pause();
+    seekTo(state.currentIndex + 1);
+  }
+
+  /// Goes back one replay fix; pauses playback (Phase R5).
+  void stepPrevious() {
+    if (!canStepPrevious) return;
+    pause();
+    seekTo(state.currentIndex - 1);
   }
 
   void setPlaybackSpeed(PlaybackSpeed speed) {
@@ -153,7 +174,8 @@ class ReplayController extends StateNotifier<ReplayState> {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   void _startTimer() {
-    final intervalMs = (_baseTickMs / state.playbackSpeed.multiplier).round();
+    final intervalMs =
+        (baseTickMs / state.playbackSpeed.multiplier).round();
     _timer = Timer.periodic(Duration(milliseconds: intervalMs), (_) => _tick());
   }
 

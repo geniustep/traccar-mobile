@@ -4,6 +4,7 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/utils/route_decimator.dart';
 import '../../../map/presentation/providers/map_provider.dart';
 import '../../../reports/presentation/providers/reports_providers.dart';
+import 'multi_replay_kpi.dart';
 import 'multi_vehicle_replay_formatters.dart';
 import 'multi_vehicle_replay_model.dart';
 import 'multi_vehicle_replay_state.dart';
@@ -153,6 +154,8 @@ final multiVehicleReplayLoaderProvider = FutureProvider.autoDispose
   final timeline = MultiVehicleReplayTimelineBuilder.build(tracks);
   timelineSw.stop();
 
+  final comparisonSummary = MultiReplayKpiCalculator.buildSummary(tracks);
+
   final totalPoints = tracks.fold<int>(0, (s, t) => s + t.allPoints.length);
 
   AppLogger.replay(
@@ -176,6 +179,7 @@ final multiVehicleReplayLoaderProvider = FutureProvider.autoDispose
     totalPoints: totalPoints,
     loadDurationMs: sw.elapsedMilliseconds,
     timelineBuildMs: timelineSw.elapsedMilliseconds,
+    comparisonSummary: comparisonSummary,
   );
 });
 

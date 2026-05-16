@@ -4,6 +4,9 @@ Documentation officielle pour la Phase D d’ELMOGPS : rejouer les trajets de **
 
 Module : [`lib/features/vehicles/presentation/replay_multi/`](../lib/features/vehicles/presentation/replay_multi/).
 
+**Documentation Replay complète (R1–R10), QA finale et release notes :** [`docs/replay_release_notes.md`](replay_release_notes.md).  
+**Single Replay :** [`docs/map_screens_overview.md`](map_screens_overview.md) §18–§20.
+
 ---
 
 ## 1. Objectif (Phase D)
@@ -352,4 +355,186 @@ Pas de log par mouvement du slider.
 
 ---
 
-*Dernière mise à jour : Phase E — polish visuel (marqueurs, légende, contrôles, overlay, recentrage).*
+---
+
+## 19. Phase R7 — Multi Replay Improvements
+
+Améliorations ciblées pour **2–5 véhicules** : clarté, contrôle caméra, véhicule actif, snapshot compact, visibilité, couleurs optionnelles, gaps visuels, performance. **Single Vehicle Replay (R1–R6) n’est pas modifié.**
+
+### fitBounds / Recentrer
+
+- Calcul via [`multi_vehicle_replay_map_helpers.dart`](../lib/features/vehicles/presentation/replay_multi/multi_vehicle_replay_map_helpers.dart) : positions des véhicules **visibles** (polylines décimées + marqueurs au temps courant si besoin).
+- Véhicules sans points ignorés ; liste vide → pas de crash caméra.
+- Padding bas **120** pour laisser place à la légende + contrôles.
+- **Recentrer** : recadre immédiatement ; masquer/afficher un véhicule recadre aussi.
+
+### Auto-follow (optionnel)
+
+- Chip carte : **Suivi automatique** (`multiReplayAutoFollow`).
+- Désactivé par défaut. Quand activé pendant la lecture : `fitBounds` sur marqueurs visibles uniquement, **throttle ~900 ms** (pas de secousse à chaque tick).
+- Désactivable à tout moment ; pas de suivi si aucun point.
+
+### Véhicule actif
+
+- Une **véhicule actif** à la fois (`activeVehicleId`) : sélection par tap sur carte légende (véhicule visible avec données).
+- Marqueur : `zIndex` plus élevé ; carte légende : bordure épaisse + libellé `multiReplayActiveVehicle`.
+- Masquer le véhicule actif → bascule vers le premier véhicule visible restant.
+
+### Snapshot / légende compacte
+
+- Bandeau horizontal **Véhicules visibles (N/M)** avec cartes ~132px : nom, statut, vitesse, mouvement (moving/stopped), heure du point courant.
+- Pas de carburant / batterie / GSM / conducteur.
+- Véhicules masqués : opacité + barré ; icône œil **Masquer / Afficher**.
+- Aucun véhicule visible : message `multiReplayNoVisibleVehicles`.
+
+### Visibilité
+
+- Masquer : polyline + marqueur disparaissent ; carte légende reste (état masqué).
+- Timeline unifiée **inchangée** (les données restent chargées).
+
+### Couleurs de route
+
+- **Défaut** : une couleur fixe par véhicule (palette Phase D).
+- **Option** : chip **Couleurs de vitesse** (`multiReplaySpeedColors`) — segments par vitesse **par véhicule**, avec respect des **gaps** (pas de trait continu à travers une coupure GPS).
+
+### Gaps (Multi)
+
+- Polylines découpées en runs continus via `ReplayRouteGapDetector` (helper R1).
+- Pas de timeline gaps / événements Single dans Multi.
+
+### Motion
+
+- Pas d’interpolation Single ; marqueurs sautent au point `atOrBefore` du temps unifié (tick 400 ms / vitesse).
+
+### Performance
+
+- Polylines recalculées au rebuild écran (toggle speed colors / visibilité), pas à chaque tick timer.
+- Auto-follow throttlé ; décimation carte inchangée (≤900 pts / ≤2000 pas timeline).
+
+### Fichiers R7
+
+| Fichier | Rôle |
+|---------|------|
+| `multi_vehicle_replay_map_helpers.dart` | fitBounds, throttle auto-follow |
+| `multi_vehicle_replay_polylines.dart` | Polylines solides / vitesse + gaps |
+| `multi_vehicle_replay_vehicle_card.dart` | Données snapshot compact |
+| `multi_vehicle_replay_widgets.dart` | Légende cartes, chips carte |
+
+### Checklist QA Phase R7
+
+- [ ] 2, 3, 5 véhicules
+- [ ] Véhicule sans points
+- [ ] Masquer / afficher / tout masquer
+- [ ] Véhicule actif (tap légende)
+- [ ] Auto-follow on/off pendant lecture
+- [ ] Recentrer
+- [ ] Couleurs vitesse on/off
+- [ ] Trajets longs + longueurs différentes
+- [ ] FR / AR
+
+### Limites connues (R7)
+
+- Pas de KPI comparaison avancée.
+- Pas de détection zoom/pan manuel pour suspendre auto-follow.
+- Interpolation motion Single non portée en Multi.
+
+---
+
+---
+
+## 20. Phase R8 — Comparison KPIs
+
+Indicateurs de comparaison **à partir des points GPS chargés uniquement** (pas d’API, pas de carburant/batterie/GSM/conducteur).
+
+### Calcul (une fois au chargement)
+
+Module : [`multi_replay_kpi.dart`](../lib/features/vehicles/presentation/replay_multi/multi_replay_kpi.dart) — `MultiReplayKpiCalculator.buildSummary(tracks)`.
+
+| KPI | Méthode |
+|-----|---------|
+| **Distance** | Haversine entre fixes valides ; segments via `canInterpolateBetween` (exclut gaps ≥10 min, coords invalides, vitesse implausible >220 km/h) — **approximative** |
+| **Durée mouvement / arrêt** | Entre fixes consécutifs : vitesse ≥5 km/h = mouvement, &lt;5 = arrêt ; **pas** de durée à travers un gap |
+| **Vitesse max** | Max des `speed` valides |
+| **Vitesse moyenne (mouvement)** | distance mouvement / temps mouvement (pas moyenne de tous les fixes) |
+| **Arrêts** | `RouteEventAnalyzer` (seuils par défaut : entrée arrêt &lt;3 km/h, sortie &gt;5 km/h, min 4 min) |
+| **Excès de vitesse** | `RouteEventAnalyzer` — seuil UI **80 km/h** ([`RouteIntelligenceThresholds.defaults`](../lib/features/map/core/route_intelligence_thresholds.dart)) |
+| **Début / fin trajet** | Premier / dernier fix valide |
+| **Premier mouvement** | Premier fix ≥5 km/h |
+
+### Insights (résumé)
+
+Affichés si **≥2 véhicules** avec `hasEnoughData` : plus grande distance, plus long temps à l’arrêt, vitesse max la plus haute, plus d’excès, premier mouvement, **première fin de trajet** (dernier fix le plus tôt — pas « arrivée à une destination »).
+
+**Non implémenté :** « qui est arrivé en premier » vers un lieu commun (pas de géofence/objectif).
+
+### UI
+
+- Chip carte **Comparaison** (`Icons.compare_arrows`) → bottom sheet [`multi_replay_comparison_sheet.dart`](../lib/features/vehicles/presentation/replay_multi/multi_replay_comparison_sheet.dart).
+- KPIs pour **tous les véhicules chargés** ; badge **véhicule masqué** si masqué sur la carte.
+- Véhicule **actif** (R7) : bordure renforcée dans la feuille.
+- Note bas de feuille : distance approximative, gaps exclus.
+
+### Performance
+
+- Calcul **au chargement** (`comparisonSummary` dans `MultiVehicleReplayLoadState`) — pas à chaque tick playback.
+- Masquer un véhicule **ne recalcule pas** les KPIs.
+
+### Checklist QA Phase R8
+
+- [ ] Ouvrir Comparaison avec 2–5 véhicules
+- [ ] Véhicule sans données → « Données insuffisantes »
+- [ ] Trajet avec gap → distance/durées sans segment gap
+- [ ] Véhicule masqué → badge dans la feuille, KPIs toujours visibles
+- [ ] Insights cohérents (distance, vitesse max)
+- [ ] R7 inchangé (auto-follow, legend, play)
+
+---
+
+---
+
+## 21. Phase R9 — Sensors (impact Multi)
+
+- **`RoutePoint`** expose désormais `attributes?` (optionnel) pour tout consommateur de points route.
+- **Aucune UI capteurs** dans Multi Replay en R9 — légende / KPIs / replay inchangés.
+- Les KPIs R8 utilisent toujours `allPoints` ; pas de capteurs dans le bottom sheet comparaison.
+
+---
+
+---
+
+## 22. Phase R10 — Documentation & QA
+
+Phase de **clôture** : pas de nouvelle fonctionnalité Multi.
+
+### Contenu documenté (ce fichier + release notes)
+
+| Thème | Section |
+|-------|---------|
+| Périmètre 2–5 véhicules, jour unique | §1–§4 |
+| Timeline unifiée, play/seek | §5–§8 |
+| fitBounds, auto-follow, actif, visibilité | §19 |
+| Speed colors, gaps polylines | §19 |
+| Légende / cartes snapshot | §19, widgets |
+| KPIs + insights | §20 |
+| Calcul KPIs (Haversine, gaps, seuils) | §20 |
+| Pas de capteurs UI Multi | §21 |
+| QA + commandes test | [`replay_release_notes.md`](replay_release_notes.md) |
+
+### Limites consolidées (Multi)
+
+- Pas d’UI capteurs (R9).
+- Pas d’interpolation motion (contrairement au glide Single R5).
+- Speed colors : charge polylines avec 5 véhicules.
+- Auto-follow : pas de détection pan manuel.
+- KPIs : valeurs **estimatives** ; overspeed 80 km/h interne ; « première fin de trajet » ≠ destination.
+- Tests automatisés : **pas** de widget `GoogleMap` — QA appareil requis.
+
+### Tests
+
+```bash
+flutter test test/features/vehicles/presentation/replay_multi/
+```
+
+---
+
+*Dernière mise à jour : Phase R10 — documentation & QA ; roadmap Replay R1–R10 close.*

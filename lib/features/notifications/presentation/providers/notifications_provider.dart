@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/auth/protected_data_guard.dart';
 import '../../../../core/logging/app_logger.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/app_notification.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import '../../data/datasources/notifications_remote_datasource.dart';
@@ -23,9 +25,7 @@ final notificationsRepositoryProvider = Provider<NotificationsRepository>((ref) 
 class NotificationsNotifier
     extends StateNotifier<AsyncValue<List<AppNotification>>> {
   NotificationsNotifier(this._repository, this._ref)
-      : super(const AsyncValue.loading()) {
-    load();
-  }
+      : super(const AsyncValue.data([]));
 
   final NotificationsRepository _repository;
   final Ref _ref;
@@ -45,6 +45,12 @@ class NotificationsNotifier
   // ── Core ──────────────────────────────────────────────────────────────────
 
   Future<void> load() async {
+    final auth = _ref.read(authProvider);
+    if (!canLoadProtectedData(auth)) {
+      logSkippedProtectedLoad('Notifications');
+      return;
+    }
+
     state = const AsyncValue.loading();
     try {
       final list = await _repository.getNotifications();
@@ -83,6 +89,7 @@ class NotificationsNotifier
   /// Does NOT create a local notification entry from FCM data.
   void addFcmEvent(Map<String, dynamic> data) {
     if (!_alive) return;
+    if (!canLoadProtectedData(_ref.read(authProvider))) return;
 
     final type = '${data['type'] ?? '?'}';
     final alertId = data['alertId'] as String?;
@@ -108,6 +115,7 @@ class NotificationsNotifier
   /// Acts as a lightweight refresh signal — does NOT create a local entry.
   void addLiveEventSignal(String? alertIdFromSocket) {
     if (!_alive) return;
+    if (!canLoadProtectedData(_ref.read(authProvider))) return;
 
     if (alertIdFromSocket != null) {
       if (_seenAlertIds.contains(alertIdFromSocket)) {

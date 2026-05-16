@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/auth/protected_data_guard.dart';
+import '../../../../core/error/app_exception.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../data/datasources/vehicle_remote_datasource.dart';
@@ -13,16 +16,29 @@ final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
 
 final vehiclesListProvider =
     FutureProvider.autoDispose<List<VehicleEntity>>((ref) async {
+  final auth = ref.watch(authProvider);
+  if (!canLoadProtectedData(auth)) {
+    logSkippedProtectedLoad('Devices');
+    return [];
+  }
   return ref.read(vehicleRepositoryProvider).getVehicles();
 });
 
 final vehicleDetailProvider =
     FutureProvider.autoDispose.family<VehicleEntity, String>((ref, id) async {
+  if (!canLoadProtectedData(ref.read(authProvider))) {
+    logSkippedProtectedLoad('Devices');
+    throw const AuthException();
+  }
   return ref.read(vehicleRepositoryProvider).getVehicle(id);
 });
 
 final vehicleLiveProvider =
     FutureProvider.autoDispose.family<VehicleEntity, String>((ref, id) async {
+  if (!canLoadProtectedData(ref.read(authProvider))) {
+    logSkippedProtectedLoad('Devices');
+    throw const AuthException();
+  }
   return ref.read(vehicleRepositoryProvider).getVehicleLive(id);
 });
 

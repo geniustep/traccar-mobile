@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../reports/core/replay_event_deduplication.dart';
+import '../../../reports/core/replay_timeline_helpers.dart';
 import '../../core/route_event_models.dart';
 import '../../core/route_event_timeline_models.dart';
 
@@ -23,6 +25,9 @@ class RouteEventTimeline extends StatefulWidget {
     this.onFilterChanged,
     this.showFilters = true,
     this.supplementalTimelineItems = const [],
+    this.externalTimelineItems = const [],
+    this.showReplayEventSummary = false,
+    this.deprioritizeAlertsWhenCollapsed = false,
   });
 
   /// Memo key aligned with RouteEventAnalyzer (e.g. length_first_fix_last_fix); `'0'` = no trace.
@@ -56,6 +61,15 @@ class RouteEventTimeline extends StatefulWidget {
   /// Extra rows merged with analyzer items (e.g. replay data gaps — Phase R1).
   final List<RouteEventTimelineItem> supplementalTimelineItems;
 
+  /// Backend / report events merged after supplemental rows (replay — Phase R4).
+  final List<RouteEventTimelineItem> externalTimelineItems;
+
+  /// Compact counts line above the list (replay — Phase R3).
+  final bool showReplayEventSummary;
+
+  /// Puts route rows before alerts when collapsed with filter [all] (replay UI).
+  final bool deprioritizeAlertsWhenCollapsed;
+
   /// Use with [GoogleMapController.animateCamera] when focusing an event row.
   static const double focusZoomHint = 16;
 
@@ -64,7 +78,11 @@ class RouteEventTimeline extends StatefulWidget {
         RouteTimelineEntryKind.overspeed => Icons.speed_rounded,
         RouteTimelineEntryKind.ignitionOn => Icons.power_rounded,
         RouteTimelineEntryKind.ignitionOff => Icons.power_off_outlined,
-        RouteTimelineEntryKind.dataGap => Icons.signal_cellular_connected_no_internet_0_bar_rounded,
+        RouteTimelineEntryKind.dataGap =>
+          Icons.signal_cellular_connected_no_internet_0_bar_rounded,
+        RouteTimelineEntryKind.routeStart => Icons.flag_rounded,
+        RouteTimelineEntryKind.routeEnd => Icons.outlined_flag_rounded,
+        RouteTimelineEntryKind.externalEvent => Icons.notifications_active_outlined,
       };
 
   static Color accentForKind(RouteTimelineEntryKind k, BuildContext context) =>
@@ -73,7 +91,25 @@ class RouteEventTimeline extends StatefulWidget {
         RouteTimelineEntryKind.overspeed => AppColors.error,
         RouteTimelineEntryKind.ignitionOn => Colors.green.shade600,
         RouteTimelineEntryKind.ignitionOff => const Color(0xFFFF9800),
-        RouteTimelineEntryKind.dataGap => AppColors.textMutedOf(context),
+        RouteTimelineEntryKind.dataGap => AppColors.purple,
+        RouteTimelineEntryKind.routeStart => const Color(0xFF4CAF50),
+        RouteTimelineEntryKind.routeEnd => AppColors.error,
+        RouteTimelineEntryKind.externalEvent => const Color(0xFFE91E63),
+      };
+
+  static String kindBadgeLabel(
+    RouteTimelineEntryKind k,
+    AppLocalizations l10n,
+  ) =>
+      switch (k) {
+        RouteTimelineEntryKind.stop => l10n.routeEventFilterStops,
+        RouteTimelineEntryKind.overspeed => l10n.routeEventFilterOverspeed,
+        RouteTimelineEntryKind.ignitionOn => l10n.replaySnapshotEngineOn,
+        RouteTimelineEntryKind.ignitionOff => l10n.replaySnapshotEngineOff,
+        RouteTimelineEntryKind.dataGap => l10n.routeEventFilterDataGaps,
+        RouteTimelineEntryKind.routeStart => l10n.routeTimelineStart,
+        RouteTimelineEntryKind.routeEnd => l10n.routeTimelineEnd,
+        RouteTimelineEntryKind.externalEvent => l10n.replayExternalAlert,
       };
 
   @override
@@ -94,10 +130,17 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
     final base = (a == null || widget.analysisKey == '0')
         ? <RouteEventTimelineItem>[]
         : buildRouteEventTimelineItems(a, l10n);
-    _items = mergeRouteEventTimelineItems(
+    var merged = mergeRouteEventTimelineItems(
       base,
       widget.supplementalTimelineItems,
     );
+    if (widget.externalTimelineItems.isNotEmpty) {
+      merged = mergeTimelineWithExternalEvents(
+        localAndSupplemental: merged,
+        external: widget.externalTimelineItems,
+      );
+    }
+    _items = merged;
     if (_items!.isEmpty) _expanded = false;
   }
 
@@ -114,7 +157,8 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.analysisKey != widget.analysisKey ||
         !identical(oldWidget.analysis, widget.analysis) ||
-        oldWidget.supplementalTimelineItems != widget.supplementalTimelineItems) {
+        oldWidget.supplementalTimelineItems != widget.supplementalTimelineItems ||
+        oldWidget.externalTimelineItems != widget.externalTimelineItems) {
       _itemsKey = null;
       _items = null;
       _expanded = false;
@@ -164,6 +208,9 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
     final items = _items ?? const <RouteEventTimelineItem>[];
     final filtered = routeEventTimelineItemsFiltered(items, widget.filter);
     final counts = routeEventTimelineFilterCounts(items);
+    final summaryLine = widget.showReplayEventSummary
+        ? formatRouteTimelineSummaryLine(items, l10n)
+        : null;
     final showFilterRow = widget.showFilters &&
         widget.onFilterChanged != null &&
         items.isNotEmpty;
@@ -175,9 +222,15 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
     );
 
     final limit = _effectiveLimit;
-    final hasMore = filtered.length > limit;
+    final deprioritize = widget.deprioritizeAlertsWhenCollapsed &&
+        widget.filter == RouteEventTimelineFilter.all;
+    final ordered = replayTimelineDisplayOrder(
+      filtered,
+      deprioritizeAlerts: deprioritize,
+    );
+    final hasMore = ordered.length > limit;
     final visible =
-        !hasMore || _expanded ? filtered : filtered.sublist(0, limit);
+        !hasMore || _expanded ? ordered : ordered.sublist(0, limit);
 
     final chipFont = widget.compact ? 9.5 : 10.5;
 
@@ -197,6 +250,19 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
           ],
         ),
         SizedBox(height: widget.compact ? 6 : 8),
+        if (summaryLine != null) ...[
+          Text(
+            summaryLine,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: widget.compact ? 9.5 : 10.5,
+              color: AppColors.textSecondaryOf(context),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
         if (showFilterRow) ...[
           SizedBox(
             height: widget.compact ? 30 : 34,
@@ -231,6 +297,22 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
                   f: RouteEventTimelineFilter.ignition,
                   fontSize: chipFont,
                 ),
+                if (counts.dataGaps > 0)
+                  _filterChip(
+                    l10n: l10n,
+                    label: l10n.routeEventFilterDataGaps,
+                    count: counts.dataGaps,
+                    f: RouteEventTimelineFilter.dataGaps,
+                    fontSize: chipFont,
+                  ),
+                if (counts.alerts > 0)
+                  _filterChip(
+                    l10n: l10n,
+                    label: l10n.routeEventFilterAlerts,
+                    count: counts.alerts,
+                    f: RouteEventTimelineFilter.alerts,
+                    fontSize: chipFont,
+                  ),
               ],
             ),
           ),
@@ -272,6 +354,8 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
                     final icon = RouteEventTimeline.iconForKind(row.kind);
                     final selected = widget.selectedItemKey != null &&
                         row.selectionKey == widget.selectedItemKey;
+                    final badge =
+                        RouteEventTimeline.kindBadgeLabel(row.kind, l10n);
                     return InkWell(
                       onTap: widget.onItemTap == null
                           ? null
@@ -285,40 +369,81 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 140),
                         curve: Curves.easeOut,
-                        decoration: selected
-                            ? BoxDecoration(
-                                color:
-                                    AppColors.accent.withValues(alpha: 0.09),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.accent
-                                      .withValues(alpha: 0.42),
-                                  width: 1,
-                                ),
-                              )
-                            : null,
-                        padding: const EdgeInsets.symmetric(
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? AppColors.accent.withValues(alpha: 0.09)
+                              : null,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selected
+                                ? AppColors.accent.withValues(alpha: 0.42)
+                                : accent.withValues(alpha: 0.22),
+                            width: selected ? 1.2 : 1,
+                          ),
+                        ),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 6,
+                          vertical: widget.compact ? 4 : 6,
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Container(
+                              width: 3,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: accent,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Icon(icon, size: 18, color: accent),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    row.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: widget.compact ? 11 : 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: accent,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          row.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize:
+                                                widget.compact ? 11 : 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimaryOf(
+                                                context),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: accent.withValues(alpha: 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          badge,
+                                          style: TextStyle(
+                                            fontSize: 8.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: accent,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
@@ -361,17 +486,25 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
             ),
           ),
           if (hasMore) ...[
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
+            const SizedBox(height: 2),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(vertical: 2),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  alignment: Alignment.center,
                 ),
                 onPressed: () => setState(() => _expanded = !_expanded),
-                child: Text(
+                icon: Icon(
+                  _expanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
+                label: Text(
                   _expanded ? l10n.routeEventsSeeLess : l10n.routeEventsSeeMore,
                   style: TextStyle(
                     fontSize: 11,

@@ -5,6 +5,7 @@ import 'package:elmogps/features/vehicles/presentation/replay_multi/multi_vehicl
 import 'package:elmogps/features/vehicles/presentation/replay_multi/multi_vehicle_replay_model.dart';
 import 'package:elmogps/features/vehicles/presentation/replay_multi/multi_vehicle_replay_timeline.dart';
 import 'package:elmogps/features/vehicles/presentation/replay_multi/multi_vehicle_replay_ui.dart';
+import 'package:elmogps/features/vehicles/presentation/replay_multi/multi_vehicle_replay_vehicle_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -136,6 +137,146 @@ void main() {
       expect(decimated.first, points.first);
       expect(decimated.last, points.last);
       expect(decimated.length, lessThanOrEqualTo(100));
+    });
+  });
+
+  group('Phase R7 controller', () {
+    final t0 = DateTime(2026, 5, 15, 10);
+    final t1 = DateTime(2026, 5, 15, 10, 0, 5);
+    final t2 = DateTime(2026, 5, 15, 10, 0, 10);
+    final t3 = DateTime(2026, 5, 15, 10, 0, 15);
+
+    test('loadTimeline sets default active vehicle with data', () {
+      final timeline = MultiVehicleReplayTimelineBuilder.build([
+        _track('A', [_pt(t0)]),
+        _track('B', [_pt(t0)], colorIndex: 1),
+      ]);
+      final controller = MultiVehicleReplayController();
+      controller.loadTimeline(timeline);
+      expect(controller.state.activeVehicleId, isNotNull);
+      controller.dispose();
+    });
+
+    test('setActiveVehicle changes active id', () {
+      final timeline = MultiVehicleReplayTimelineBuilder.build([
+        _track('A', [_pt(t0), _pt(t3)]),
+        _track('B', [_pt(t1), _pt(t2)], colorIndex: 1),
+      ]);
+      final controller = MultiVehicleReplayController();
+      controller.loadTimeline(timeline);
+      controller.setActiveVehicle('B');
+      expect(controller.state.activeVehicleId, 'B');
+      controller.dispose();
+    });
+
+    test('hiding active vehicle moves active to another visible', () {
+      final timeline = MultiVehicleReplayTimelineBuilder.build([
+        _track('A', [_pt(t0)]),
+        _track('B', [_pt(t0)], colorIndex: 1),
+      ]);
+      final controller = MultiVehicleReplayController();
+      controller.loadTimeline(timeline);
+      controller.setActiveVehicle('A');
+      controller.setVehicleVisible('A', false);
+      expect(controller.state.activeVehicleId, 'B');
+      controller.dispose();
+    });
+
+    test('visibleVehicleCount reflects visibility', () {
+      final timeline = MultiVehicleReplayTimelineBuilder.build([
+        _track('A', [_pt(t0)]),
+        _track('B', [_pt(t0)], colorIndex: 1),
+        _track('C', [_pt(t0)], colorIndex: 2),
+      ]);
+      final controller = MultiVehicleReplayController();
+      controller.loadTimeline(timeline);
+      expect(controller.state.visibleVehicleCount, 3);
+      controller.setVehicleVisible('B', false);
+      expect(controller.state.visibleVehicleCount, 2);
+      controller.dispose();
+    });
+
+    test('different route lengths seek without crash', () {
+      final timeline = MultiVehicleReplayTimelineBuilder.build([
+        _track('A', [_pt(t0), _pt(t3)]),
+        _track('B', [_pt(t1)], colorIndex: 1),
+      ]);
+      final controller = MultiVehicleReplayController();
+      controller.loadTimeline(timeline);
+      controller.seekToProgress(1);
+      expect(controller.state.currentIndex, timeline.length - 1);
+      final markers = timeline.markersAtTime(controller.state.currentTime!);
+      expect(markers['A'], isNotNull);
+      controller.dispose();
+    });
+
+    test('five vehicles within supported limit', () {
+      final tracks = List.generate(
+        5,
+        (i) => _track('V$i', [_pt(t0)], colorIndex: i),
+      );
+      final timeline = MultiVehicleReplayTimelineBuilder.build(tracks);
+      expect(timeline.tracksByVehicleId.length, 5);
+    });
+
+    test('autoFollow and speed colors toggles', () {
+      final controller = MultiVehicleReplayController();
+      controller.setAutoFollow(true);
+      controller.setUseSpeedColors(true);
+      expect(controller.state.autoFollow, isTrue);
+      expect(controller.state.useSpeedColors, isTrue);
+      controller.dispose();
+    });
+  });
+
+  group('MultiVehicleReplayVehicleCardBuilder', () {
+    test('snapshot shows speed and movement safely', () {
+      final t0 = DateTime(2026, 5, 15, 10);
+      final track = _track('A', [_pt(t0, lat: 1)]);
+      final card = MultiVehicleReplayVehicleCardBuilder.build(
+        track: track,
+        visible: true,
+        isActive: true,
+        pointAtTime: _pt(t0, lat: 1),
+        movingLabel: 'Moving',
+        stoppedLabel: 'Stopped',
+        noFixLabel: 'No fix',
+      );
+      expect(card.speedLabel, contains('km/h'));
+      expect(card.movementLabel, isNotEmpty);
+      expect(card.timeLabel, isNot('—'));
+    });
+
+    test('no point at time uses placeholders', () {
+      final track = _track('A', [_pt(DateTime(2026, 5, 15, 10))]);
+      final card = MultiVehicleReplayVehicleCardBuilder.build(
+        track: track,
+        visible: true,
+        isActive: false,
+        pointAtTime: null,
+        movingLabel: 'Moving',
+        stoppedLabel: 'Stopped',
+        noFixLabel: 'No fix',
+      );
+      expect(card.speedLabel, '—');
+      expect(card.movementLabel, 'No fix');
+    });
+
+    test('legendStatus activeSelected when active', () {
+      final track = _track('A', [_pt(DateTime(2026, 5, 15, 10))]);
+      final card = MultiVehicleReplayVehicleCardBuilder.build(
+        track: track,
+        visible: true,
+        isActive: true,
+        pointAtTime: _pt(DateTime(2026, 5, 15, 10)),
+        movingLabel: 'M',
+        stoppedLabel: 'S',
+        noFixLabel: 'N',
+      );
+      expect(
+        MultiVehicleReplayVehicleCardBuilder.legendStatusFor(card),
+        MultiVehicleReplayLegendStatus.activeSelected,
+      );
     });
   });
 

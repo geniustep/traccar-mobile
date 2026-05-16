@@ -14,6 +14,9 @@ class MultiVehicleReplayPlaybackState {
     this.isCompleted = false,
     this.visibility = const {},
     this.showMapLabels = false,
+    this.autoFollow = false,
+    this.useSpeedColors = false,
+    this.activeVehicleId,
   });
 
   final MultiVehicleReplayTimeline? timeline;
@@ -28,7 +31,26 @@ class MultiVehicleReplayPlaybackState {
   /// When true, markers use compact initials badges (less clutter than always-on).
   final bool showMapLabels;
 
+  /// When true, map recenters on visible vehicles during playback (throttled).
+  final bool autoFollow;
+
+  /// Speed-colored route segments per vehicle (optional).
+  final bool useSpeedColors;
+
+  /// Highlighted vehicle for legend / snapshot focus.
+  final String? activeVehicleId;
+
   bool vehicleVisible(String vehicleId) => visibility[vehicleId] ?? true;
+
+  int get visibleVehicleCount {
+    final tl = timeline;
+    if (tl == null) return 0;
+    var n = 0;
+    for (final id in tl.tracksByVehicleId.keys) {
+      if (vehicleVisible(id)) n++;
+    }
+    return n;
+  }
 
   DateTime? get currentTime => timeline?.timeAtIndex(currentIndex);
 
@@ -48,6 +70,10 @@ class MultiVehicleReplayPlaybackState {
     bool? isCompleted,
     Map<String, bool>? visibility,
     bool? showMapLabels,
+    bool? autoFollow,
+    bool? useSpeedColors,
+    String? activeVehicleId,
+    bool clearActiveVehicle = false,
   }) =>
       MultiVehicleReplayPlaybackState(
         timeline: timeline ?? this.timeline,
@@ -57,6 +83,11 @@ class MultiVehicleReplayPlaybackState {
         isCompleted: isCompleted ?? this.isCompleted,
         visibility: visibility ?? this.visibility,
         showMapLabels: showMapLabels ?? this.showMapLabels,
+        autoFollow: autoFollow ?? this.autoFollow,
+        useSpeedColors: useSpeedColors ?? this.useSpeedColors,
+        activeVehicleId: clearActiveVehicle
+            ? null
+            : (activeVehicleId ?? this.activeVehicleId),
       );
 }
 
@@ -72,10 +103,25 @@ class MultiVehicleReplayController
     final visibility = {
       for (final id in timeline.tracksByVehicleId.keys) id: true,
     };
+    final active = _defaultActiveVehicleId(timeline, visibility);
     state = MultiVehicleReplayPlaybackState(
       timeline: timeline,
       visibility: visibility,
+      activeVehicleId: active,
     );
+  }
+
+  static String? _defaultActiveVehicleId(
+    MultiVehicleReplayTimeline timeline,
+    Map<String, bool> visibility,
+  ) {
+    for (final id in timeline.tracksByVehicleId.keys) {
+      final track = timeline.tracksByVehicleId[id];
+      if (track != null && track.hasData && (visibility[id] ?? true)) {
+        return id;
+      }
+    }
+    return null;
   }
 
   void play() {
@@ -95,6 +141,11 @@ class MultiVehicleReplayController
   void pause() {
     _cancelTimer();
     state = state.copyWith(isPlaying: false);
+  }
+
+  /// Timer only — no [state] update (safe during screen teardown / autoDispose).
+  void stopTimerOnly() {
+    _cancelTimer();
   }
 
   void reset() {
@@ -139,7 +190,48 @@ class MultiVehicleReplayController
   void setVehicleVisible(String vehicleId, bool visible) {
     final next = Map<String, bool>.from(state.visibility);
     next[vehicleId] = visible;
-    state = state.copyWith(visibility: next);
+    var active = state.activeVehicleId;
+    if (!visible && active == vehicleId) {
+      active = _firstVisibleVehicleId(next);
+    } else if (visible && active == null) {
+      active = vehicleId;
+    }
+    state = state.copyWith(
+      visibility: next,
+      activeVehicleId: active,
+      clearActiveVehicle: active == null,
+    );
+  }
+
+  String? _firstVisibleVehicleId(Map<String, bool> visibility) {
+    for (final entry in visibility.entries) {
+      if (!entry.value) continue;
+      final track = state.timeline?.tracksByVehicleId[entry.key];
+      if (track != null && track.hasData) return entry.key;
+    }
+    return null;
+  }
+
+  void setActiveVehicle(String? vehicleId) {
+    if (vehicleId != null) {
+      if (!state.vehicleVisible(vehicleId)) return;
+      final track = state.timeline?.tracksByVehicleId[vehicleId];
+      if (track == null || !track.hasData) return;
+    }
+    state = state.copyWith(
+      activeVehicleId: vehicleId,
+      clearActiveVehicle: vehicleId == null,
+    );
+  }
+
+  void setAutoFollow(bool enabled) {
+    if (state.autoFollow == enabled) return;
+    state = state.copyWith(autoFollow: enabled);
+  }
+
+  void setUseSpeedColors(bool enabled) {
+    if (state.useSpeedColors == enabled) return;
+    state = state.copyWith(useSpeedColors: enabled);
   }
 
   void setShowMapLabels(bool enabled) {

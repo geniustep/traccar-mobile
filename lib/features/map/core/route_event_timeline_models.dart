@@ -16,6 +16,15 @@ enum RouteTimelineEntryKind {
 
   /// Missing GPS interval on replay (Phase R1).
   dataGap,
+
+  /// Route departure (replay timeline — Phase R3).
+  routeStart,
+
+  /// Route arrival (replay timeline — Phase R3).
+  routeEnd,
+
+  /// Backend / report event (replay — Phase R4).
+  externalEvent,
 }
 
 /// Flattened, time-sorted route event for the shared timeline widget.
@@ -287,6 +296,12 @@ enum RouteEventTimelineFilter {
   stops,
   overspeed,
   ignition,
+
+  /// Missing GPS gaps (replay — Phase R3).
+  dataGaps,
+
+  /// Backend alerts & non-analyzer events (replay — Phase R4).
+  alerts,
 }
 
 bool routeEventTimelineItemMatchesFilter(
@@ -303,6 +318,10 @@ bool routeEventTimelineItemMatchesFilter(
     case RouteEventTimelineFilter.ignition:
       return item.kind == RouteTimelineEntryKind.ignitionOn ||
           item.kind == RouteTimelineEntryKind.ignitionOff;
+    case RouteEventTimelineFilter.dataGaps:
+      return item.kind == RouteTimelineEntryKind.dataGap;
+    case RouteEventTimelineFilter.alerts:
+      return item.kind == RouteTimelineEntryKind.externalEvent;
   }
 }
 
@@ -326,12 +345,16 @@ class RouteEventTimelineFilterCounts {
     required this.stops,
     required this.overspeed,
     required this.ignition,
+    required this.dataGaps,
+    required this.alerts,
   });
 
   final int all;
   final int stops;
   final int overspeed;
   final int ignition;
+  final int dataGaps;
+  final int alerts;
 }
 
 RouteEventTimelineFilterCounts routeEventTimelineFilterCounts(
@@ -340,6 +363,8 @@ RouteEventTimelineFilterCounts routeEventTimelineFilterCounts(
   var stops = 0;
   var overspeed = 0;
   var ignition = 0;
+  var dataGaps = 0;
+  var alerts = 0;
   for (final i in items) {
     switch (i.kind) {
       case RouteTimelineEntryKind.stop:
@@ -353,6 +378,13 @@ RouteEventTimelineFilterCounts routeEventTimelineFilterCounts(
         ignition++;
         break;
       case RouteTimelineEntryKind.dataGap:
+        dataGaps++;
+        break;
+      case RouteTimelineEntryKind.externalEvent:
+        alerts++;
+        break;
+      case RouteTimelineEntryKind.routeStart:
+      case RouteTimelineEntryKind.routeEnd:
         break;
     }
   }
@@ -361,5 +393,86 @@ RouteEventTimelineFilterCounts routeEventTimelineFilterCounts(
     stops: stops,
     overspeed: overspeed,
     ignition: ignition,
+    dataGaps: dataGaps,
+    alerts: alerts,
   );
+}
+
+/// Event counts for replay timeline summary (Phase R3).
+@immutable
+class RouteTimelineEventSummaryCounts {
+  const RouteTimelineEventSummaryCounts({
+    required this.stops,
+    required this.overspeed,
+    required this.ignition,
+    required this.dataGaps,
+  });
+
+  final int stops;
+  final int overspeed;
+  final int ignition;
+  final int dataGaps;
+
+  bool get isEmpty =>
+      stops == 0 && overspeed == 0 && ignition == 0 && dataGaps == 0;
+}
+
+RouteTimelineEventSummaryCounts routeTimelineEventSummaryCounts(
+  List<RouteEventTimelineItem> items,
+) {
+  var stops = 0;
+  var overspeed = 0;
+  var ignition = 0;
+  var dataGaps = 0;
+  for (final i in items) {
+    switch (i.kind) {
+      case RouteTimelineEntryKind.stop:
+        stops++;
+        break;
+      case RouteTimelineEntryKind.overspeed:
+        overspeed++;
+        break;
+      case RouteTimelineEntryKind.ignitionOn:
+      case RouteTimelineEntryKind.ignitionOff:
+        ignition++;
+        break;
+      case RouteTimelineEntryKind.dataGap:
+        dataGaps++;
+        break;
+      case RouteTimelineEntryKind.externalEvent:
+        break;
+      case RouteTimelineEntryKind.routeStart:
+      case RouteTimelineEntryKind.routeEnd:
+        break;
+    }
+  }
+  return RouteTimelineEventSummaryCounts(
+    stops: stops,
+    overspeed: overspeed,
+    ignition: ignition,
+    dataGaps: dataGaps,
+  );
+}
+
+/// One-line summary above replay timeline (Phase R3).
+String? formatRouteTimelineSummaryLine(
+  List<RouteEventTimelineItem> items,
+  AppLocalizations l10n,
+) {
+  final c = routeTimelineEventSummaryCounts(items);
+  if (c.isEmpty) return null;
+  final parts = <String>[];
+  if (c.stops > 0) {
+    parts.add(l10n.replayTimelineSummaryStops(c.stops));
+  }
+  if (c.overspeed > 0) {
+    parts.add(l10n.replayTimelineSummaryOverspeed(c.overspeed));
+  }
+  if (c.dataGaps > 0) {
+    parts.add(l10n.replayTimelineSummaryDataGaps(c.dataGaps));
+  }
+  if (c.ignition > 0) {
+    parts.add(l10n.replayTimelineSummaryIgnition(c.ignition));
+  }
+  return parts.isEmpty ? null : parts.join(' · ');
 }

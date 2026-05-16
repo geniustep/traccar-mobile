@@ -8,10 +8,14 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/maps/map_config.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../reports/presentation/providers/replay_controller.dart';
+import 'multi_replay_comparison_sheet.dart';
+import 'multi_replay_kpi.dart';
 import 'multi_vehicle_replay_controller.dart';
 import 'multi_vehicle_replay_formatters.dart';
+import 'multi_vehicle_replay_map_helpers.dart';
 import 'multi_vehicle_replay_marker_icons.dart';
 import 'multi_vehicle_replay_model.dart';
+import 'multi_vehicle_replay_polylines.dart';
 import 'multi_vehicle_replay_provider.dart';
 import 'multi_vehicle_replay_route_args.dart';
 import 'multi_vehicle_replay_state.dart';
@@ -57,14 +61,20 @@ class _MultiVehicleReplayScreenState
   bool _mapReady = false;
   bool _hasFitted = false;
   bool _timelineLoaded = false;
+  int _lastFollowIndex = -1;
+  DateTime? _lastFollowAt;
   final MultiVehicleReplayMarkerIcons _markerIcons =
       MultiVehicleReplayMarkerIcons();
+
+  /// Cached in [initState] — do not use [ref] in [dispose] (Riverpod guard).
+  late final MultiVehicleReplayController _playback;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate ?? DateTime.now();
     _selectedDate = MultiVehicleReplayFormatters.startOfDay(_selectedDate);
+    _playback = ref.read(multiVehicleReplayControllerProvider.notifier);
   }
 
   MultiVehicleReplayRequest get _request => MultiVehicleReplayRequest(
@@ -75,6 +85,8 @@ class _MultiVehicleReplayScreenState
   void _resetReplaySession() {
     _timelineLoaded = false;
     _hasFitted = false;
+    _lastFollowIndex = -1;
+    _lastFollowAt = null;
     _markerIcons.clear();
     ref.read(multiVehicleReplayControllerProvider.notifier).reset();
   }
@@ -105,9 +117,11 @@ class _MultiVehicleReplayScreenState
     _loadMarkerIcons(load, withLabels);
     if (_mapReady && !_hasFitted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _fitBounds(
           load,
           ref.read(multiVehicleReplayControllerProvider),
+          force: true,
         );
       });
     }
@@ -116,24 +130,12 @@ class _MultiVehicleReplayScreenState
   Set<Polyline> _buildPolylines(
     List<MultiVehicleReplayTrack> tracks,
     MultiVehicleReplayPlaybackState playback,
-  ) {
-    return tracks
-        .where(
-          (t) =>
-              t.mapPoints.length >= 2 &&
-              playback.vehicleVisible(t.vehicleId),
-        )
-        .map(
-          (t) => Polyline(
-            polylineId: PolylineId('route_${t.vehicleId}'),
-            points: t.mapPoints.map((p) => p.position).toList(),
-            color: t.color,
-            width: 4,
-            geodesic: true,
-          ),
-        )
-        .toSet();
-  }
+  ) =>
+      MultiVehicleReplayPolylines.build(
+        tracks: tracks,
+        isVisible: playback.vehicleVisible,
+        useSpeedColors: playback.useSpeedColors,
+      );
 
   Set<Marker> _buildMarkers(
     MultiVehicleReplayPlaybackState playback,
@@ -153,6 +155,7 @@ class _MultiVehicleReplayScreenState
       final pt = atTime[track.vehicleId];
       if (pt == null) continue;
 
+      final isActive = playback.activeVehicleId == track.vehicleId;
       final icon = _markerIcons.iconFor(
             track.colorIndex,
             withLabels: withLabels,
@@ -173,11 +176,9 @@ class _MultiVehicleReplayScreenState
           position: pt.position,
           rotation: rotate ? pt.course : 0,
           flat: rotate,
-          anchor: withLabels
-              ? const Offset(0.5, 0.5)
-              : const Offset(0.5, 0.5),
+          anchor: const Offset(0.5, 0.5),
           icon: icon,
-          zIndexInt: track.colorIndex + 1,
+          zIndexInt: isActive ? 20 : track.colorIndex + 1,
         ),
       );
     }
@@ -189,51 +190,54 @@ class _MultiVehicleReplayScreenState
     MultiVehicleReplayPlaybackState playback, {
     bool force = false,
   }) {
-    final positions = <LatLng>[];
-    for (final t in load.tracks) {
-      if (!playback.vehicleVisible(t.vehicleId)) continue;
-      for (final p in t.mapPoints) {
-        positions.add(p.position);
-      }
-    }
-    if (positions.isEmpty || _mapController == null) return;
-    if (!force && _hasFitted) return;
-    _hasFitted = true;
+    if (_mapController == null) return;
+    if (!force && _hasFitted && !playback.autoFollow) return;
 
-    if (positions.length == 1) {
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngZoom(positions.first, 14),
-      );
+    final time = playback.currentTime;
+    final markersAtTime = time == null || playback.timeline == null
+        ? null
+        : playback.timeline!.markersAtTime(time);
+
+    final positions = MultiVehicleReplayMapHelpers.positionsForFit(
+      tracks: load.tracks,
+      isVisible: playback.vehicleVisible,
+      markersAtCurrentTime: markersAtTime,
+      preferMarkersOnly: playback.autoFollow && time != null,
+    );
+
+    if (positions.isEmpty) {
+      if (!force) return;
       return;
     }
 
-    var minLat = positions.first.latitude;
-    var maxLat = minLat;
-    var minLng = positions.first.longitude;
-    var maxLng = minLng;
-
-    for (final p in positions) {
-      if (p.latitude < minLat) minLat = p.latitude;
-      if (p.latitude > maxLat) maxLat = p.latitude;
-      if (p.longitude < minLng) minLng = p.longitude;
-      if (p.longitude > maxLng) maxLng = p.longitude;
+    if (force || !playback.autoFollow) {
+      _hasFitted = true;
     }
 
-    try {
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            southwest: LatLng(minLat, minLng),
-            northeast: LatLng(maxLat, maxLng),
-          ),
-          64,
-        ),
-      );
-    } catch (_) {
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngZoom(positions.first, 12),
-      );
+    final update = MultiVehicleReplayMapHelpers.cameraUpdateForFit(positions);
+    if (update == null) return;
+    _mapController!.animateCamera(update);
+  }
+
+  void _maybeAutoFollow(
+    MultiVehicleReplayLoadState load,
+    MultiVehicleReplayPlaybackState playback,
+  ) {
+    if (!playback.autoFollow || _mapController == null) return;
+    if (!playback.isPlaying && _lastFollowIndex == playback.currentIndex) {
+      return;
     }
+
+    final now = DateTime.now();
+    final throttled = _lastFollowAt != null &&
+        now.difference(_lastFollowAt!) <
+            MultiVehicleReplayMapHelpers.autoFollowThrottle;
+    final index = playback.currentIndex;
+    if (throttled && index == _lastFollowIndex) return;
+
+    _lastFollowIndex = index;
+    _lastFollowAt = now;
+    _fitBounds(load, playback, force: true);
   }
 
   void _onRecenter(
@@ -257,7 +261,8 @@ class _MultiVehicleReplayScreenState
 
   @override
   void dispose() {
-    ref.read(multiVehicleReplayControllerProvider.notifier).pause();
+    // Do not call [pause] here — updating provider state during unmount breaks tests.
+    _playback.stopTimerOnly();
     super.dispose();
   }
 
@@ -285,12 +290,42 @@ class _MultiVehicleReplayScreenState
     final playback = ref.watch(multiVehicleReplayControllerProvider);
 
     ref.listen(multiVehicleReplayLoaderProvider(_request), (prev, next) {
+      if (!mounted) return;
       next.whenData((load) {
         if (load.status == MultiVehicleReplayLoadStatus.success) {
           _onLoadSuccess(load);
         }
       });
     });
+
+    ref.listen<int>(
+      multiVehicleReplayControllerProvider.select((s) => s.currentIndex),
+      (prev, next) {
+        if (!mounted || prev == next) return;
+        final load = loadAsync.valueOrNull;
+        if (load == null || load.status != MultiVehicleReplayLoadStatus.success) {
+          return;
+        }
+        _maybeAutoFollow(
+          load,
+          ref.read(multiVehicleReplayControllerProvider),
+        );
+      },
+    );
+
+    ref.listen<bool>(
+      multiVehicleReplayControllerProvider.select((s) => s.autoFollow),
+      (prev, next) {
+        if (!mounted || prev == next || !next) return;
+        final load = loadAsync.valueOrNull;
+        if (load == null) return;
+        _hasFitted = false;
+        _maybeAutoFollow(
+          load,
+          ref.read(multiVehicleReplayControllerProvider),
+        );
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -367,9 +402,10 @@ class _MultiVehicleReplayScreenState
             _mapController = c;
             _mapReady = true;
             if (!_hasFitted) {
-              WidgetsBinding.instance.addPostFrameCallback(
-                (_) => _fitBounds(load, playback),
-              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                _fitBounds(load, playback, force: true);
+              });
             }
           },
           onRecenter: () => _onRecenter(load, playback),
@@ -383,6 +419,8 @@ class _MultiVehicleReplayScreenState
           },
           onReset: () {
             ref.read(multiVehicleReplayControllerProvider.notifier).reset();
+            _hasFitted = false;
+            _fitBounds(load, playback, force: true);
           },
           onSeek: (p) => ref
               .read(multiVehicleReplayControllerProvider.notifier)
@@ -401,8 +439,42 @@ class _MultiVehicleReplayScreenState
             ref
                 .read(multiVehicleReplayControllerProvider.notifier)
                 .setVehicleVisible(id, visible);
+            if (mounted) {
+              setState(() {});
+              _fitBounds(load, ref.read(multiVehicleReplayControllerProvider),
+                  force: true);
+            }
+          },
+          onActiveVehicle: (id) {
+            ref
+                .read(multiVehicleReplayControllerProvider.notifier)
+                .setActiveVehicle(id);
+            if (mounted) setState(() {});
           },
           onToggleLabels: () => _onToggleLabels(load),
+          onToggleAutoFollow: () {
+            final c = ref.read(multiVehicleReplayControllerProvider.notifier);
+            final next =
+                !ref.read(multiVehicleReplayControllerProvider).autoFollow;
+            c.setAutoFollow(next);
+            AppLogger.replay('multi_replay_autofollow enabled=$next');
+            if (next) {
+              _hasFitted = false;
+              _maybeAutoFollow(
+                load,
+                ref.read(multiVehicleReplayControllerProvider),
+              );
+            }
+          },
+          onToggleSpeedColors: () {
+            final c = ref.read(multiVehicleReplayControllerProvider.notifier);
+            final next = !ref
+                .read(multiVehicleReplayControllerProvider)
+                .useSpeedColors;
+            c.setUseSpeedColors(next);
+            if (mounted) setState(() {});
+          },
+          comparisonSummary: load.comparisonSummary,
         );
     }
   }
@@ -422,7 +494,11 @@ class _ReplayMapBody extends StatelessWidget {
     required this.onSeek,
     required this.onSpeed,
     required this.onVisibility,
+    required this.onActiveVehicle,
     required this.onToggleLabels,
+    required this.onToggleAutoFollow,
+    required this.onToggleSpeedColors,
+    required this.comparisonSummary,
   });
 
   final MultiVehicleReplayLoadState load;
@@ -437,7 +513,23 @@ class _ReplayMapBody extends StatelessWidget {
   final ValueChanged<double> onSeek;
   final ValueChanged<PlaybackSpeed> onSpeed;
   final void Function(String vehicleId, bool visible) onVisibility;
+  final ValueChanged<String> onActiveVehicle;
   final VoidCallback onToggleLabels;
+  final VoidCallback onToggleAutoFollow;
+  final VoidCallback onToggleSpeedColors;
+  final MultiReplayComparisonSummary? comparisonSummary;
+
+  void _openComparison(BuildContext context) {
+    final summary = comparisonSummary;
+    if (summary == null) return;
+    AppLogger.replay('multi_replay_comparison_opened');
+    MultiReplayComparisonSheet.show(
+      context,
+      summary: summary,
+      tracks: load.tracks,
+      playback: playback,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -472,6 +564,30 @@ class _ReplayMapBody extends StatelessWidget {
                       isPlaying: playback.isPlaying,
                     ),
                     const Spacer(),
+                    if (comparisonSummary != null)
+                      _MapToolChip(
+                        icon: Icons.compare_arrows_rounded,
+                        tooltip: l10n.multiReplayComparison,
+                        selected: false,
+                        onPressed: () => _openComparison(context),
+                      ),
+                    if (comparisonSummary != null) const SizedBox(width: 6),
+                    _MapToolChip(
+                      icon: playback.autoFollow
+                          ? Icons.gps_fixed_rounded
+                          : Icons.gps_not_fixed_rounded,
+                      tooltip: l10n.multiReplayAutoFollow,
+                      selected: playback.autoFollow,
+                      onPressed: onToggleAutoFollow,
+                    ),
+                    const SizedBox(width: 6),
+                    _MapToolChip(
+                      icon: Icons.speed_rounded,
+                      tooltip: l10n.multiReplaySpeedColors,
+                      selected: playback.useSpeedColors,
+                      onPressed: onToggleSpeedColors,
+                    ),
+                    const SizedBox(width: 6),
                     MultiVehicleReplayRecenterButton(
                       onPressed: onRecenter,
                     ),
@@ -484,7 +600,9 @@ class _ReplayMapBody extends StatelessWidget {
         MultiVehicleReplayLegend(
           tracks: load.tracks,
           playback: playback,
+          timeline: timeline,
           onVisibility: onVisibility,
+          onActiveVehicle: onActiveVehicle,
           labelsEnabled: playback.showMapLabels,
           onToggleLabels: onToggleLabels,
         ),
@@ -499,6 +617,38 @@ class _ReplayMapBody extends StatelessWidget {
           l10n: l10n,
         ),
       ],
+    );
+  }
+}
+
+class _MapToolChip extends StatelessWidget {
+  const _MapToolChip({
+    required this.icon,
+    required this.tooltip,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      elevation: 3,
+      borderRadius: BorderRadius.circular(8),
+      color: selected
+          ? scheme.primaryContainer.withValues(alpha: 0.95)
+          : scheme.surface.withValues(alpha: 0.94),
+      child: IconButton(
+        icon: Icon(icon, size: 20),
+        tooltip: tooltip,
+        onPressed: onPressed,
+        visualDensity: VisualDensity.compact,
+      ),
     );
   }
 }

@@ -52,10 +52,17 @@ abstract final class MultiVehicleReplayUi {
     return MultiVehicleReplayLegendStatus.active;
   }
 
+  static bool isMovingSpeed(double speedKmh) => speedKmh >= 5;
+
   static String? formatPointsSubtitle(int pointCount) {
     if (pointCount <= 0) return null;
     return '$pointCount';
   }
 }
 
-enum MultiVehicleReplayLegendStatus { active, hidden, noData }
+enum MultiVehicleReplayLegendStatus {
+  active,
+  activeSelected,
+  hidden,
+  noData,
+}

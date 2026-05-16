@@ -120,6 +120,23 @@ void main() {
       expect(ReplayRouteGapDetector.detectGaps(pts), isEmpty);
     });
 
+    test('gap detection يعتمد على الوقت وليس ترتيب الفهرس الأصلي', () {
+      final lateFirst = [
+        testRoutePoint(
+          const LatLng(36.81, 10.13),
+          30,
+          t0.add(const Duration(minutes: 20)),
+        ),
+        testRoutePoint(const LatLng(36.8, 10.13), 30, t0),
+      ];
+      final gaps = ReplayRouteGapDetector.detectGaps(lateFirst);
+      expect(gaps.length, 1);
+      expect(
+        gaps.single.duration,
+        const Duration(minutes: 20),
+      );
+    });
+
     test('segmentation لا تربط عبر gap', () {
       final pts = <RoutePoint>[
         testRoutePoint(const LatLng(36.8, 10.13), 40, t0),

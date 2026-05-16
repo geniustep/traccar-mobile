@@ -1,6 +1,8 @@
 # بنية خرائط ELMOGPS — Map Core والشاشات
 
 وثيقة تقنية مختصرة بعد تحسينات **Phase 1**، **Phase 2A–2C**، **Phase 3A–3D**، **Phase 4A–4B**، **Phase 5A–7E**، و**Phase 8** (تجزئة الرحلات، قائمة الرحلات، خريطة رحلة واحدة، Replay بنطاق رحلة؛ تفاصيل التقسيم: **`docs/trip_segmentation_overview.md`**).  
+
+**Replay (R1–R10) :** ملخص المراحل، QA النهائي، أوامر الاختبار، والقيود — **[`docs/replay_release_notes.md`](replay_release_notes.md)**.  
 المسار: `docs/map_screens_overview.md`.
 
 ---
@@ -24,6 +26,7 @@
 | **VehicleTrackingScreen** | `lib/features/map/presentation/screens/vehicle_tracking_screen.dart` | `/vehicles/:id/track` |
 | **RouteReportMapScreen** | `lib/features/reports/presentation/screens/route_report_map_screen.dart` | `/reports/route-map` (`extra`: `ReportFilterParams` + اسم مركبة) |
 | **ReplayReportScreen** | `lib/features/reports/presentation/screens/replay_report_screen.dart` | `/reports/replay` (`extra`: `ReportFilterParams`، اسم مركبة) |
+| **MultiVehicleReplayScreen** | `lib/features/vehicles/presentation/replay_multi/multi_vehicle_replay_screen.dart` | `/vehicles/replay-multi` (2–5 مركبات، يوم واحد) — **Phase R7** |
 | **TripDetailMapScreen** | `lib/features/reports/presentation/screens/trip_detail_map_screen.dart` | `/vehicles/:id/trip-map` (`extra`: `ReportFilterParams`، `tripSubtitle`) |
 | **FleetIntelligenceDashboardScreen** (**Phase 10B–10G**) | `lib/features/fleet_intelligence/presentation/screens/fleet_intelligence_dashboard_screen.dart` | `/fleet-intelligence` (ملخص أسطول؛ **`fleetIntelligenceMetricsProvider`** + فلاتر + **تخزين مؤقت قصير** (TTL افتراضي **3 دقائق**) لنفس **`cacheStableKey`** مع تجاوز عند **`refreshNonce`**؛ **`FleetAttentionCenterCard`**؛ نقرة مركبة في القسم المصنّف → **`VehicleTrackingScreen`**؛ نقرة في **مركز المتابعة** → **`showFleetAttentionDetailsSheet`** ثم أزرار تنقّل اختيارية نحو تفاصيل المركبة أو الخريطة أو الرحلات بدون جلب جديد عند فتح الورقة). |
 | **GeofenceMapPicker** | `lib/features/geofences/presentation/widgets/geofence_map_picker.dart` | مدمج في المحرر والتفاصيل (ليس مسارًا مستقلاً) |
@@ -39,7 +42,7 @@
 | **LiveMapScreen** | **مراقبة الأسطول**: كل المركبات، تجميع عند زوم منخفض، بحث/فلتر، مركبة مختارة، طبقات خفيفة (جيوفنس، تنبيهات، مسار يوم للمختارة فقط). بث **REST + WebSocket**. |
 | **VehicleTrackingScreen** | **تتبع وتحليل مركبة واحدة**: موقع حي + مسار في نطاق من/إلى، إحصاءات، متابعة كاميرا، ماركر سيارة ومسار عبر الـ Core؛ **طبقة Route Intelligence** (تحليل خارج البناء + ماركرات عبر `RoutePolylineBuilder.buildRouteIntelligenceMarkers` مع `reportStyle: false`). لوحة أسفل الخريطة تتضمن **Route Event Timeline** و**قائمة الرحلات المجزأة (Phase 8)** أسفل خط زمني الأحداث عند توفر نقاط GPS؛ **لا** استبدال لشاشة التقارير الثقيلة. |
 | **RouteReportMapScreen** | **مسار تاريخي من التقارير أو نافذة رحلة واحدة (Phase 8C)** عبر المعاملات الاختيارية: بوليثين ملوّن، ماركرات بداية/نهاية/أقصى سرعة/ساعية حسب الزوم؛ **بدون WebSocket**؛ `RoutePolylineBuilder` + `MapZoomPolicy`؛ ذكاء المسار `reportStyle: true`؛ **Route Event Timeline** + زر Replay اختياري عند **`onOpenReplayShortcut`**. |
-| **ReplayReportScreen** | **إعادة تشغيل الرحلة**: بوليثينات ملوّنة حسب السرعة (**Phase R1:** مقاطع منفصلة عند فجوات GPS، بدون وصل عبر بيانات ناقصة) + ماركر متحرك، تحكمات إعادة، مخطط سرعة، متابعة الكاميرا. **Route Intelligence (3C):** تحليل على **`RoutePoint` الكاملة**؛ Timeline (**§11**) + صفوف **`dataGap`**؛ ماركرات فجوات وشارة ملخص → **`ReplayGapsSheet`**. **Phase 8D:** نافذة رحلة. انظر **§12**. |
+| **ReplayReportScreen** | **إعادة تشغيل الرحلة**: بوليثينات ملوّنة (**R1:** مقاطع عند فجوات GPS) + ماركر متحرك + **`ReplaySnapshotPanel` (R2)** + تحكمات إعادة. **Route Intelligence:** Timeline (**§11**) + **`dataGap`**؛ **`ReplayGapsSheet`**. انظر **§12–§13**. |
 | **TripDetailMapScreen** | **Phase 8C — خريطة رحلة واحدة:** يضبط نافذة **`ReportFilterParams`** على بداية/نهاية الرحلة (UTC + buffer صغير) ويعيد استخدام **`RouteReportMapScreen`** عبر حقول **`contextualSubtitle`** و **`onOpenReplayShortcut`**؛ نفس **`reportRouteProvider`**، وبوليثينات وTimeline وبطاقة تفاصيل الأحداث؛ **بدون إضافة واجهة برمجية جديدة في هذه المرحلة**. |
 | **GeofenceMapPicker** | **رسم وتعديل** شكل المنطقة (دائرة/مضلع) داخل المحرر: نقر لعرض المركز أو إضافة رؤوس، `GeofenceMapRenderer.buildEditorGeometry` + `MapZoomPolicy` (سمك، handles، عنوان عند زوم مناسب). |
 | **GeofenceEditorScreen** | نموذج الاسم، اللون، النوع، الربط بالمركبات، التنبيهات؛ يغلّف **`GeofenceMapPicker`** ويمرّر `fitNonce` / `emptyHint`. |
@@ -358,12 +361,239 @@
 | **التشغيل** | **`ReplayController`** / seek / play **دون تغيير**؛ الضغط على فجوة يبحث أقرب نقطة تشغيل لوقت **أول fix بعد الفجوة**. |
 | **سجلات debug** | **`AppLogger.replay`** عند التحميل: عدد النقاط، عدد الفجوات، أطول فجوة، العتبة. |
 
-**قيود Phase R1:** لا polyline متقطع (dashed) — فصل المقاطع فقط. لا فلتر Timeline مخصّص للفجوات. **Multi-vehicle replay** خارج النطاق.
-
-**لاحقاً (مقترح):** Phase R2 — لوحة لقطة النقطة الحالية؛ تحسينات Timeline/فلتر للفجوات.
+**قيود Phase R1:** لا polyline متقطع (dashed) — فصل المقاطع فقط. فلتر Timeline للفجوات عبر شريحة **`dataGaps`** (R3). Multi Replay يعيد استخدام نفس كاشف الفجوات في polylines (R7) دون Timeline `dataGap` كامل.
 
 ---
 
-*آخر تحديث: Phase R1 — فجوات Replay على **`ReplayReportScreen`** + Phase 8 (رحلات).*
+## 13. Replay — Current Point Snapshot (Phase R2)
+
+| العنصر | الوصف |
+|--------|--------|
+| **`replay_point_snapshot.dart`** | **`ReplayPointSnapshot`** + **`ReplayPointSnapshotBuilder.fromRoutePoint`** — نموذج عرض من **`RoutePoint`** الحالي في **`ReplayController`** (نقاط التشغيل المُخفَّفة، وليس القائمة الكاملة للرسم). |
+| **`replay_snapshot_panel.dart`** | **`ReplaySnapshotPanel`** — بطاقة في لوحة التحكم السفلية: وقت، سرعة، تقدم٪، حركة (متوقف &lt; 5 km/h / متحرك)، عنوان اختياري، تفاصيل قابلة للطي (إحداثيات، اتجاه، إشعال). |
+| **التحديث** | يُعاد البناء تلقائياً عند كل tick لأن **`_ReplayControls`** يشاهد **`replayControllerProvider`** (play / pause / seek / timeline / restart). |
+| **الإشعال** | يُعرض فقط عندما **`RouteEventAnalysisResult.ignitionDataLikelyPresent`** على المسار الكامل. |
+| **الفجوات (R1)** | شارة «بعد انقطاع البيانات» عندما **`fixTime`** النقطة الحالية ≈ **`gapEndTime`** (±1.5 ث). |
+| **الحساسات (R9)** | في **التفاصيل الموسّعة** فقط — fuel، battery، GSM، أقمار، دقة/hdop، سائق (نص) — **إن وُجدت** في `RoutePoint.attributes`؛ لا قيم وهمية. |
+
+**قيود Phase R2:** لا Multi Replay في هذه البطاقة؛ الإشعال يُعرض عند **`ignitionDataLikelyPresent`** على المسار الكامل (تحليل ذكاء المسار).
+
+---
+
+## 14. Replay — Timeline Upgrade (Phase R3)
+
+| العنصر | الوصف |
+|--------|--------|
+| **`replay_timeline_helpers.dart`** | بداية/نهاية المسار، دمج supplemental، **`replayTimelineSeekTimeForItem`**, ملخص الأحداث. |
+| **أنواع الصفوف** | `stop`, `overspeed`, `ignitionOn/Off`, **`dataGap`**, **`routeStart`**, **`routeEnd`**. |
+| **الفلاتر** | الكل، التوقفات، تجاوز السرعة، الإشعال، **بيانات ناقصة (`dataGaps`)** — شريحة الفجوات تظهر فقط عند `counts.dataGaps > 0`. |
+| **العرض** | شارة نوع الحدث، شريط لوني جانبي، **`dataGap`** بلون بنفسجي؛ ملخص سطر واحد في Replay (`showReplayEventSummary`). |
+| **لوحة مضغوطة (UI-1)** | افتراضياً: Timeline يعرض **حدّين** فقط؛ عند ≥10 تنبيهات تُؤخَّر **Alerts** في عرض «الكل» المختصر؛ زر **See all events** داخل قسم الأحداث؛ سرعات x1–x8 في صف ثانٍ؛ **`_basePanelHeight`** ≈300 لإبراز الخريطة. |
+| **الضغط** | seek + كاميرا + Snapshot (عبر **`ReplayController`**) + ورقة تفاصيل؛ **dataGap** → أول fix بعد الفجوة؛ **routeStart/End** → index 0 / الأخير. |
+
+**لم يُنفَّذ:** Zoom زمني للـ Timeline؛ ربط متقدم بين المخطط والـ Timeline (يبقى **`highlightTime`** من النقطة الحالية فقط).
+
+---
+
+---
+
+## 15. Replay — Events Integration (Phase R4)
+
+| العنصر | الوصف |
+|--------|--------|
+| **مصادر الأحداث** | `GET /reports/events` عبر **`eventsReportProvider`**؛ تنبيهات **`GET /alerts/`** (مع `from`/`to`/`deviceId`) عبر **`replayPeriodExternalEventsProvider`**. |
+| **طبقة التحويل** | **`replay_external_event.dart`**, **`replay_external_event_mapper.dart`**, **`replay_event_deduplication.dart`** — دمج مع تحليل المسار المحلي؛ أولوية Backend عند تطابق النوع ±30 ث. |
+| **Timeline** | صفوف إضافية عبر **`externalTimelineItems`** في **`RouteEventTimeline`**؛ فلتر **«التنبيهات»** لـ `externalEvent` فقط؛ overspeed/ignition/stop من التقارير تدخل الفلاتر الحالية. |
+| **الخريطة** | علامات وردية/برتقالية لأحداث ذات إحداثيات GPS فقط (حد أقصى 20) — **`ReplayExternalEventMarkers`**. |
+| **بدون موقع** | يظهر في Timeline فقط؛ الموضع للـ seek = أقرب نقطة مسار؛ لا علامة خريطة. |
+| **التفاصيل** | ورقة **`RouteEventDetailsSheet`** مع نوع/وقت/وصف؛ «الموقع غير متوفر» عند غياب GPS. |
+| **الأداء** | جلب مرة واحدة عند فتح Replay (لا أثناء التشغيل). |
+
+**لم يُربط / غير متوفر:** أحداث fuel/media/driver إن لم تُرجَع من API؛ إشعارات push كـ timeline؛ geocoding جديد للتنبيهات بدون إحداثيات.
+
+**لم يُكسر:** R1 (فجوات)، R2 (Snapshot)، R3 (بداية/نهاية، فلاتر، ملخص).
+
+---
+
+---
+
+## 16. Replay — Motion Smoothness (Phase R5)
+
+| العنصر | الوصف |
+|--------|--------|
+| **Step controls** | أزرار «النقطة السابقة» / «النقطة التالية» بجانب التشغيل — `stepPrevious` / `stepNext` في **`ReplayController`** (إيقاف مؤقت ثم `seekTo`). |
+| **Interpolation** | انزلاق بصري للعلامة فقط عبر **`replay_motion_helper.dart`** + `AnimationController` في الشاشة — **لا** يغيّر Snapshot (يبقى على `currentPoint` الحقيقي). |
+| **منع عبر الفجوة** | `canInterpolateBetween` يرفض إذا: Δt > `replayGapThreshold`، Δt ≤ 0، إحداثيات غير صالحة، تداخل مع `ReplayRouteGap`، سرعة غير منطقية (>220 km/h). |
+| **عبر gap** | قفزة فورية للعلامة (بدون انزلاق). |
+| **الكاميرا** | auto-follow يتحرك عند نهاية الانزلاق أو عند القفزة؛ لا تحديث لكل إطار أثناء الانزلاق. |
+
+**لم يُنفَّذ:** interpolation لبيانات Snapshot أو تغيير معنى سرعات x1–x8.
+
+---
+
+---
+
+## 17. Single Replay — Tests & Stability (Phase R6)
+
+مرحلة **لا تضيف Features** — تثبيت واختبارات وتوثيق بعد R1–R5.
+
+### مجموعة الاختبارات الآلية
+
+```bash
+# Replay core (R1–R5 logic)
+flutter test test/features/reports/
+
+# Timeline / filters (R3 + R4 filters)
+flutter test test/features/map/core/route_event_timeline_filter_test.dart
+flutter test test/features/map/core/route_event_timeline_models_test.dart
+
+# Static analysis (ملفات التقارير)
+flutter analyze lib/features/reports/
+```
+
+### ما تغطيه الاختبارات
+
+| منطقة | ملفات الاختبار الرئيسية |
+|--------|-------------------------|
+| **R1 Gaps** | `replay_route_gap_detector_test.dart` |
+| **R2 Snapshot** | `replay_point_snapshot_test.dart` |
+| **R3 Timeline** | `replay_timeline_helpers_test.dart`, `route_event_timeline_filter_test.dart` |
+| **R4 Events** | `replay_external_event_mapper_test.dart`, `replay_event_deduplication_test.dart`, `replay_external_event_markers_test.dart` |
+| **R5 Motion** | `replay_motion_helper_test.dart`, `replay_controller_test.dart` (step) |
+| **Controller** | `replay_controller_test.dart` (play/pause/seek/speed/timer) |
+
+### حدود الاختبارات
+
+- **لا** widget tests لـ `GoogleMap` / `ReplayReportScreen` (تعتمد على QA يدوي).
+- **لا** اختبارات شبكة لـ `replayPeriodExternalEventsProvider`.
+- انزلاق العلامة (R5) يُختبر منطق `canInterpolateBetween` وليس إطارات Flutter.
+
+### إصلاح استقرار (R6)
+
+- إلغاء `AnimationController` للعلامة عند تغيير `params` في `didUpdateWidget` (منع leak بعد تغيير الفترة).
+
+### QA يدوي — Single Replay
+
+قائمة الفحص الكاملة (Single + Multi + KPIs + أجهزة) — **[`docs/replay_release_notes.md`](replay_release_notes.md)** § «QA Checklist finale».
+
+### السلوك المستقر النهائي (R1–R5)
+
+- فجوات ≥10 دقائق: polyline منفصل، timeline `dataGap`، لا انزلاق عبر الفجوة.
+- Snapshot من `currentPoint` الحقيقي فقط.
+- Timeline مدمج (محلي + supplemental + external مع dedup ±30 ث).
+- Step + play x1–x8 + انزلاق علامة اختياري بين نقطتين آمنتين.
+
+---
+
+---
+
+## 18. Single Vehicle Replay — مرجع موحّد (R1–R9)
+
+**الشاشة:** `ReplayReportScreen` — `/reports/replay` — **`ReportFilterParams`** + اسم المركبة.
+
+### مصدر البيانات
+
+| العنصر | التفاصيل |
+|--------|----------|
+| API | تقرير المسار (`RouteDataSource` / `reportRouteProvider`) — **بدون API جديد** |
+| `RoutePoint` | lat/lng، speed (km/h)، course، fixTime، ignition، address?، **attributes?** (R9) |
+| نقاط كاملة | القائمة المحمّلة — gaps، events، تحليل ذكاء المسار |
+| نقاط التشغيل | `ReplayController` — تصفية (0,0)، ترتيب، عيّنة **≤ 1200** للـ play/seek/snapshot |
+
+### الخريطة
+
+- Polyline ملوّن بالسرعة، **مقاطع منفصلة عند gaps** (§12).
+- ماركرات: بداية/نهاية/أقصى سرعة/ساعية (حسب الزوم)؛ gaps بنفسجية؛ أحداث خارجية (GPS، max **20**)؛ ماركر مركبة متحرك.
+- دوران الماركر عند speed ≥ 5 km/h واتجاه صالح.
+- **fitBounds** عند التحميل؛ **auto-follow** (`_followVehicle`) يُوقف عند recentrer أو tap Timeline.
+
+### Gaps (R1)
+
+- عتبة **10 دقائق** بين fixes مرتبة.
+- لا خط polyline عبر gap؛ `ReplayGapsSheet`؛ `dataGap` في Timeline؛ seek → أول fix بعد الفجوة.
+- **لا** polyline متقطّع (dashed).
+
+### Snapshot (R2 + R9)
+
+- ثابت: وقت، سرعة، تقدم %، حركة، عنوان إن وُجد.
+- موسّع: إحداثيات، اتجاه، إشعال (شرطي)، **حساسات** (حتى 4) من attributes فقط.
+- «بعد انقطاع البيانات» عند fix قرب نهاية gap.
+
+### Timeline (R3 + R4)
+
+`routeStart` | `routeEnd` | `stop` | `overspeed` | `ignitionOn/Off` | `dataGap` | `externalEvent` — فلاتر + ملخص — tap → seek + كاميرا + ورقة تفاصيل.
+
+### Events (R4)
+
+تقارير events + تنبيهات الفترة؛ دمج ±30 ث dedup؛ بدون GPS = Timeline فقط.
+
+### Motion (R5)
+
+Step Next/Previous؛ glide بصري إن `canInterpolateBetween`؛ لا glide عبر gap؛ Snapshot = نقطة حقيقية.
+
+### الحساسات (R9)
+
+انظر §19 أدناه و**[`replay_release_notes.md`](replay_release_notes.md)** — لا عرض بدون بيانات؛ لا JSON خام.
+
+**تفاصيل كل مرحلة:** §12 (R1) … §17 (R6).
+
+---
+
+## 19. Multi-Vehicle Replay (Phase R7)
+
+**مسار:** `/vehicles/replay-multi` — **`MultiVehicleReplayScreen`** (2–5 مركبات، timeline موحّد). التفاصيل الكاملة: **`docs/multi_vehicle_replay.md` §19**.
+
+| العنصر | الوصف |
+|--------|--------|
+| **fitBounds / Recentrer** | `MultiVehicleReplayMapHelpers` — مركبات **ظاهرة** فقط؛ padding 120؛ بدون crash عند صفر نقاط. |
+| **Auto-follow** | اختياري (chip)؛ throttle ~900 ms؛ يتبع marqueurs المرئية أثناء التشغيل. |
+| **مركبة نشطة** | `activeVehicleId` — tap على بطاقة الليجند؛ zIndex أعلى للماركر. |
+| **Snapshot مختصر** | بطاقات أفقية: سرعة، حركة، وقت؛ بدون fuel/battery/GSM. |
+| **إظهار/إخفاء** | polyline + marker؛ timeline الموحّد لا يتغيّر. |
+| **ألوان** | لون ثابت افتراضي؛ **ألوان السرعة** اختيارية (مع gaps عبر `ReplayRouteGapDetector`). |
+| **Single Replay** | **غير متأثر** — لا تغيير على `ReplayReportScreen` / `ReplayController`. |
+
+**اختبارات:** `test/features/vehicles/presentation/replay_multi/` (52+).
+
+### Phase R9 — Advanced Sensors (Single Replay)
+
+- **`RoutePoint.attributes`** — خريطة اختيارية من route API (إن وُجدت في JSON).
+- **`RoutePointAttributesMapper`** / **`ReplaySensorSnapshotBuilder`** — fuel، battery (`power`/voltage أو %)، GSM (`rssi`/%)، satellites، accuracy/hdop، driver (نص فقط).
+- **العرض:** داخل **تفاصيل** `ReplaySnapshotPanel` الموسّعة فقط (حتى 4 قيم)؛ لا raw JSON؛ لا قيم وهمية.
+- **الإشعال:** `RoutePoint.ignition` (يُملأ عند التحليل من attributes) له الأولوية.
+- **Multi Replay:** لا عرض sensors في الواجهة (مؤجل)؛ KPIs R8 و R7 غير متأثرة.
+
+### Phase R8 — Comparison KPIs
+
+- **`MultiReplayKpiCalculator`** — مسافة تقريبية، مدة حركة/توقف، سرعة قصوى/متوسطة، توقفات وتجاوزات عبر **`RouteEventAnalyzer`** (عتبة 80 km/h افتراضية).
+- **حساب مرة واحدة عند التحميل** — `comparisonSummary` في حالة التحميل.
+- **واجهة:** chip «المقارنة» → Bottom Sheet؛ KPIs لكل المركبات المحمّلة مع تمييز المخفية/النشطة.
+- **تفاصيل:** `docs/multi_vehicle_replay.md` §20.
+
+---
+
+## 20. Phase R10 — Documentation & QA
+
+| العنصر | الموقع |
+|--------|--------|
+| **Release Notes R1–R10** | [`docs/replay_release_notes.md`](replay_release_notes.md) |
+| **QA Checklist النهائي** | نفس الملف — 10 أقسام (Single، Gaps، Snapshot، Timeline، Events، Motion، Multi، KPIs، l10n، جهاز) |
+| **أوامر الاختبار** | نفس الملف + §17 أعلاه |
+| **Known limitations** | نفس الملف + أقسام R1–R9 هنا وفي `multi_vehicle_replay.md` |
+
+**Phase R10 لا تضيف Features** — لا تغيير UI ولا منطق Replay.
+
+### أوامر التحقق (Phase R10)
+
+```bash
+flutter test test/features/reports/
+flutter test test/features/vehicles/presentation/replay_multi/
+flutter test test/features/map/core/
+flutter analyze lib/features/reports/ lib/features/vehicles/presentation/replay_multi/
+```
+
+---
+
+*آخر تحديث: Phase R10 — توثيق Replay R1–R10 + QA؛ [`replay_release_notes.md`](replay_release_notes.md).*
 
 ---

@@ -13,12 +13,16 @@ class AlertsRepositoryImpl implements AlertsRepository {
     int limit = 50,
     int offset = 0,
     int? deviceId,
+    DateTime? from,
+    DateTime? to,
   }) async {
     final models = await _dataSource.getAlerts(
       status: status,
       limit: limit,
       offset: offset,
       deviceId: deviceId,
+      from: from,
+      to: to,
     );
     return models.map((m) => m.toEntity()).toList();
   }

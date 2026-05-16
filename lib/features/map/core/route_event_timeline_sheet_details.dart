@@ -110,6 +110,20 @@ RouteEventSheetPresentation buildRouteEventSheetPresentation(
         value: _formatDateTime(item.sortTime),
       ));
       break;
+    case RouteTimelineEntryKind.routeStart:
+      headline = l10n.routeTimelineStart;
+      rows.add(RouteEventSheetRow(
+        label: l10n.routeEventDetailsTime,
+        value: _formatDateTime(item.sortTime),
+      ));
+      break;
+    case RouteTimelineEntryKind.routeEnd:
+      headline = l10n.routeTimelineEnd;
+      rows.add(RouteEventSheetRow(
+        label: l10n.routeEventDetailsTime,
+        value: _formatDateTime(item.sortTime),
+      ));
+      break;
     case RouteTimelineEntryKind.dataGap:
       headline = l10n.replayMissingGpsData;
       final start = item.stopStartTime;
@@ -133,12 +147,35 @@ RouteEventSheetPresentation buildRouteEventSheetPresentation(
         ));
       }
       break;
+    case RouteTimelineEntryKind.externalEvent:
+      headline = item.title;
+      rows.add(RouteEventSheetRow(
+        label: l10n.replayEventDetailsType,
+        value: l10n.replayExternalEvent,
+      ));
+      rows.add(RouteEventSheetRow(
+        label: l10n.routeEventDetailsTime,
+        value: _formatDateTime(item.sortTime),
+      ));
+      if (item.detailLine.trim().isNotEmpty &&
+          item.detailLine != l10n.replayExternalEvent) {
+        rows.add(RouteEventSheetRow(
+          label: l10n.replayEventDetailsDescription,
+          value: item.detailLine,
+        ));
+      }
+      break;
   }
 
   if (validPos) {
     rows.add(RouteEventSheetRow(
       label: l10n.routeEventDetailsLocation,
       value: coordLine!,
+    ));
+  } else if (item.kind == RouteTimelineEntryKind.externalEvent) {
+    rows.add(RouteEventSheetRow(
+      label: l10n.routeEventDetailsLocation,
+      value: l10n.replayExternalPositionUnavailable,
     ));
   }
 

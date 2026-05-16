@@ -12,6 +12,7 @@ class RoutePoint {
     required this.fixTime,
     required this.ignition,
     this.address,
+    this.attributes,
   });
 
   final LatLng position;
@@ -23,9 +24,14 @@ class RoutePoint {
   /// When the server includes a resolved address on the position (Phase 7D).
   final String? address;
 
+  /// Raw position attributes from the route API when present (Phase R9).
+  final Map<String, dynamic>? attributes;
+
   factory RoutePoint.fromJson(Map<String, dynamic> json) {
-    final attrs =
-        Map<String, dynamic>.from(json['attributes'] as Map? ?? {});
+    final rawAttrs = json['attributes'];
+    final Map<String, dynamic>? attrs = rawAttrs is Map
+        ? Map<String, dynamic>.from(rawAttrs)
+        : null;
     final rawAddr = json['address'] as String?;
     final trimmed = rawAddr?.trim();
     return RoutePoint(
@@ -38,8 +44,9 @@ class RoutePoint {
       fixTime: DateTime.tryParse(
                   json['fixTime'] as String? ?? '')?.toLocal() ??
               DateTime.now(),
-      ignition: attrs['ignition'] as bool? ?? false,
+      ignition: attrs?['ignition'] as bool? ?? false,
       address: (trimmed != null && trimmed.isNotEmpty) ? trimmed : null,
+      attributes: attrs?.isEmpty == true ? null : attrs,
     );
   }
 }

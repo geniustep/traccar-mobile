@@ -49,6 +49,16 @@ void main() {
         detailLine: '',
       );
 
+  RouteEventTimelineItem gap() => RouteEventTimelineItem(
+        selectionKey: 'g1',
+        kind: RouteTimelineEntryKind.dataGap,
+        sortTime: DateTime.utc(2025, 1, 5),
+        position: const LatLng(1, 2),
+        title: 'G',
+        primaryTimeLabel: 'e',
+        detailLine: '',
+      );
+
   test('filter all keeps all', () {
     final items = [stop(), os(), ignOn()];
     expect(
@@ -82,13 +92,81 @@ void main() {
     expect(f.length, 2);
   });
 
+  RouteEventTimelineItem routeStart() => RouteEventTimelineItem(
+        selectionKey: 'rs',
+        kind: RouteTimelineEntryKind.routeStart,
+        sortTime: DateTime.utc(2025, 1, 0),
+        position: const LatLng(1, 2),
+        title: 'Start',
+        primaryTimeLabel: 'a',
+        detailLine: '',
+      );
+
+  RouteEventTimelineItem routeEnd() => RouteEventTimelineItem(
+        selectionKey: 're',
+        kind: RouteTimelineEntryKind.routeEnd,
+        sortTime: DateTime.utc(2025, 1, 6),
+        position: const LatLng(1, 2),
+        title: 'End',
+        primaryTimeLabel: 'b',
+        detailLine: '',
+      );
+
+  RouteEventTimelineItem external() => RouteEventTimelineItem(
+        selectionKey: 'x',
+        kind: RouteTimelineEntryKind.externalEvent,
+        sortTime: DateTime.utc(2025, 1, 7),
+        position: const LatLng(1, 2),
+        title: 'Alert',
+        primaryTimeLabel: 'c',
+        detailLine: '',
+      );
+
+  test('routeStart and routeEnd appear in all filter only', () {
+    final items = [routeStart(), stop(), routeEnd()];
+    expect(
+      routeEventTimelineItemsFiltered(items, RouteEventTimelineFilter.all).length,
+      3,
+    );
+    expect(
+      routeEventTimelineItemsFiltered(items, RouteEventTimelineFilter.stops).length,
+      1,
+    );
+    expect(
+      routeEventTimelineItemsFiltered(items, RouteEventTimelineFilter.stops)
+          .any((e) => e.kind == RouteTimelineEntryKind.routeStart),
+      isFalse,
+    );
+  });
+
+  test('filter alerts only externalEvent', () {
+    final items = [external(), os(), routeStart()];
+    final f = routeEventTimelineItemsFiltered(
+      items,
+      RouteEventTimelineFilter.alerts,
+    );
+    expect(f.length, 1);
+    expect(f.single.kind, RouteTimelineEntryKind.externalEvent);
+  });
+
+  test('filter dataGaps only', () {
+    final items = [stop(), gap(), os()];
+    final f = routeEventTimelineItemsFiltered(
+      items,
+      RouteEventTimelineFilter.dataGaps,
+    );
+    expect(f.length, 1);
+    expect(f.single.kind, RouteTimelineEntryKind.dataGap);
+  });
+
   test('counts match kinds', () {
-    final items = [stop(), stop(), os(), ignOn()];
+    final items = [stop(), stop(), os(), ignOn(), gap()];
     final c = routeEventTimelineFilterCounts(items);
-    expect(c.all, 4);
+    expect(c.all, 5);
     expect(c.stops, 2);
     expect(c.overspeed, 1);
     expect(c.ignition, 1);
+    expect(c.dataGaps, 1);
   });
 
   test('selection key may be absent from filtered list — matcher consistent', () {

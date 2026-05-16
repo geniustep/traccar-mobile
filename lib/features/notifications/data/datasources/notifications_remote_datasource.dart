@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
-import '../../../../core/network/traccar_client.dart';
 import '../../../../core/api/traccar_endpoints.dart';
+import '../../../../core/error/app_exception.dart';
+import '../../../../core/network/traccar_client.dart';
+import '../../../../core/response/result.dart';
 import '../models/notification_model.dart';
 
 /// Notification history is derived from recent Traccar events.
@@ -13,11 +15,11 @@ class NotificationsRemoteDataSource {
   /// Fetches the last 7 days of events as notification feed.
   Future<List<NotificationModel>> getNotifications() async {
     // 1. Get devices for name lookup
-    final devices = (await _client.get<List<Map<String, dynamic>>>(
+    final devicesResult = await _client.get<List<Map<String, dynamic>>>(
       TraccarEndpoints.devices,
-      fromJson: (j) =>
-          (j as List).whereType<Map<String, dynamic>>().toList(),
-    )).getOrThrow();
+      fromJson: _parseMapList,
+    );
+    final devices = _unwrap(devicesResult);
 
     if (devices.isEmpty) return [];
 
@@ -30,16 +32,16 @@ class NotificationsRemoteDataSource {
     final now = DateTime.now().toUtc();
     final from = now.subtract(const Duration(days: 7));
 
-    final events = (await _client.get<List<Map<String, dynamic>>>(
+    final eventsResult = await _client.get<List<Map<String, dynamic>>>(
       TraccarEndpoints.reportEvents,
       query: {
         'from': from.toIso8601String(),
         'to': now.toIso8601String(),
         'deviceId': nameMap.keys.toList(),
       },
-      fromJson: (j) =>
-          (j as List).whereType<Map<String, dynamic>>().toList(),
-    )).getOrThrow();
+      fromJson: _parseMapList,
+    );
+    final events = _unwrap(eventsResult);
 
     return events.map((e) {
       final dId = e['deviceId'] as int?;
@@ -49,6 +51,27 @@ class NotificationsRemoteDataSource {
       );
     }).toList();
   }
+
+  static List<Map<String, dynamic>> _parseMapList(dynamic json) =>
+      parseMapListForTest(json);
+
+  /// Exposed for unit tests only.
+  @visibleForTesting
+  static List<Map<String, dynamic>> parseMapListForTest(dynamic json) {
+    if (json == null) return [];
+    if (json is! List) {
+      throw const ParseException(
+        message: 'Expected a JSON array in response.',
+      );
+    }
+    return json.whereType<Map<String, dynamic>>().toList();
+  }
+
+  /// Unwraps [Result] — propagates [AuthException] on 401 without JSON decode.
+  static T _unwrap<T>(Result<T, AppException> result) => result.when(
+        success: (value) => value,
+        failure: (error) => throw error,
+      );
 
   /// Traccar has no "mark as read" API for events.
   /// Read state is managed locally (shared_preferences or in-memory).

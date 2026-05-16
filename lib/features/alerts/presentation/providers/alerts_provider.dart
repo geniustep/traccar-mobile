@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/auth/protected_data_guard.dart';
 import '../../../../core/debug/debug_log_store.dart';
 import '../../../../core/logging/app_logger.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/alert.dart';
 import '../../domain/repositories/alerts_repository.dart';
 import '../../data/datasources/alerts_remote_datasource.dart';
@@ -17,7 +19,7 @@ final alertsRepositoryProvider = Provider<AlertsRepository>((ref) {
 
 class AlertsState {
   const AlertsState({
-    this.alertsAsync = const AsyncValue.loading(),
+    this.alertsAsync = const AsyncValue.data([]),
     this.unreadCount = 0,
     this.statusFilter = 'all',
     this.isLoadingMore = false,
@@ -71,11 +73,10 @@ class AlertsState {
 // ── Notifier ──────────────────────────────────────────────────────────────────
 
 class AlertsNotifier extends StateNotifier<AlertsState> {
-  AlertsNotifier(this._repository) : super(const AlertsState()) {
-    load();
-  }
+  AlertsNotifier(this._repository, this._ref) : super(const AlertsState());
 
   final AlertsRepository _repository;
+  final Ref _ref;
 
   static const int _pageSize = 50;
 
@@ -100,6 +101,12 @@ class AlertsNotifier extends StateNotifier<AlertsState> {
   }
 
   Future<void> _doLoad({bool resetOffset = true}) async {
+    final auth = _ref.read(authProvider);
+    if (!canLoadProtectedData(auth)) {
+      logSkippedProtectedLoad('Alerts');
+      return;
+    }
+
     if (resetOffset) {
       state = state.copyWith(
         alertsAsync: const AsyncValue.loading(),
@@ -199,6 +206,10 @@ class AlertsNotifier extends StateNotifier<AlertsState> {
   // ── Load more (pagination) ────────────────────────────────────────────────
 
   Future<void> loadMore() async {
+    if (!canLoadProtectedData(_ref.read(authProvider))) {
+      logSkippedProtectedLoad('Alerts');
+      return;
+    }
     if (state.isLoadingMore || !state.hasMore) return;
     final current = state.alertsAsync.valueOrNull;
     if (current == null) return;
@@ -304,6 +315,10 @@ class AlertsNotifier extends StateNotifier<AlertsState> {
   /// call getUnreadCount() separately here. This eliminates the duplicate
   /// unread-count request that was previously fired.
   Future<void> refreshFromFcm(String alertId) async {
+    if (!canLoadProtectedData(_ref.read(authProvider))) {
+      logSkippedProtectedLoad('Alerts');
+      return;
+    }
     AppLogger.alerts('Refresh from FCM started (alertId=${alertId.isEmpty ? '-' : alertId})');
     DebugLogStore.instance
       ..alertsLastRefreshSource = 'FCM'
@@ -350,6 +365,10 @@ class AlertsNotifier extends StateNotifier<AlertsState> {
   }
 
   Future<void> _doRefreshUnreadCount() async {
+    if (!canLoadProtectedData(_ref.read(authProvider))) {
+      logSkippedProtectedLoad('Alerts');
+      return;
+    }
     try {
       final count = await _repository.getUnreadCount();
       if (mounted) state = state.copyWith(unreadCount: count);
@@ -393,7 +412,7 @@ class AlertsNotifier extends StateNotifier<AlertsState> {
 // NOT autoDispose — survives tab navigation so filter/unreadCount persist.
 final alertsProvider =
     StateNotifierProvider<AlertsNotifier, AlertsState>(
-  (ref) => AlertsNotifier(ref.read(alertsRepositoryProvider)),
+  (ref) => AlertsNotifier(ref.read(alertsRepositoryProvider), ref),
 );
 
 /// Badge count — used by MainShell bottom nav.
@@ -405,6 +424,10 @@ final unreadAlertsCountProvider = Provider<int>((ref) {
 /// Vehicle-specific alerts (for vehicle detail screen).
 final vehicleAlertsProvider = FutureProvider.autoDispose
     .family<List<AlertEntity>, String>((ref, vehicleId) async {
+  if (!canLoadProtectedData(ref.read(authProvider))) {
+    logSkippedProtectedLoad('Alerts');
+    return [];
+  }
   return ref.read(alertsRepositoryProvider).getVehicleAlerts(vehicleId);
 });
 
@@ -412,6 +435,10 @@ final vehicleAlertsProvider = FutureProvider.autoDispose
 /// Used by AlertDetailScreen so it always gets fresh data.
 final alertDetailProvider =
     FutureProvider.autoDispose.family<AlertEntity?, String>((ref, alertId) async {
+  if (!canLoadProtectedData(ref.read(authProvider))) {
+    logSkippedProtectedLoad('Alerts');
+    return null;
+  }
   final numId = int.tryParse(alertId);
   if (numId == null) {
     AppLogger.alerts('Fetch detail skipped: invalid alertId=$alertId');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'app/app.dart';
 import 'shared/providers/core_providers.dart' show sharedPreferencesProvider;
 import 'shared/providers/traccar_providers.dart';
@@ -9,6 +10,10 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  for (final locale in ['en', 'ar', 'fr', 'es']) {
+    await initializeDateFormatting(locale);
+  }
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

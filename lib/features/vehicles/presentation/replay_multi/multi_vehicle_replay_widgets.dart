@@ -4,12 +4,14 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../map/data/datasources/route_datasource.dart';
 import '../../../reports/presentation/providers/replay_controller.dart';
 import 'multi_vehicle_replay_controller.dart';
 import 'multi_vehicle_replay_formatters.dart';
 import 'multi_vehicle_replay_model.dart';
 import 'multi_vehicle_replay_timeline.dart';
 import 'multi_vehicle_replay_ui.dart';
+import 'multi_vehicle_replay_vehicle_card.dart';
 
 class MultiVehicleReplayTimeCard extends StatelessWidget {
   const MultiVehicleReplayTimeCard({
@@ -106,20 +108,40 @@ class MultiVehicleReplayLegend extends StatelessWidget {
     super.key,
     required this.tracks,
     required this.playback,
+    required this.timeline,
     required this.onVisibility,
+    required this.onActiveVehicle,
     required this.labelsEnabled,
     required this.onToggleLabels,
   });
 
   final List<MultiVehicleReplayTrack> tracks;
   final MultiVehicleReplayPlaybackState playback;
+  final MultiVehicleReplayTimeline? timeline;
   final void Function(String vehicleId, bool visible) onVisibility;
+  final ValueChanged<String> onActiveVehicle;
   final bool labelsEnabled;
   final VoidCallback onToggleLabels;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final time = playback.currentTime;
+    final markers = time == null || timeline == null
+        ? <String, RoutePoint?>{}
+        : timeline!.markersAtTime(time);
+
+    final cards = MultiVehicleReplayVehicleCardBuilder.forTracks(
+      tracks: tracks,
+      markersAtTime: markers,
+      isVisible: playback.vehicleVisible,
+      activeVehicleId: playback.activeVehicleId,
+      movingLabel: l10n.moving,
+      stoppedLabel: l10n.stopped,
+      noFixLabel: l10n.multiReplayNoFixAtTime,
+    );
+
+    final visibleCount = playback.visibleVehicleCount;
 
     return Material(
       elevation: 2,
@@ -132,10 +154,18 @@ class MultiVehicleReplayLegend extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  l10n.replayMapLegend,
+                  l10n.multiReplayVisibleVehicles,
                   style: AppTextStyles.labelSmall.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textMutedOf(context),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '($visibleCount/${tracks.length})',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textMutedOf(context),
+                    fontSize: 10,
                   ),
                 ),
                 const Spacer(),
@@ -155,8 +185,19 @@ class MultiVehicleReplayLegend extends StatelessWidget {
               ],
             ),
           ),
+          if (visibleCount == 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Text(
+                l10n.multiReplayNoVisibleVehicles,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.warning,
+                  fontSize: 11,
+                ),
+              ),
+            ),
           SizedBox(
-            height: 76,
+            height: 96,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(
@@ -165,13 +206,12 @@ class MultiVehicleReplayLegend extends StatelessWidget {
                 AppSpacing.md,
                 8,
               ),
-              itemCount: tracks.length,
+              itemCount: cards.length,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, i) =>
-                  _LegendTile(
-                track: tracks[i],
-                playback: playback,
+              itemBuilder: (context, i) => _LegendTile(
+                data: cards[i],
                 onVisibility: onVisibility,
+                onActiveVehicle: onActiveVehicle,
                 l10n: l10n,
               ),
             ),
@@ -184,63 +224,68 @@ class MultiVehicleReplayLegend extends StatelessWidget {
 
 class _LegendTile extends StatelessWidget {
   const _LegendTile({
-    required this.track,
-    required this.playback,
+    required this.data,
     required this.onVisibility,
+    required this.onActiveVehicle,
     required this.l10n,
   });
 
-  final MultiVehicleReplayTrack track;
-  final MultiVehicleReplayPlaybackState playback;
+  final MultiVehicleReplayVehicleCardData data;
   final void Function(String vehicleId, bool visible) onVisibility;
+  final ValueChanged<String> onActiveVehicle;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final visible = playback.vehicleVisible(track.vehicleId);
-    final hasData = track.hasData;
-    final status = MultiVehicleReplayUi.legendStatus(
-      hasData: hasData,
-      visible: visible,
-    );
+    final track = data.track;
+    final status = MultiVehicleReplayVehicleCardBuilder.legendStatusFor(data);
 
     final statusText = switch (status) {
       MultiVehicleReplayLegendStatus.noData => l10n.replayVehicleNoData,
       MultiVehicleReplayLegendStatus.hidden => l10n.replayVehicleHidden,
+      MultiVehicleReplayLegendStatus.activeSelected =>
+        l10n.multiReplayActiveVehicle,
       MultiVehicleReplayLegendStatus.active => l10n.replayVehicleActive,
     };
 
-    final subtitle = !hasData
-        ? null
-        : (track.distanceMeters != null
-            ? MultiVehicleReplayFormatters.formatDistance(track.distanceMeters)
-            : l10n.replayPointsCount(track.allPoints.length));
-
     return InkWell(
-      onTap: hasData ? () => onVisibility(track.vehicleId, !visible) : null,
+      onTap: data.hasData && data.visible
+          ? () => onActiveVehicle(track.vehicleId)
+          : null,
       borderRadius: BorderRadius.circular(10),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 180),
-        opacity: status == MultiVehicleReplayLegendStatus.hidden ? 0.5 : 1,
+        opacity: status == MultiVehicleReplayLegendStatus.hidden ? 0.45 : 1,
         child: Container(
-          width: 118,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          width: 132,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: status == MultiVehicleReplayLegendStatus.hidden
-                  ? AppColors.textMutedOf(context).withValues(alpha: 0.35)
-                  : track.color.withValues(alpha: 0.45),
+              color: status == MultiVehicleReplayLegendStatus.activeSelected
+                  ? track.color
+                  : status == MultiVehicleReplayLegendStatus.hidden
+                      ? AppColors.textMutedOf(context).withValues(alpha: 0.35)
+                      : track.color.withValues(alpha: 0.45),
+              width: status == MultiVehicleReplayLegendStatus.activeSelected
+                  ? 2
+                  : 1,
             ),
             color: status == MultiVehicleReplayLegendStatus.hidden
                 ? AppColors.textMutedOf(context).withValues(alpha: 0.06)
-                : track.color.withValues(alpha: 0.08),
+                : track.color.withValues(
+                    alpha: status ==
+                            MultiVehicleReplayLegendStatus.activeSelected
+                        ? 0.14
+                        : 0.08,
+                  ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
                     width: 14,
@@ -258,6 +303,10 @@ class _LegendTile extends StatelessWidget {
                         track.vehicleId,
                       ),
                       style: AppTextStyles.labelSmall.copyWith(
+                        fontSize: 11,
+                        fontWeight: data.isActive
+                            ? FontWeight.w800
+                            : FontWeight.w600,
                         decoration: status ==
                                 MultiVehicleReplayLegendStatus.hidden
                             ? TextDecoration.lineThrough
@@ -267,13 +316,26 @@ class _LegendTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (hasData)
-                    Icon(
-                      visible
-                          ? Icons.visibility_rounded
-                          : Icons.visibility_off_rounded,
-                      size: 16,
-                      color: AppColors.textMutedOf(context),
+                  if (data.hasData)
+                    Tooltip(
+                      message: data.visible
+                          ? l10n.multiReplayHide
+                          : l10n.multiReplayShow,
+                      child: InkWell(
+                        onTap: () =>
+                            onVisibility(track.vehicleId, !data.visible),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Icon(
+                            data.visible
+                                ? Icons.visibility_rounded
+                                : Icons.visibility_off_rounded,
+                            size: 15,
+                            color: AppColors.textMutedOf(context),
+                          ),
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -284,21 +346,25 @@ class _LegendTile extends StatelessWidget {
                   color: status == MultiVehicleReplayLegendStatus.noData
                       ? AppColors.warning
                       : AppColors.textMutedOf(context),
-                  fontSize: 10,
+                  fontSize: 9.5,
+                  fontWeight: data.isActive ? FontWeight.w700 : null,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (subtitle != null)
+              if (data.hasData && data.visible) ...[
+                const SizedBox(height: 1),
                 Text(
-                  subtitle,
+                  '${data.speedLabel} · ${data.movementLabel} · ${data.timeLabel}',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMutedOf(context),
-                    fontSize: 10,
+                    color: AppColors.textSecondaryOf(context),
+                    fontSize: 9.5,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ],
             ],
           ),
         ),

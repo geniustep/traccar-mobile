@@ -73,6 +73,12 @@ class TraccarClient {
       return Result.success(_decode<T>(res.data, fromJson));
     } on DioException catch (e) {
       return Result.failure(_extractException(e));
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on FormatException catch (e) {
+      return Result.failure(
+        ParseException(message: 'Failed to parse response: ${e.message}'),
+      );
     } catch (e) {
       return Result.failure(UnknownException(message: e.toString()));
     }
@@ -186,12 +192,36 @@ class TraccarClient {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   T _decode<T>(dynamic data, T Function(dynamic)? fromJson) {
-    if (fromJson != null) return fromJson(data);
+    if (fromJson != null) {
+      try {
+        return fromJson(data);
+      } on FormatException catch (e) {
+        throw ParseException(
+          message: 'Failed to parse response: ${e.message}',
+          details: data,
+        );
+      }
+    }
     return data as T;
   }
 
   AppException _extractException(DioException e) {
     if (e.error is AppException) return e.error as AppException;
+
+    final statusCode = e.response?.statusCode;
+    if (statusCode != null && statusCode > 0) {
+      return AppException.fromStatusCode(
+        statusCode,
+        e.message,
+      );
+    }
+
+    if (e.error is FormatException) {
+      return ParseException(
+        message: 'Failed to parse response: ${(e.error as FormatException).message}',
+      );
+    }
+
     return UnknownException(message: e.message ?? 'Unknown error');
   }
 }

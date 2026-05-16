@@ -71,15 +71,18 @@ final fcmAuthSyncProvider = Provider<void>((ref) {
         },
       );
 
-      // Note: AlertsNotifier.load() already fetches unread count on creation.
-      // No separate refreshUnreadCount() call needed here — avoids duplicate
-      // GET /alerts/unread-count on startup.
+      ref.read(alertsProvider.notifier).load();
+      ref.read(notificationsProvider.notifier).load();
     } else if (!state.isAuthenticated && !state.isLoading) {
       FcmService.instance.reset();
-      ref.read(alertsProvider.notifier).resetOnLogout();
-      ref.read(notificationsProvider.notifier).resetOnLogout();
+      if (ref.exists(alertsProvider)) {
+        ref.read(alertsProvider.notifier).resetOnLogout();
+      }
+      if (ref.exists(notificationsProvider)) {
+        ref.read(notificationsProvider.notifier).resetOnLogout();
+      }
       ref.read(pendingNotificationAlertIdProvider.notifier).state = null;
-      AppLogger.fcm('Logout — FCM / alerts state cleared');
+      AppLogger.fcm('Logout — FCM / alerts state cleared (no API reload)');
     }
   }
 

@@ -408,6 +408,29 @@ class AppLocalizations {
   String get multiReplayLoading => _t('multiReplayLoading');
   String get multiReplayNoData => _t('multiReplayNoData');
   String get multiReplayLoadFailed => _t('multiReplayLoadFailed');
+  String get multiReplayAutoFollow => _t('multiReplayAutoFollow');
+  String get multiReplayActiveVehicle => _t('multiReplayActiveVehicle');
+  String get multiReplayVisibleVehicles => _t('multiReplayVisibleVehicles');
+  String get multiReplayHide => _t('multiReplayHide');
+  String get multiReplayShow => _t('multiReplayShow');
+  String get multiReplayNoVisibleVehicles => _t('multiReplayNoVisibleVehicles');
+  String get multiReplaySpeedColors => _t('multiReplaySpeedColors');
+  String get multiReplayNoFixAtTime => _t('multiReplayNoFixAtTime');
+  String get multiReplayComparison => _t('multiReplayComparison');
+  String get multiReplaySummary => _t('multiReplaySummary');
+  String get multiReplayMovingTime => _t('multiReplayMovingTime');
+  String get multiReplayStoppedTime => _t('multiReplayStoppedTime');
+  String get multiReplayInsufficientData => _t('multiReplayInsufficientData');
+  String get multiReplayHiddenVehicle => _t('multiReplayHiddenVehicle');
+  String get multiReplayKpiLoadedNote => _t('multiReplayKpiLoadedNote');
+  String get multiReplayDistanceApproxNote => _t('multiReplayDistanceApproxNote');
+  String get multiReplayRouteStart => _t('multiReplayRouteStart');
+  String get multiReplayRouteEnd => _t('multiReplayRouteEnd');
+  String get multiReplayInsightLongestStop => _t('multiReplayInsightLongestStop');
+  String get multiReplayInsightHighestSpeed => _t('multiReplayInsightHighestSpeed');
+  String get multiReplayInsightMostOverspeed => _t('multiReplayInsightMostOverspeed');
+  String get multiReplayInsightFirstMovement => _t('multiReplayInsightFirstMovement');
+  String get multiReplayInsightEarliestEnd => _t('multiReplayInsightEarliestEnd');
   String get routeDataUnavailable => _t('routeDataUnavailable');
   String get hideVehicle => _t('hideVehicle');
   String get showVehicle => _t('showVehicle');
@@ -799,6 +822,10 @@ class AppLocalizations {
   String get replayPause              => _t('replayPause');
   String get replayRestart            => _t('replayRestart');
   String get replaySpeed              => _t('replaySpeed');
+  String get replaySpeedShort         => _t('replaySpeedShort');
+  String get replayCurrentPoint       => _t('replayCurrentPoint');
+  String get replayCompletedChip      => _t('replayCompletedChip');
+  String get replayMoreActions        => _t('replayMoreActions');
   String get replayCurrentSpeed       => _t('replayCurrentSpeed');
   String get replayCurrentTime        => _t('replayCurrentTime');
   String get replayRecenter           => _t('replayRecenter');
@@ -826,6 +853,47 @@ class AppLocalizations {
   String get replayGapEndLabel        => _t('replayGapEndLabel');
   String get replayGapDurationLabel   => _t('replayGapDurationLabel');
   String get replayGapsSheetTitle     => _t('replayGapsSheetTitle');
+  String get replaySnapshotTitle      => _t('replaySnapshotTitle');
+  String get replaySnapshotTime       => _t('replaySnapshotTime');
+  String get replaySnapshotSpeed      => _t('replaySnapshotSpeed');
+  String get replaySnapshotAddress    => _t('replaySnapshotAddress');
+  String get replaySnapshotCoordinates => _t('replaySnapshotCoordinates');
+  String get replaySnapshotDirection  => _t('replaySnapshotDirection');
+  String get replaySnapshotIgnition   => _t('replaySnapshotIgnition');
+  String get replaySnapshotEngineOn   => _t('replaySnapshotEngineOn');
+  String get replaySnapshotEngineOff  => _t('replaySnapshotEngineOff');
+  String get replaySnapshotDetails    => _t('replaySnapshotDetails');
+  String get replaySensorsTitle       => _t('replaySensorsTitle');
+  String get replaySensorFuel         => _t('replaySensorFuel');
+  String get replaySensorBattery      => _t('replaySensorBattery');
+  String get replaySensorGsm          => _t('replaySensorGsm');
+  String get replaySensorSatellites   => _t('replaySensorSatellites');
+  String get replaySensorAccuracy     => _t('replaySensorAccuracy');
+  String get replaySensorDriver       => _t('replaySensorDriver');
+  String get replaySensorUnavailable  => _t('replaySensorUnavailable');
+  String get replayAfterDataGap       => _t('replayAfterDataGap');
+  String get routeEventFilterDataGaps => _t('routeEventFilterDataGaps');
+  String get routeTimelineStart       => _t('routeTimelineStart');
+  String get routeTimelineEnd         => _t('routeTimelineEnd');
+  String replayTimelineSummaryStops(int count) =>
+      _t('replayTimelineSummaryStops').replaceAll('{count}', '$count');
+  String replayTimelineSummaryOverspeed(int count) =>
+      _t('replayTimelineSummaryOverspeed').replaceAll('{count}', '$count');
+  String replayTimelineSummaryDataGaps(int count) =>
+      _t('replayTimelineSummaryDataGaps').replaceAll('{count}', '$count');
+  String replayTimelineSummaryIgnition(int count) =>
+      _t('replayTimelineSummaryIgnition').replaceAll('{count}', '$count');
+  String get routeEventFilterAlerts => _t('routeEventFilterAlerts');
+  String get replayExternalEvent => _t('replayExternalEvent');
+  String get replayExternalAlert => _t('replayExternalAlert');
+  String get replayExternalMaintenance => _t('replayExternalMaintenance');
+  String get replayNoAlertsInPeriod => _t('replayNoAlertsInPeriod');
+  String get replayEventDetailsType => _t('replayEventDetailsType');
+  String get replayEventDetailsDescription => _t('replayEventDetailsDescription');
+  String get replayExternalPositionUnavailable =>
+      _t('replayExternalPositionUnavailable');
+  String get replayStepPrevious => _t('replayStepPrevious');
+  String get replayStepNext => _t('replayStepNext');
 
   // ── Speed Chart ────────────────────────────────────────────────────────────
   String get speedChartTitle          => _t('speedChartTitle');
@@ -1506,6 +1574,30 @@ class AppLocalizations {
       'multiReplayLoading': 'Loading multi-vehicle replay…',
       'multiReplayNoData': 'No route data for the selected vehicles.',
       'multiReplayLoadFailed': 'Could not load replay.',
+      'multiReplayAutoFollow': 'Auto-follow',
+      'multiReplayActiveVehicle': 'Active vehicle',
+      'multiReplayVisibleVehicles': 'Visible vehicles',
+      'multiReplayHide': 'Hide',
+      'multiReplayShow': 'Show',
+      'multiReplayNoVisibleVehicles': 'No visible vehicles',
+      'multiReplaySpeedColors': 'Speed colors',
+      'multiReplayNoFixAtTime': 'No position at this time',
+      'multiReplayComparison': 'Comparison',
+      'multiReplaySummary': 'Summary',
+      'multiReplayMovingTime': 'Moving time',
+      'multiReplayStoppedTime': 'Stopped time',
+      'multiReplayInsufficientData': 'Insufficient data',
+      'multiReplayHiddenVehicle': 'Hidden vehicle',
+      'multiReplayKpiLoadedNote': 'Indicators for all loaded vehicles (approximate GPS distance).',
+      'multiReplayDistanceApproxNote':
+          'Distance is approximate from GPS points; gaps are excluded.',
+      'multiReplayRouteStart': 'Route start',
+      'multiReplayRouteEnd': 'Route end',
+      'multiReplayInsightLongestStop': 'Longest stop time',
+      'multiReplayInsightHighestSpeed': 'Highest speed',
+      'multiReplayInsightMostOverspeed': 'Most overspeed events',
+      'multiReplayInsightFirstMovement': 'First movement',
+      'multiReplayInsightEarliestEnd': 'Earliest route end',
       'routeDataUnavailable': 'No route data',
       'hideVehicle': 'Hide vehicle',
       'showVehicle': 'Show vehicle',
@@ -1612,8 +1704,12 @@ class AppLocalizations {
       'routeGpsPointsInfo': '{total} GPS pts · {drawn} pts displayed',
       'routeEventsTimelineTitle': 'Trip events',
       'routeEventsNoneDetected': 'No route events detected',
-      'routeEventsSeeMore': 'See more',
-      'routeEventsSeeLess': 'See less',
+      'routeEventsSeeMore': 'See all events',
+      'replaySpeedShort': 'Speed',
+      'replayCurrentPoint': 'Current point',
+      'replayCompletedChip': 'Completed',
+      'replayMoreActions': 'More',
+      'routeEventsSeeLess': 'Show less',
       'routeEventFilterAll': 'All',
       'routeEventFilterStops': 'Stops',
       'routeEventFilterOverspeed': 'Overspeed',
@@ -1806,6 +1902,42 @@ class AppLocalizations {
       'replayGapEndLabel': 'First fix after gap',
       'replayGapDurationLabel': 'Gap duration',
       'replayGapsSheetTitle': 'GPS data gaps',
+      'replaySnapshotTitle': 'Current snapshot',
+      'replaySnapshotTime': 'Time',
+      'replaySnapshotSpeed': 'Speed',
+      'replaySnapshotAddress': 'Address',
+      'replaySnapshotCoordinates': 'Coordinates',
+      'replaySnapshotDirection': 'Direction',
+      'replaySnapshotIgnition': 'Engine',
+      'replaySnapshotEngineOn': 'Engine on',
+      'replaySnapshotEngineOff': 'Engine off',
+      'replaySnapshotDetails': 'Details',
+      'replaySensorsTitle': 'Sensors',
+      'replaySensorFuel': 'Fuel',
+      'replaySensorBattery': 'Battery',
+      'replaySensorGsm': 'GSM signal',
+      'replaySensorSatellites': 'Satellites',
+      'replaySensorAccuracy': 'Accuracy',
+      'replaySensorDriver': 'Driver',
+      'replaySensorUnavailable': 'Value unavailable',
+      'replayAfterDataGap': 'After data interruption',
+      'routeEventFilterDataGaps': 'Missing data',
+      'routeTimelineStart': 'Start',
+      'routeTimelineEnd': 'End',
+      'replayTimelineSummaryStops': '{count} stops',
+      'replayTimelineSummaryOverspeed': '{count} speed events',
+      'replayTimelineSummaryDataGaps': '{count} data gaps',
+      'replayTimelineSummaryIgnition': '{count} engine events',
+      'routeEventFilterAlerts': 'Alerts',
+      'replayExternalEvent': 'Event',
+      'replayExternalAlert': 'Alert',
+      'replayExternalMaintenance': 'Maintenance',
+      'replayNoAlertsInPeriod': 'No alerts in this period',
+      'replayEventDetailsType': 'Type',
+      'replayEventDetailsDescription': 'Description',
+      'replayExternalPositionUnavailable': 'Position unavailable',
+      'replayStepPrevious': 'Previous point',
+      'replayStepNext': 'Next point',
       // Speed chart
       'speedChartTitle': 'Speed chart',
       'speedChartMax': 'Max speed',
@@ -2424,6 +2556,31 @@ class AppLocalizations {
       'multiReplayLoading': 'جاري تحميل إعادة التشغيل المتعددة…',
       'multiReplayNoData': 'لا توجد بيانات مسار للمركبات المحددة.',
       'multiReplayLoadFailed': 'تعذر تحميل إعادة التشغيل.',
+      'multiReplayAutoFollow': 'التتبع التلقائي',
+      'multiReplayActiveVehicle': 'المركبة النشطة',
+      'multiReplayVisibleVehicles': 'المركبات الظاهرة',
+      'multiReplayHide': 'إخفاء',
+      'multiReplayShow': 'إظهار',
+      'multiReplayNoVisibleVehicles': 'لا توجد مركبات ظاهرة',
+      'multiReplaySpeedColors': 'ألوان السرعة',
+      'multiReplayNoFixAtTime': 'لا موضع في هذا الوقت',
+      'multiReplayComparison': 'المقارنة',
+      'multiReplaySummary': 'الملخص',
+      'multiReplayMovingTime': 'مدة الحركة',
+      'multiReplayStoppedTime': 'مدة التوقف',
+      'multiReplayInsufficientData': 'بيانات غير كافية',
+      'multiReplayHiddenVehicle': 'مركبة مخفية',
+      'multiReplayKpiLoadedNote':
+          'مؤشرات لكل المركبات المحمّلة (مسافة GPS تقريبية).',
+      'multiReplayDistanceApproxNote':
+          'المسافة تقريبية من نقاط GPS؛ الفجوات مستبعدة.',
+      'multiReplayRouteStart': 'بداية المسار',
+      'multiReplayRouteEnd': 'نهاية المسار',
+      'multiReplayInsightLongestStop': 'أطول مدة توقف',
+      'multiReplayInsightHighestSpeed': 'أعلى سرعة مسجلة',
+      'multiReplayInsightMostOverspeed': 'أكثر تجاوزات سرعة',
+      'multiReplayInsightFirstMovement': 'أول حركة',
+      'multiReplayInsightEarliestEnd': 'أول نهاية مسار',
       'routeDataUnavailable': 'لا توجد بيانات مسار',
       'hideVehicle': 'إخفاء المركبة',
       'showVehicle': 'إظهار المركبة',
@@ -2530,7 +2687,11 @@ class AppLocalizations {
       'routeGpsPointsInfo': '{total} نقطة GPS · {drawn} نقطة معروضة',
       'routeEventsTimelineTitle': 'أحداث المسار',
       'routeEventsNoneDetected': 'لا توجد أحداث مسار',
-      'routeEventsSeeMore': 'عرض المزيد',
+      'routeEventsSeeMore': 'عرض كل الأحداث',
+      'replaySpeedShort': 'السرعة',
+      'replayCurrentPoint': 'النقطة الحالية',
+      'replayCompletedChip': 'مكتمل',
+      'replayMoreActions': 'المزيد',
       'routeEventsSeeLess': 'عرض أقل',
       'routeEventFilterAll': 'الكل',
       'routeEventFilterStops': 'التوقفات',
@@ -2722,6 +2883,42 @@ class AppLocalizations {
       'replayGapEndLabel': 'أول نقطة بعد الفجوة',
       'replayGapDurationLabel': 'مدة الفجوة',
       'replayGapsSheetTitle': 'فجوات بيانات GPS',
+      'replaySnapshotTitle': 'اللقطة الحالية',
+      'replaySnapshotTime': 'الوقت',
+      'replaySnapshotSpeed': 'السرعة',
+      'replaySnapshotAddress': 'العنوان',
+      'replaySnapshotCoordinates': 'الإحداثيات',
+      'replaySnapshotDirection': 'الاتجاه',
+      'replaySnapshotIgnition': 'المحرك',
+      'replaySnapshotEngineOn': 'المحرك يعمل',
+      'replaySnapshotEngineOff': 'المحرك متوقف',
+      'replaySnapshotDetails': 'التفاصيل',
+      'replaySensorsTitle': 'الحساسات',
+      'replaySensorFuel': 'الوقود',
+      'replaySensorBattery': 'البطارية',
+      'replaySensorGsm': 'إشارة GSM',
+      'replaySensorSatellites': 'الأقمار',
+      'replaySensorAccuracy': 'الدقة',
+      'replaySensorDriver': 'السائق',
+      'replaySensorUnavailable': 'القيمة غير متوفرة',
+      'replayAfterDataGap': 'بعد انقطاع البيانات',
+      'routeEventFilterDataGaps': 'بيانات ناقصة',
+      'routeTimelineStart': 'البداية',
+      'routeTimelineEnd': 'النهاية',
+      'replayTimelineSummaryStops': '{count} توقف',
+      'replayTimelineSummaryOverspeed': '{count} تجاوز سرعة',
+      'replayTimelineSummaryDataGaps': '{count} فجوة بيانات',
+      'replayTimelineSummaryIgnition': '{count} حدث محرك',
+      'routeEventFilterAlerts': 'التنبيهات',
+      'replayExternalEvent': 'حدث',
+      'replayExternalAlert': 'تنبيه',
+      'replayExternalMaintenance': 'صيانة',
+      'replayNoAlertsInPeriod': 'لا توجد تنبيهات في هذه الفترة',
+      'replayEventDetailsType': 'النوع',
+      'replayEventDetailsDescription': 'الوصف',
+      'replayExternalPositionUnavailable': 'الموقع غير متوفر',
+      'replayStepPrevious': 'النقطة السابقة',
+      'replayStepNext': 'النقطة التالية',
       // Speed chart
       'speedChartTitle': 'رسم السرعة',
       'speedChartMax': 'السرعة القصوى',
@@ -3352,6 +3549,31 @@ class AppLocalizations {
       'multiReplayNoData':
           'Aucune donnée de trajet pour les véhicules sélectionnés.',
       'multiReplayLoadFailed': 'Impossible de charger le replay.',
+      'multiReplayAutoFollow': 'Suivi automatique',
+      'multiReplayActiveVehicle': 'Véhicule actif',
+      'multiReplayVisibleVehicles': 'Véhicules visibles',
+      'multiReplayHide': 'Masquer',
+      'multiReplayShow': 'Afficher',
+      'multiReplayNoVisibleVehicles': 'Aucun véhicule visible',
+      'multiReplaySpeedColors': 'Couleurs de vitesse',
+      'multiReplayNoFixAtTime': 'Aucune position à cet instant',
+      'multiReplayComparison': 'Comparaison',
+      'multiReplaySummary': 'Résumé',
+      'multiReplayMovingTime': 'Durée en mouvement',
+      'multiReplayStoppedTime': 'Durée à l\'arrêt',
+      'multiReplayInsufficientData': 'Données insuffisantes',
+      'multiReplayHiddenVehicle': 'Véhicule masqué',
+      'multiReplayKpiLoadedNote':
+          'Indicateurs pour tous les véhicules chargés (distance GPS approximative).',
+      'multiReplayDistanceApproxNote':
+          'Distance approximative à partir des points GPS ; les coupures sont exclues.',
+      'multiReplayRouteStart': 'Début du trajet',
+      'multiReplayRouteEnd': 'Fin du trajet',
+      'multiReplayInsightLongestStop': 'Plus long arrêt',
+      'multiReplayInsightHighestSpeed': 'Vitesse la plus élevée',
+      'multiReplayInsightMostOverspeed': 'Plus d\'excès de vitesse',
+      'multiReplayInsightFirstMovement': 'Premier mouvement',
+      'multiReplayInsightEarliestEnd': 'Première fin de trajet',
       'routeDataUnavailable': 'Aucune donnée de trajet',
       'hideVehicle': 'Masquer le véhicule',
       'showVehicle': 'Afficher le véhicule',
@@ -3458,7 +3680,11 @@ class AppLocalizations {
       'routeGpsPointsInfo': '{total} pts GPS · {drawn} pts affichés',
       'routeEventsTimelineTitle': 'Événements du trajet',
       'routeEventsNoneDetected': 'Aucun événement détecté',
-      'routeEventsSeeMore': 'Voir plus',
+      'routeEventsSeeMore': 'Voir tous les événements',
+      'replaySpeedShort': 'Vitesse',
+      'replayCurrentPoint': 'Point actuel',
+      'replayCompletedChip': 'Terminé',
+      'replayMoreActions': 'Plus',
       'routeEventsSeeLess': 'Voir moins',
       'routeEventFilterAll': 'Tous',
       'routeEventFilterStops': 'Arrêts',
@@ -3657,6 +3883,42 @@ class AppLocalizations {
       'replayGapEndLabel': 'Premier point après la coupure',
       'replayGapDurationLabel': 'Durée de la coupure',
       'replayGapsSheetTitle': 'Coupures de données GPS',
+      'replaySnapshotTitle': 'Instant actuel',
+      'replaySnapshotTime': 'Heure',
+      'replaySnapshotSpeed': 'Vitesse',
+      'replaySnapshotAddress': 'Adresse',
+      'replaySnapshotCoordinates': 'Coordonnées',
+      'replaySnapshotDirection': 'Direction',
+      'replaySnapshotIgnition': 'Moteur',
+      'replaySnapshotEngineOn': 'Moteur allumé',
+      'replaySnapshotEngineOff': 'Moteur éteint',
+      'replaySnapshotDetails': 'Détails',
+      'replaySensorsTitle': 'Capteurs',
+      'replaySensorFuel': 'Carburant',
+      'replaySensorBattery': 'Batterie',
+      'replaySensorGsm': 'Signal GSM',
+      'replaySensorSatellites': 'Satellites',
+      'replaySensorAccuracy': 'Précision',
+      'replaySensorDriver': 'Conducteur',
+      'replaySensorUnavailable': 'Valeur non disponible',
+      'replayAfterDataGap': 'Données reprises après interruption',
+      'routeEventFilterDataGaps': 'Données manquantes',
+      'routeTimelineStart': 'Début',
+      'routeTimelineEnd': 'Fin',
+      'replayTimelineSummaryStops': '{count} arrêts',
+      'replayTimelineSummaryOverspeed': '{count} survitesse',
+      'replayTimelineSummaryDataGaps': '{count} coupures',
+      'replayTimelineSummaryIgnition': '{count} moteur',
+      'routeEventFilterAlerts': 'Alertes',
+      'replayExternalEvent': 'Événement',
+      'replayExternalAlert': 'Alerte',
+      'replayExternalMaintenance': 'Maintenance',
+      'replayNoAlertsInPeriod': 'Aucune alerte sur cette période',
+      'replayEventDetailsType': 'Type',
+      'replayEventDetailsDescription': 'Description',
+      'replayExternalPositionUnavailable': 'Position non disponible',
+      'replayStepPrevious': 'Point précédent',
+      'replayStepNext': 'Point suivant',
       // Speed chart
       'speedChartTitle': 'Graphique de vitesse',
       'speedChartMax': 'Vitesse maximale',
@@ -4292,6 +4554,31 @@ class AppLocalizations {
       'multiReplayNoData':
           'No hay datos de ruta para los vehículos seleccionados.',
       'multiReplayLoadFailed': 'No se pudo cargar la reproducción.',
+      'multiReplayAutoFollow': 'Seguimiento automático',
+      'multiReplayActiveVehicle': 'Vehículo activo',
+      'multiReplayVisibleVehicles': 'Vehículos visibles',
+      'multiReplayHide': 'Ocultar',
+      'multiReplayShow': 'Mostrar',
+      'multiReplayNoVisibleVehicles': 'No hay vehículos visibles',
+      'multiReplaySpeedColors': 'Colores de velocidad',
+      'multiReplayNoFixAtTime': 'Sin posición en este momento',
+      'multiReplayComparison': 'Comparación',
+      'multiReplaySummary': 'Resumen',
+      'multiReplayMovingTime': 'Tiempo en movimiento',
+      'multiReplayStoppedTime': 'Tiempo detenido',
+      'multiReplayInsufficientData': 'Datos insuficientes',
+      'multiReplayHiddenVehicle': 'Vehículo oculto',
+      'multiReplayKpiLoadedNote':
+          'Indicadores de todos los vehículos cargados (distancia GPS aproximada).',
+      'multiReplayDistanceApproxNote':
+          'Distancia aproximada desde puntos GPS; se excluyen cortes.',
+      'multiReplayRouteStart': 'Inicio de ruta',
+      'multiReplayRouteEnd': 'Fin de ruta',
+      'multiReplayInsightLongestStop': 'Mayor tiempo detenido',
+      'multiReplayInsightHighestSpeed': 'Velocidad más alta',
+      'multiReplayInsightMostOverspeed': 'Más excesos de velocidad',
+      'multiReplayInsightFirstMovement': 'Primer movimiento',
+      'multiReplayInsightEarliestEnd': 'Primera fin de ruta',
       'routeDataUnavailable': 'Sin datos de ruta',
       'hideVehicle': 'Ocultar vehículo',
       'showVehicle': 'Mostrar vehículo',
@@ -4398,8 +4685,12 @@ class AppLocalizations {
       'routeGpsPointsInfo': '{total} pts GPS · {drawn} pts mostrados',
       'routeEventsTimelineTitle': 'Eventos del trayecto',
       'routeEventsNoneDetected': 'No se detectaron eventos',
-      'routeEventsSeeMore': 'Ver más',
-      'routeEventsSeeLess': 'Ver menos',
+      'routeEventsSeeMore': 'Ver todos los eventos',
+      'replaySpeedShort': 'Velocidad',
+      'replayCurrentPoint': 'Punto actual',
+      'replayCompletedChip': 'Completado',
+      'replayMoreActions': 'Más',
+      'routeEventsSeeLess': 'Mostrar menos',
       'routeEventFilterAll': 'Todos',
       'routeEventFilterStops': 'Paradas',
       'routeEventFilterOverspeed': 'Exceso de velocidad',
@@ -4596,6 +4887,42 @@ class AppLocalizations {
       'replayGapEndLabel': 'Primer punto después de la brecha',
       'replayGapDurationLabel': 'Duración de la brecha',
       'replayGapsSheetTitle': 'Brechas de datos GPS',
+      'replaySnapshotTitle': 'Instantánea actual',
+      'replaySnapshotTime': 'Hora',
+      'replaySnapshotSpeed': 'Velocidad',
+      'replaySnapshotAddress': 'Dirección',
+      'replaySnapshotCoordinates': 'Coordenadas',
+      'replaySnapshotDirection': 'Rumbo',
+      'replaySnapshotIgnition': 'Motor',
+      'replaySnapshotEngineOn': 'Motor encendido',
+      'replaySnapshotEngineOff': 'Motor apagado',
+      'replaySnapshotDetails': 'Detalles',
+      'replaySensorsTitle': 'Sensores',
+      'replaySensorFuel': 'Combustible',
+      'replaySensorBattery': 'Batería',
+      'replaySensorGsm': 'Señal GSM',
+      'replaySensorSatellites': 'Satélites',
+      'replaySensorAccuracy': 'Precisión',
+      'replaySensorDriver': 'Conductor',
+      'replaySensorUnavailable': 'Valor no disponible',
+      'replayAfterDataGap': 'Después de una interrupción de datos',
+      'routeEventFilterDataGaps': 'Datos faltantes',
+      'routeTimelineStart': 'Inicio',
+      'routeTimelineEnd': 'Fin',
+      'replayTimelineSummaryStops': '{count} paradas',
+      'replayTimelineSummaryOverspeed': '{count} excesos',
+      'replayTimelineSummaryDataGaps': '{count} brechas',
+      'replayTimelineSummaryIgnition': '{count} motor',
+      'routeEventFilterAlerts': 'Alertas',
+      'replayExternalEvent': 'Evento',
+      'replayExternalAlert': 'Alerta',
+      'replayExternalMaintenance': 'Mantenimiento',
+      'replayNoAlertsInPeriod': 'No hay alertas en este período',
+      'replayEventDetailsType': 'Tipo',
+      'replayEventDetailsDescription': 'Descripción',
+      'replayExternalPositionUnavailable': 'Posición no disponible',
+      'replayStepPrevious': 'Punto anterior',
+      'replayStepNext': 'Punto siguiente',
       // Speed chart
       'speedChartTitle': 'Gráfico de velocidad',
       'speedChartMax': 'Velocidad máxima',

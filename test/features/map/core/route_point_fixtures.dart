@@ -9,6 +9,7 @@ RoutePoint testRoutePoint(
   DateTime fixTime, {
   double course = 0,
   bool ignition = false,
+  Map<String, dynamic>? attributes,
 }) =>
     RoutePoint(
       position: position,
@@ -16,6 +17,7 @@ RoutePoint testRoutePoint(
       course: course,
       fixTime: fixTime,
       ignition: ignition,
+      attributes: attributes,
     );
 
 DateTime utc(int y, int m, int d, [int h = 0, int min = 0, int s = 0]) =>

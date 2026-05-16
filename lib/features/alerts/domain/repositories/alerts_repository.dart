@@ -10,6 +10,8 @@ abstract interface class AlertsRepository {
     int limit,
     int offset,
     int? deviceId,
+    DateTime? from,
+    DateTime? to,
   });
 
   /// Returns the server-side unread count from `GET /alerts/unread-count`.

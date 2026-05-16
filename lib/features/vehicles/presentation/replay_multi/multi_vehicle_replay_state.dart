@@ -1,3 +1,4 @@
+import 'multi_replay_kpi.dart';
 import 'multi_vehicle_replay_model.dart';
 import 'multi_vehicle_replay_timeline.dart';
 
@@ -20,6 +21,7 @@ class MultiVehicleReplayLoadState {
     this.totalPoints = 0,
     this.loadDurationMs = 0,
     this.timelineBuildMs = 0,
+    this.comparisonSummary,
   });
 
   final MultiVehicleReplayLoadStatus status;
@@ -33,6 +35,9 @@ class MultiVehicleReplayLoadState {
   final int totalPoints;
   final int loadDurationMs;
   final int timelineBuildMs;
+
+  /// Route-based KPIs computed once at load (Phase R8).
+  final MultiReplayComparisonSummary? comparisonSummary;
 
   bool get hasAnyRouteData =>
       tracks.any((t) => t.hasData);
@@ -50,6 +55,7 @@ class MultiVehicleReplayLoadState {
     int? totalPoints,
     int? loadDurationMs,
     int? timelineBuildMs,
+    MultiReplayComparisonSummary? comparisonSummary,
   }) =>
       MultiVehicleReplayLoadState(
         status: status ?? this.status,
@@ -61,5 +67,6 @@ class MultiVehicleReplayLoadState {
         totalPoints: totalPoints ?? this.totalPoints,
         loadDurationMs: loadDurationMs ?? this.loadDurationMs,
         timelineBuildMs: timelineBuildMs ?? this.timelineBuildMs,
+        comparisonSummary: comparisonSummary ?? this.comparisonSummary,
       );
 }
