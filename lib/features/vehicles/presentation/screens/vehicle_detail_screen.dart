@@ -13,6 +13,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../../../shared/providers/traccar_providers.dart';
 import '../../../commands/presentation/providers/commands_provider.dart';
 import '../../../map/core/map_camera_focus.dart';
+import '../../../map/core/vehicle_live_merger.dart';
 import '../../../map/presentation/providers/map_provider.dart';
 import '../../../map/presentation/widgets/route_intelligence_thresholds_preview.dart';
 import '../../../map/presentation/widgets/route_intelligence_vehicle_central_threshold_editor.dart';
@@ -133,9 +134,10 @@ class _VehicleDetailBody extends ConsumerWidget {
 
     final deviceId = int.tryParse(vehicle.id);
     final brief = fleetBriefMap[vehicleId];
+    final displayVehicle = VehicleLiveMerger.mergeIfPresent(vehicle, livePositions);
     final livePos = deviceId != null ? livePositions[deviceId] : null;
     final device = deviceId != null ? liveDevices[deviceId] : null;
-    final status = StatusBadge.fromString(vehicle.status);
+    final status = StatusBadge.fromString(displayVehicle.status);
 
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
@@ -203,8 +205,8 @@ class _VehicleDetailBody extends ConsumerWidget {
                   // A. Status + Speed + Last Update
                   VdStatusSpeedCard(
                     status: StatusBadge(status: status),
-                    speedKmh: livePos?.speedKmh ?? vehicle.speed,
-                    lastUpdate: vehicle.lastUpdate,
+                    speedKmh: displayVehicle.speed,
+                    lastUpdate: displayVehicle.lastUpdate,
                   ),
 
                   const SizedBox(height: AppSpacing.md),

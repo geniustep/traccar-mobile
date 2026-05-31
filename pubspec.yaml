@@ -53,6 +53,7 @@ dependencies:
   flutter_svg: ^2.3.0
   firebase_core: ^4.8.0
   firebase_messaging: ^16.2.1
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +61,28 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+  image: ^4.5.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/elmogps_launcher.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/images/elmogps_launcher.png
+  adaptive_icon_foreground_inset: 0
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#060D1A"
+  image: assets/images/elmo-02_splash.png
+  android_gravity: center
+  ios_content_mode: scaleAspectFit
+  android_12:
+    color: "#060D1A"
+    image: assets/images/elmo-02_splash.png
+  ios: true
+  android: true
 
 flutter:
   uses-material-design: true

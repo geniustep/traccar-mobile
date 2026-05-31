@@ -35,6 +35,19 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
     final allAsync = ref.watch(vehiclesListProvider);
     final filteredAsync = ref.watch(filteredVehiclesProvider);
     final fleetBriefMap = ref.watch(fleetVehicleBriefMapProvider);
+    final allVehicles = allAsync.valueOrNull ?? const <VehicleEntity>[];
+    final statusCounts = fleetStatusFilterCounts(allVehicles);
+
+    ref.listen(vehiclesListProvider, (previous, next) {
+      next.whenData((list) {
+        final status = ref.read(vehicleFilterProvider).statusFilter;
+        if (status == null) return;
+        final count = list.where((v) => v.status == status).length;
+        if (count == 0) {
+          ref.read(vehicleFilterProvider.notifier).setStatus(null);
+        }
+      });
+    });
 
     return Scaffold(
       body: CustomScrollView(
@@ -107,7 +120,8 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
             pinned: true,
             delegate: _FilterDelegate(
               filter: filter,
-              allAsync: allAsync,
+              vehicles: allVehicles,
+              statusCounts: statusCounts,
               onStatusChanged: (s) =>
                   ref.read(vehicleFilterProvider.notifier).setStatus(s),
             ),
@@ -130,10 +144,11 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                       child: EmptyView(
                         icon: Icons.directions_car_outlined,
                         title: l10n.noVehicles,
-                        message: filter.query.isNotEmpty ||
-                                filter.statusFilter != null
-                            ? l10n.tryChangingFilters
-                            : l10n.noVehiclesRegistered,
+                        message: filter.statusFilter != null
+                            ? l10n.noVehiclesInFilter
+                            : filter.query.isNotEmpty
+                                ? l10n.tryChangingFilters
+                                : l10n.noVehiclesRegistered,
                       ),
                     ),
                   );
@@ -239,13 +254,23 @@ class _FleetStatsBar extends StatelessWidget {
                   size: 13,
                   color: AppColors.textMutedOf(context)),
               const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  l10n.totalFleetCount(vehicles.length),
+                  style: TextStyle(
+                    color: AppColors.textMutedOf(context),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
               Text(
-                l10n.totalFleetCount(vehicles.length),
+                l10n.fleetStatsLastSyncNow,
                 style: TextStyle(
                   color: AppColors.textMutedOf(context),
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3,
                 ),
               ),
             ],
@@ -311,42 +336,56 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.18), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 13),
-              const Spacer(),
-              Text(
-                '$count',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
+    final isZero = count == 0;
+    final tileColor = isZero
+        ? AppColors.textMutedOf(context)
+        : color;
+    return Opacity(
+      opacity: isZero ? 0.5 : 1,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: isZero
+              ? AppColors.surfaceElevatedOf(context).withValues(alpha: 0.5)
+              : color.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isZero
+                ? AppColors.borderOf(context).withValues(alpha: 0.35)
+                : color.withValues(alpha: 0.18),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: tileColor, size: isZero ? 12 : 13),
+                const Spacer(),
+                Text(
+                  '$count',
+                  style: TextStyle(
+                    color: tileColor,
+                    fontSize: isZero ? 16 : 22,
+                    fontWeight: isZero ? FontWeight.w600 : FontWeight.w800,
+                    height: 1,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color.withValues(alpha: 0.75),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: tileColor.withValues(alpha: isZero ? 0.7 : 0.75),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -357,28 +396,19 @@ class _StatTile extends StatelessWidget {
 class _FilterDelegate extends SliverPersistentHeaderDelegate {
   _FilterDelegate({
     required this.filter,
-    required this.allAsync,
+    required this.vehicles,
+    required this.statusCounts,
     required this.onStatusChanged,
   });
 
   final VehicleFilterState filter;
-  final AsyncValue<List<VehicleEntity>> allAsync;
+  final List<VehicleEntity> vehicles;
+  final Map<String?, int> statusCounts;
   final ValueChanged<String?> onStatusChanged;
 
-  static const _statuses = [
-    null,
-    'moving',
-    'stopped',
-    'idle',
-    'offline',
-  ];
+  List<String?> get _visibleStatuses => visibleFleetStatusFilters(statusCounts);
 
-  int _count(String? status) {
-    final vehicles = allAsync.valueOrNull;
-    if (vehicles == null) return 0;
-    if (status == null) return vehicles.length;
-    return vehicles.where((v) => v.status == status).length;
-  }
+  int _count(String? status) => statusCounts[status] ?? 0;
 
   Color _chipColor(String? status) => switch (status) {
         'moving' => AppColors.statusMoving,
@@ -401,6 +431,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     final l10n = context.l10n;
+    final statuses = _visibleStatuses;
     return Container(
       color: AppColors.backgroundOf(context),
       child: Column(
@@ -410,10 +441,10 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
               scrollDirection: Axis.horizontal,
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _statuses.length,
+              itemCount: statuses.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
-                final status = _statuses[i];
+                final status = statuses[i];
                 final isSelected = status == null
                     ? filter.statusFilter == null
                     : filter.statusFilter == status;
@@ -514,5 +545,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_FilterDelegate old) =>
-      old.filter != filter || old.allAsync != allAsync;
+      old.filter != filter ||
+      old.vehicles.length != vehicles.length ||
+      old.statusCounts != statusCounts;
 }

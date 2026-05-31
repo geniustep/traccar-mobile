@@ -4,6 +4,10 @@ import '../../../../shared/providers/core_providers.dart';
 import '../../../trips/domain/entities/trip.dart';
 import '../../../map/data/datasources/route_datasource.dart';
 import '../../data/datasources/reports_remote_datasource.dart';
+import '../../../../core/fleet/fleet_base_data_gate.dart';
+import '../../../../core/utils/request_coalescer.dart';
+import '../../data/fleet_reports_request_gate.dart';
+import '../../data/reports_request_gate.dart';
 import '../../data/repositories/reports_repository_impl.dart';
 import '../../data/services/report_pdf_service.dart';
 import '../../data/services/report_share_service.dart';
@@ -194,9 +198,57 @@ class ReportsEntryParams {
 
 // ── Repository / datasource providers ────────────────────────────────────────
 
-final reportsDataSourceProvider = Provider<ReportsRemoteDataSource>((ref) {
-  return ReportsRemoteDataSource(ref.read(traccarClientProvider));
+/// Shared coalescer for fleet-wide and per-device report deduplication.
+final sharedReportsCoalescerProvider = Provider<RequestCoalescer>((ref) {
+  return RequestCoalescer(cacheTtl: const Duration(seconds: 15));
 });
+
+final fleetReportsRequestGateProvider = Provider<FleetReportsRequestGate>((ref) {
+  return FleetReportsRequestGate(
+    ref.read(traccarClientProvider),
+    ref.read(sharedReportsCoalescerProvider),
+  );
+});
+
+/// Shared `GET /devices` + `GET /positions` — same coalescer as fleet reports.
+final fleetBaseDataGateProvider = Provider<FleetBaseDataGate>((ref) {
+  return FleetBaseDataGate(
+    ref.read(traccarClientProvider),
+    ref.read(sharedReportsCoalescerProvider),
+  );
+});
+
+final reportsRequestGateProvider = Provider<ReportsRequestGate>((ref) {
+  return ReportsRequestGate(
+    ref.read(traccarClientProvider),
+    ref.read(sharedReportsCoalescerProvider),
+  );
+});
+
+final reportsDataSourceProvider = Provider<ReportsRemoteDataSource>((ref) {
+  return ReportsRemoteDataSource(
+    ref.read(traccarClientProvider),
+    ref.read(reportsRequestGateProvider),
+  );
+});
+
+/// Tabs whose report providers are allowed to fetch (lazy load — reduces storms).
+final reportsVisitedTabIndicesProvider =
+    StateProvider.autoDispose<Set<int>>((ref) => {0});
+
+void resetReportsVisitedTabs(WidgetRef ref, int activeTabIndex) {
+  ref.read(reportsVisitedTabIndicesProvider.notifier).state = {activeTabIndex};
+}
+
+void markReportsTabVisited(WidgetRef ref, int tabIndex) {
+  final current = ref.read(reportsVisitedTabIndicesProvider);
+  if (!current.contains(tabIndex)) {
+    ref.read(reportsVisitedTabIndicesProvider.notifier).state = {
+      ...current,
+      tabIndex,
+    };
+  }
+}
 
 final reportsRepositoryProvider = Provider<ReportsRepository>((ref) {
   return ReportsRepositoryImpl(ref.read(reportsDataSourceProvider));
@@ -217,6 +269,7 @@ final summaryReportProvider = FutureProvider.autoDispose
         deviceId: params.vehicleId,
         from: params.from,
         to: params.to,
+        trigger: 'reports_tab_summary',
       );
 });
 
@@ -226,6 +279,7 @@ final stopsReportProvider = FutureProvider.autoDispose
         deviceId: params.vehicleId,
         from: params.from,
         to: params.to,
+        trigger: 'reports_tab_stops',
       );
 });
 
@@ -235,6 +289,7 @@ final eventsReportProvider = FutureProvider.autoDispose
         deviceId: params.vehicleId,
         from: params.from,
         to: params.to,
+        trigger: 'reports_tab_events',
       );
 });
 
@@ -244,6 +299,7 @@ final reportTripsProvider = FutureProvider.autoDispose
         deviceId: params.vehicleId,
         from: params.from,
         to: params.to,
+        trigger: 'reports_tab_trips',
       );
 });
 
@@ -253,6 +309,7 @@ final reportRouteProvider = FutureProvider.autoDispose
         deviceId: params.vehicleId,
         from: params.from,
         to: params.to,
+        trigger: 'reports_tab_route',
       );
 });
 

@@ -72,7 +72,8 @@ final fcmAuthSyncProvider = Provider<void>((ref) {
       );
 
       ref.read(alertsProvider.notifier).load();
-      ref.read(notificationsProvider.notifier).load();
+      // Notifications feed (7-day Traccar events) loads lazily when opening
+      // /notifications — avoids startup report storm on Dashboard.
     } else if (!state.isAuthenticated && !state.isLoading) {
       FcmService.instance.reset();
       if (ref.exists(alertsProvider)) {

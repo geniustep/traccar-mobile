@@ -62,6 +62,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       initialIndex: entry != null ? entry.tabIndex.clamp(0, _tabCount - 1) : 0,
     );
 
+    _tabController.addListener(_onTabChanged);
+
     if (entry != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final notifier = ref.read(reportFilterProvider.notifier);
@@ -72,12 +74,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
           notifier.setTo(entry.to);
         }
         notifier.generate();
+        resetReportsVisitedTabs(ref, entry.tabIndex.clamp(0, _tabCount - 1));
       });
+    }
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      markReportsTabVisited(ref, _tabController.index);
     }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -120,8 +130,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                 ref.read(reportFilterProvider.notifier).setFrom(dt),
             onToPicked: (dt) =>
                 ref.read(reportFilterProvider.notifier).setTo(dt),
-            onGenerate: () =>
-                ref.read(reportFilterProvider.notifier).generate(),
+            onGenerate: () {
+              ref.read(reportFilterProvider.notifier).generate();
+              resetReportsVisitedTabs(ref, _tabController.index);
+            },
           ),
 
           Padding(
@@ -242,16 +254,11 @@ class _PdfButton extends ConsumerWidget {
     final params = filter.params;
     if (params == null) return;
 
-    // Collect already-loaded data from existing providers (no extra network call).
-    final summaryAsync = ref.read(summaryReportProvider(params));
-    final tripsAsync = ref.read(reportTripsProvider(params));
-    final stopsAsync = ref.read(stopsReportProvider(params));
-    final eventsAsync = ref.read(eventsReportProvider(params));
-
-    final summary = summaryAsync.valueOrNull;
-    final trips = tripsAsync.valueOrNull;
-    final stops = stopsAsync.valueOrNull;
-    final events = eventsAsync.valueOrNull;
+    // Prefetch all sections for PDF (explicit — not loaded by lazy tabs).
+    final summary = await ref.read(summaryReportProvider(params).future);
+    final trips = await ref.read(reportTripsProvider(params).future);
+    final stops = await ref.read(stopsReportProvider(params).future);
+    final events = await ref.read(eventsReportProvider(params).future);
 
     final path = await ref.read(pdfGenerationProvider.notifier).generateFull(
           vehicleName: filter.vehicleName,
@@ -441,19 +448,19 @@ class _ShareBottomSheet extends ConsumerWidget {
     final params = filter.params;
     if (params == null) return null;
 
-    final summaryAsync = ref.read(summaryReportProvider(params));
-    final tripsAsync = ref.read(reportTripsProvider(params));
-    final stopsAsync = ref.read(stopsReportProvider(params));
-    final eventsAsync = ref.read(eventsReportProvider(params));
+    final summary = await ref.read(summaryReportProvider(params).future);
+    final trips = await ref.read(reportTripsProvider(params).future);
+    final stops = await ref.read(stopsReportProvider(params).future);
+    final events = await ref.read(eventsReportProvider(params).future);
 
     final path = await ref.read(pdfGenerationProvider.notifier).generateFull(
           vehicleName: filter.vehicleName,
           from: filter.from,
           to: filter.to,
-          summary: summaryAsync.valueOrNull,
-          trips: tripsAsync.valueOrNull,
-          stops: stopsAsync.valueOrNull,
-          events: eventsAsync.valueOrNull,
+          summary: summary,
+          trips: trips,
+          stops: stops,
+          events: events,
         );
 
     if (path == null && context.mounted) {
@@ -1266,6 +1273,10 @@ class _RouteTab extends ConsumerWidget {
     final params = filter.params;
     if (params == null) return _NoVehiclePlaceholder();
 
+    if (!ref.watch(reportsVisitedTabIndicesProvider).contains(1)) {
+      return const _DeferredReportTabPlaceholder();
+    }
+
     final routeAsync = ref.watch(reportRouteProvider(params));
 
     return routeAsync.when(
@@ -1501,6 +1512,10 @@ class _TripsTab extends ConsumerWidget {
 
     final params = filter.params;
     if (params == null) return _NoVehiclePlaceholder();
+
+    if (!ref.watch(reportsVisitedTabIndicesProvider).contains(2)) {
+      return const _DeferredReportTabPlaceholder();
+    }
 
     final tripsAsync = ref.watch(reportTripsProvider(params));
 
@@ -1763,6 +1778,10 @@ class _StopsTab extends ConsumerWidget {
     final params = filter.params;
     if (params == null) return _NoVehiclePlaceholder();
 
+    if (!ref.watch(reportsVisitedTabIndicesProvider).contains(3)) {
+      return const _DeferredReportTabPlaceholder();
+    }
+
     final stopsAsync = ref.watch(stopsReportProvider(params));
 
     return stopsAsync.when(
@@ -1914,6 +1933,10 @@ class _EventsTab extends ConsumerWidget {
 
     final params = filter.params;
     if (params == null) return _NoVehiclePlaceholder();
+
+    if (!ref.watch(reportsVisitedTabIndicesProvider).contains(4)) {
+      return const _DeferredReportTabPlaceholder();
+    }
 
     final eventsAsync = ref.watch(eventsReportProvider(params));
 
@@ -2087,6 +2110,38 @@ class _EventTimelineItem extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared placeholder widgets
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Shown until the user opens this tab (lazy report loading).
+class _DeferredReportTabPlaceholder extends StatelessWidget {
+  const _DeferredReportTabPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.tab_outlined,
+              size: 48,
+              color: AppColors.textSecondaryOf(context).withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Ouvrez cet onglet pour charger le rapport',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondaryOf(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _NotGeneratedPlaceholder extends StatelessWidget {
   const _NotGeneratedPlaceholder({

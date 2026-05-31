@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../shared/providers/core_providers.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../../vehicles/data/datasources/vehicle_remote_datasource.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../data/datasources/route_datasource.dart';
@@ -95,7 +96,10 @@ final routeDataSourceProvider = Provider<RouteDataSource>((ref) {
 /// by socket data when available.
 final _baseVehicleProvider =
     FutureProvider.autoDispose.family<VehicleEntity, String>((ref, id) async {
-  final ds = VehicleRemoteDataSource(ref.read(traccarClientProvider));
+  final ds = VehicleRemoteDataSource(
+    ref.read(traccarClientProvider),
+    ref.read(fleetBaseDataGateProvider),
+  );
   final model = await ds.getVehicle(id);
   return model.toEntity();
 });

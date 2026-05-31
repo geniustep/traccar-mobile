@@ -75,10 +75,11 @@ final fleetVehicleBriefMapProvider =
     final displayName =
         linkedDriver?.name ?? vehicle.driverName?.trim();
 
-    final driverLine =
-        displayName != null && displayName.isNotEmpty
-            ? l10n.fleetCardDriverAssigned(displayName)
-            : l10n.fleetCardNoDriver;
+    final driverLine = displayName != null &&
+            displayName.isNotEmpty &&
+            !_isPlaceholderDriverName(displayName)
+        ? displayName
+        : '';
 
     final scoped = rows
         .where((r) =>
@@ -99,14 +100,14 @@ final fleetVehicleBriefMapProvider =
       if (s == ElmoMaintenanceSeverity.overdue) overdueAny = true;
 
       final rank = _maintenanceRank(s);
-      if (rank >= bestRank) {
+      if (rank > 0 && rank >= bestRank) {
         bestRank = rank;
         highlight = r;
       }
     }
 
     final maintenanceLine = highlight == null
-        ? l10n.fleetCardNoMaintenance
+        ? ''
         : l10n.fleetCardMaintenanceSnippet(
             '${l10n.maintenanceTypeLocalized(highlight.maintenanceTypeCode ?? '')} — ${highlight.name}',
           );
@@ -144,6 +145,22 @@ final fleetVehicleBriefMapProvider =
 
   return output;
 });
+
+bool _isPlaceholderDriverName(String name) {
+  final lower = name.trim().toLowerCase();
+  const blocked = {
+    'no driver assigned',
+    'conducteur non assigné',
+    'conducteur non assigne',
+    'sin conductor asignado',
+    'لا يوجد سائق',
+    'لا يوجد سائق مخصّص',
+    'n/a',
+    'na',
+    '-',
+  };
+  return blocked.contains(lower);
+}
 
 int _daysBetweenUtc(DateTime a, DateTime b) {
   final da = DateTime.utc(a.year, a.month, a.day);

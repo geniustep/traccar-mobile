@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/providers/core_providers.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../drivers/domain/entities/driver.dart';
 import '../../../drivers/presentation/providers/drivers_providers.dart';
@@ -8,6 +7,7 @@ import '../../../maintenance/presentation/providers/maintenance_providers.dart';
 import '../../../trips/data/models/trip_model.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../../vehicles/presentation/providers/vehicles_provider.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../data/datasources/fleet_intelligence_remote_datasource.dart';
 import '../../domain/fleet_admin_snapshot.dart';
 import '../../domain/fleet_dashboard_period.dart';
@@ -15,7 +15,9 @@ import '../../domain/services/fleet_admin_snapshot_builder.dart';
 
 final fleetIntelligenceRemoteProvider =
     Provider<FleetIntelligenceRemoteDataSource>((ref) {
-  return FleetIntelligenceRemoteDataSource(ref.read(traccarClientProvider));
+  return FleetIntelligenceRemoteDataSource(
+    ref.read(fleetReportsRequestGateProvider),
+  );
 });
 
 /// الفترة المعروضة في لوحة ذكاء الأسطول.
@@ -43,6 +45,7 @@ final fleetAdminSnapshotProvider = FutureProvider.autoDispose
       deviceIds: ids,
       fromUtc: range.$1,
       toUtc: range.$2,
+      trigger: 'fleet_snapshot_${period.name}',
     );
     trips = raw.trips;
     events = raw.events;

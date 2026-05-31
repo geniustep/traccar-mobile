@@ -9,12 +9,14 @@ abstract class ReportsRepository {
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   });
 
   Future<List<StopReport>> getStops({
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   });
 
   Future<List<EventReport>> getEvents({
@@ -22,17 +24,20 @@ abstract class ReportsRepository {
     required DateTime from,
     required DateTime to,
     List<String>? types,
+    String trigger = 'provider',
   });
 
   Future<List<TripEntity>> getTrips({
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   });
 
   Future<List<RoutePoint>> getRoute({
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   });
 }

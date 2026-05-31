@@ -25,6 +25,7 @@ final vehicleTodayDashboardProvider = FutureProvider.autoDispose
       deviceId: vehicleId,
       from: from,
       to: to,
+      trigger: 'vehicle_detail_today',
     );
   } catch (_) {
     summary = null;
@@ -35,6 +36,7 @@ final vehicleTodayDashboardProvider = FutureProvider.autoDispose
       deviceId: vehicleId,
       from: from,
       to: to,
+      trigger: 'vehicle_detail_today',
     );
     stopsCount = stops.length;
     for (final s in stops) {

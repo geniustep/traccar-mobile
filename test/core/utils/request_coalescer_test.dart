@@ -181,7 +181,7 @@ void main() {
       var callCount = 0;
       final from = '2026-05-13T00:00:00.000Z';
       final to = '2026-05-13T12:00:00.000Z';
-      final key = 'reports_events|$from|$to';
+      final key = 'reports_events|1,2|$from|$to';
 
       final completer = Completer<List<String>>();
 
@@ -202,6 +202,30 @@ void main() {
       expect(r1, ['event1', 'event2']);
       expect(r2, ['event1', 'event2']);
       expect(callCount, 1, reason: 'Same reports key should fire only once');
+    });
+
+    test('reports key with different sub-second to still coalesces', () async {
+      var callCount = 0;
+      final keyA =
+          'reports_events|9,11|2026-05-16T00:00:00.000Z|2026-05-16T12:35:43.951400Z';
+      final keyB =
+          'reports_events|9,11|2026-05-16T00:00:00.000Z|2026-05-16T12:35:44.771480Z';
+
+      final completer = Completer<List<String>>();
+
+      final f1 = coalescer.coalesce(keyA, () {
+        callCount++;
+        return completer.future;
+      });
+      final f2 = coalescer.coalesce(keyB, () {
+        callCount++;
+        return completer.future;
+      });
+
+      completer.complete(['e1']);
+
+      await Future.wait([f1, f2]);
+      expect(callCount, 1);
     });
   });
 }

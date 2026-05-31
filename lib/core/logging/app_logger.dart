@@ -91,6 +91,26 @@ abstract final class AppLogger {
   static void dashboard(String message, {int? durationMs}) =>
       _log('Dashboard', message, category: DebugLogCategory.dashboard, durationMs: durationMs);
 
+  static void reports(String message, {int? durationMs, String? source}) =>
+      _log(
+        'Reports',
+        message,
+        category: DebugLogCategory.api,
+        durationMs: durationMs,
+        source: source,
+      );
+
+  static void reportsError(String message, {String? source}) =>
+      _log(
+        'Reports ERROR',
+        message,
+        isError: true,
+        category: DebugLogCategory.api,
+        source: source,
+      );
+
+  static void liveSyncStale(String message) => liveSync(message);
+
   static void fleetIntel(String message) => _log('FleetIntel', message);
 
   static void connection(String message) => _log('Connection', message);

@@ -16,8 +16,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   }) async {
-    final model = await _ds.getSummary(deviceId: deviceId, from: from, to: to);
+    final model = await _ds.getSummary(
+      deviceId: deviceId,
+      from: from,
+      to: to,
+      trigger: trigger,
+    );
     return model != null ? SummaryReport.fromModel(model) : null;
   }
 
@@ -26,8 +32,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   }) async {
-    final models = await _ds.getStops(deviceId: deviceId, from: from, to: to);
+    final models = await _ds.getStops(
+      deviceId: deviceId,
+      from: from,
+      to: to,
+      trigger: trigger,
+    );
     return models.map(StopReport.fromModel).toList();
   }
 
@@ -37,12 +49,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required DateTime from,
     required DateTime to,
     List<String>? types,
+    String trigger = 'provider',
   }) async {
     final models = await _ds.getEvents(
       deviceId: deviceId,
       from: from,
       to: to,
       types: types,
+      trigger: trigger,
     );
     return models.map(EventReport.fromModel).toList();
   }
@@ -52,8 +66,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   }) async {
-    final models = await _ds.getTrips(deviceId: deviceId, from: from, to: to);
+    final models = await _ds.getTrips(
+      deviceId: deviceId,
+      from: from,
+      to: to,
+      trigger: trigger,
+    );
     return models.map((m) => m.toEntity()).toList();
   }
 
@@ -62,7 +82,13 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required String deviceId,
     required DateTime from,
     required DateTime to,
+    String trigger = 'provider',
   }) async {
-    return _ds.getRoute(deviceId: deviceId, from: from, to: to);
+    return _ds.getRoute(
+      deviceId: deviceId,
+      from: from,
+      to: to,
+      trigger: trigger,
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/providers/core_providers.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../../vehicles/data/datasources/vehicle_remote_datasource.dart';
 import '../../data/repositories/route_intelligence_thresholds_write_repository_impl.dart';
 import '../../domain/repositories/route_intelligence_thresholds_write_repository.dart';
@@ -12,7 +13,10 @@ import 'tracking_provider.dart';
 final routeIntelligenceThresholdsWriteRepositoryProvider =
     Provider<RouteIntelligenceThresholdsWriteRepository>((ref) {
   return RouteIntelligenceThresholdsWriteRepositoryImpl(
-    VehicleRemoteDataSource(ref.read(traccarClientProvider)),
+    VehicleRemoteDataSource(
+      ref.read(traccarClientProvider),
+      ref.read(fleetBaseDataGateProvider),
+    ),
   );
 });
 

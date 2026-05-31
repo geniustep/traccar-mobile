@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/traccar_device.dart';
 import '../models/traccar_event.dart';
+import '../logging/app_logger.dart';
 import '../models/traccar_position.dart';
+import 'live_position_update_gate.dart';
 import 'socket_event_parser.dart';
 import 'socket_state.dart';
 import 'traccar_socket_service.dart';
@@ -43,13 +45,26 @@ class LivePositionsNotifier
     extends StateNotifier<Map<int, TraccarPosition>> {
   LivePositionsNotifier(TraccarSocketService svc) : super({}) {
     _sub = svc.messageStream.listen((msg) {
-      // msg.positions
-      if (msg.hasPositions) {
-        state = {
-          ...state,
-          for (final pos in msg.positions) pos.deviceId: pos,
-        };
+      if (!msg.hasPositions) return;
+
+      var next = Map<int, TraccarPosition>.from(state);
+      for (final pos in msg.positions) {
+        final current = next[pos.deviceId];
+        if (!LivePositionUpdateGate.shouldAcceptLiveUpdate(
+          current: current,
+          incoming: pos,
+        )) {
+          AppLogger.liveSyncStale(
+            'Ignored stale position for live update: '
+            'vehicleId=${pos.deviceId} '
+            'fixTime=${pos.fixTime.toUtc().toIso8601String()} '
+            'lastFixTime=${current!.fixTime.toUtc().toIso8601String()}',
+          );
+          continue;
+        }
+        next[pos.deviceId] = pos;
       }
+      state = next;
     });
   }
 

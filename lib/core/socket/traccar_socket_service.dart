@@ -27,7 +27,7 @@ enum SocketAuthMode {
 /// - Explicit JSESSIONID Cookie header for WebSocket handshake
 /// - Fallback to ?session= query parameter if Cookie header fails
 /// - Automatic reconnection with exponential backoff
-/// - Ping-keepalive to prevent silent disconnects
+/// - WebSocket protocol ping (via [IOWebSocketChannel] pingInterval)
 /// - Stream of [SocketMessage] for consumers
 /// - Structured diagnostics for Debug Console
 class TraccarSocketService {
@@ -40,7 +40,6 @@ class TraccarSocketService {
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
-  Timer? _pingTimer;
   Timer? _reconnectTimer;
 
   int _reconnectAttempt = 0;
@@ -235,7 +234,6 @@ class TraccarSocketService {
         ..nextRetrySeconds = 0;
 
       _emit(const SocketConnected());
-      _startPing();
 
       _subscription = _channel!.stream.listen(
         _onData,
@@ -257,7 +255,6 @@ class TraccarSocketService {
         );
         _cookieHeaderFailed = true;
         // Clean up the failed attempt
-        _pingTimer?.cancel();
         _subscription?.cancel();
         try {
           _channel?.sink.close(WebSocketStatus.normalClosure);
@@ -269,8 +266,6 @@ class TraccarSocketService {
       }
 
       _onError(e);
-      _pingTimer?.cancel();
-      _pingTimer = null;
       _subscription?.cancel();
       _subscription = null;
       try {
@@ -437,17 +432,7 @@ class TraccarSocketService {
     return (base * (1 << (attempt - 1))).clamp(base, 60);
   }
 
-  void _startPing() {
-    _pingTimer?.cancel();
-    _pingTimer = Timer.periodic(ApiConfig.socketPingInterval, (_) {
-      try {
-        _channel?.sink.add('ping');
-      } catch (_) {}
-    });
-  }
-
   void _cleanup() {
-    _pingTimer?.cancel();
     _reconnectTimer?.cancel();
     _subscription?.cancel();
     try {

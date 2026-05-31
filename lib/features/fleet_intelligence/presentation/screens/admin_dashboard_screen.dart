@@ -14,7 +14,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../dashboard/domain/dashboard_refresh_policy.dart';
 import '../../../dashboard/domain/entities/dashboard_summary.dart';
-import '../../../notifications/presentation/providers/notifications_provider.dart';
+import '../../../alerts/presentation/providers/alerts_provider.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../dashboard/presentation/providers/fleet_live_provider.dart';
 import '../../../dashboard/presentation/widgets/animated_live_number.dart';
@@ -149,7 +149,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen>
     final appStatus = ref.watch(appConnectionStatusProvider);
     final liveStatus = ref.watch(liveSyncStatusProvider);
     final connectionBadge = _computeConnectionBadge(appStatus, liveStatus);
-    final unreadNotifications = ref.watch(unreadNotificationsCountProvider);
+    final unreadNotifications = ref.watch(unreadAlertsCountProvider);
     final refreshState = ref.watch(dashboardNotifierProvider);
 
     Future<void> doFullRefresh({required String source}) async {

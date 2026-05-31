@@ -5,9 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/connection/app_connection_monitor.dart';
 import '../../../../core/debug/debug_log_store.dart';
 import '../../../../core/logging/app_logger.dart';
-import '../../../fleet_intelligence/domain/fleet_dashboard_period.dart';
 import '../../../fleet_intelligence/presentation/providers/fleet_intelligence_providers.dart';
-import '../../../../shared/providers/core_providers.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../../alerts/domain/entities/alert.dart';
 import '../../../alerts/presentation/providers/alerts_provider.dart';
 import '../../data/datasources/dashboard_remote_datasource.dart';
@@ -23,7 +22,10 @@ import 'fleet_live_provider.dart';
 
 final dashboardRemoteDataSourceProvider =
     Provider<DashboardRemoteDataSource>((ref) {
-  return DashboardRemoteDataSource(ref.read(traccarClientProvider));
+  return DashboardRemoteDataSource(
+    ref.read(fleetReportsRequestGateProvider),
+    ref.read(fleetBaseDataGateProvider),
+  );
 });
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
@@ -164,6 +166,16 @@ class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
   static const _throttleWindow = Duration(seconds: 3);
   DateTime? _lastRefreshStarted;
 
+  /// Manual/user-driven refresh sources that must bypass cache coalescing.
+  static const _manualRefreshSources = {
+    'pull_to_refresh',
+    'toolbar',
+    'retry',
+  };
+
+  static bool _isManualRefreshSource(String source) =>
+      _manualRefreshSources.contains(source);
+
   /// Smart refresh — picks the right mode automatically.
   Future<void> smartRefresh({
     required String reason,
@@ -237,12 +249,12 @@ class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
     _ref.read(dashboardRefreshNowProvider.notifier).state = refreshNow;
 
     AppLogger.dashboard(
-      '${_modeLabel(mode)} refresh started, source: $source, '
-      'refreshNow: ${refreshNow.toIso8601String()}',
+      '[Dashboard] Refresh dispatched source=$source mode=${mode.name} '
+      'refreshNow=${refreshNow.toIso8601String()}',
     );
 
-    // For full/manual refresh, reset the coalescer cache
-    if (mode == DashboardRefreshMode.full) {
+    // Only user-driven refresh clears shared HTTP cache (auto-open keeps coalescer TTL).
+    if (mode == DashboardRefreshMode.full && _isManualRefreshSource(source)) {
       _ref.read(dashboardRemoteDataSourceProvider).resetCoalescer();
     }
 
@@ -267,10 +279,6 @@ class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
           );
           _ref.invalidate(dashboardSummaryProvider);
           AppLogger.dashboard(
-            'Invalidating provider: dashboardInsightsProvider, source: $source',
-          );
-          _ref.invalidate(dashboardInsightsProvider);
-          AppLogger.dashboard(
             'Triggering: alertsProvider.load(), source: $source',
           );
           _ref.read(alertsProvider.notifier).load();
@@ -280,22 +288,27 @@ class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
             'Invalidating provider: dashboardSummaryProvider, source: $source',
           );
           _ref.invalidate(dashboardSummaryProvider);
-          AppLogger.dashboard(
-            'Invalidating provider: dashboardInsightsProvider, source: $source',
-          );
-          _ref.invalidate(dashboardInsightsProvider);
           AppLogger.alerts('Refresh requested: source=dashboard_$source');
           AppLogger.dashboard(
             'Triggering: alertsProvider.load(), source: $source',
           );
           _ref.read(alertsProvider.notifier).load();
-          for (final p in FleetDashboardPeriod.values) {
+          if (_isManualRefreshSource(source)) {
+            final fleetPeriod = _ref.read(fleetDashboardPeriodProvider);
             AppLogger.dashboard(
-              'Invalidating provider: fleetAdminSnapshotProvider(${p.name}), source: $source',
+              'Invalidating provider: fleetAdminSnapshotProvider(${fleetPeriod.name}), '
+              'source: $source (manual refresh)',
             );
-            _ref.invalidate(fleetAdminSnapshotProvider(p));
+            _ref.invalidate(fleetAdminSnapshotProvider(fleetPeriod));
+          } else {
+            AppLogger.dashboard(
+              'Skipping fleetAdminSnapshot invalidation (source=$source) — '
+              'reports coalesce with dashboard summary',
+            );
           }
       }
+
+      await _awaitPrimaryRefreshData(mode);
 
       state = state.copyWith(
         isRefreshing: false,
@@ -306,7 +319,8 @@ class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
       sw.stop();
       DebugLogStore.instance.dashboardRefreshDurationMs = sw.elapsedMilliseconds;
       AppLogger.dashboard(
-        '[Dashboard] Refresh completed source=$source durationMs=${sw.elapsedMilliseconds}',
+        '[Dashboard] Data loaded/settled source=$source mode=${mode.name} '
+        'durationMs=${sw.elapsedMilliseconds}',
         durationMs: sw.elapsedMilliseconds,
       );
     } catch (e, st) {
@@ -327,6 +341,16 @@ class DashboardNotifier extends StateNotifier<DashboardRefreshState> {
         DashboardRefreshMode.medium => 'Medium',
         DashboardRefreshMode.full => 'Full',
       };
+
+  /// Waits for the primary REST summary before logging "settled".
+  Future<void> _awaitPrimaryRefreshData(DashboardRefreshMode mode) async {
+    if (mode == DashboardRefreshMode.none) return;
+    try {
+      await _ref.read(dashboardSummaryProvider.future);
+    } catch (_) {
+      // Provider may surface errors via AsyncValue; still mark cycle settled.
+    }
+  }
 }
 
 final dashboardNotifierProvider =

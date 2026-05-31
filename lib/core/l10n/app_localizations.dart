@@ -106,6 +106,7 @@ class AppLocalizations {
   String get noVehicles => _t('noVehicles');
   String get noVehiclesRegistered => _t('noVehiclesRegistered');
   String get tryChangingFilters => _t('tryChangingFilters');
+  String get noVehiclesInFilter => _t('noVehiclesInFilter');
   String get loadingFleet => _t('loadingFleet');
   String get searchHint => _t('searchHint');
   String get filterAll => _t('filterAll');
@@ -1018,6 +1019,48 @@ class AppLocalizations {
   String get fleetCardNoMaintenance => _t('fleetCardNoMaintenance');
   String fleetCardMaintenanceSnippet(String snippet) =>
       _t('fleetCardMaintenanceSnippet').replaceAll('{snippet}', snippet);
+  String fleetCardSummaryStoppedFor(String duration) =>
+      _t('fleetCardSummaryStoppedFor').replaceAll('{duration}', duration);
+  String fleetCardSummaryIdleFor(String duration) =>
+      _t('fleetCardSummaryIdleFor').replaceAll('{duration}', duration);
+  String fleetCardSummaryEngineOffFor(String duration) =>
+      _t('fleetCardSummaryEngineOffFor').replaceAll('{duration}', duration);
+  String fleetCardLastMovement(String time) =>
+      _t('fleetCardLastMovement').replaceAll('{time}', time);
+  String fleetCardLastIgnition(String time) =>
+      _t('fleetCardLastIgnition').replaceAll('{time}', time);
+  String fleetCardEngineOffSince(String duration) =>
+      _t('fleetCardEngineOffSince').replaceAll('{duration}', duration);
+  String fleetCardLastPosition(String address) =>
+      _t('fleetCardLastPosition').replaceAll('{address}', address);
+  String fleetCardLastData(String time) =>
+      _t('fleetCardLastData').replaceAll('{time}', time);
+  String get fleetCardAlertNoRecentData => _t('fleetCardAlertNoRecentData');
+  String fleetCardAlertOfflineLong(String duration) =>
+      _t('fleetCardAlertOfflineLong').replaceAll('{duration}', duration);
+  String fleetCardAlertOfflineSince(String time) =>
+      _t('fleetCardAlertOfflineSince').replaceAll('{time}', time);
+  String fleetCardAlertStaleData(String time) =>
+      _t('fleetCardAlertStaleData').replaceAll('{time}', time);
+  String fleetCardAlertLowBattery(String voltage) =>
+      _t('fleetCardAlertLowBattery').replaceAll('{voltage}', voltage);
+  String fleetCardAlertBatteryAttention(String voltage) =>
+      _t('fleetCardAlertBatteryAttention').replaceAll('{voltage}', voltage);
+  String fleetCardAlertLowFuel(String level) =>
+      _t('fleetCardAlertLowFuel').replaceAll('{level}', level);
+  String get relativeJustNow => _t('relativeJustNow');
+  String relativeMinutesAgo(int n) =>
+      _t('relativeMinutesAgo').replaceAll('{n}', '$n');
+  String relativeHoursAgo(int n) =>
+      _t('relativeHoursAgo').replaceAll('{n}', '$n');
+  String relativeDaysAgo(int n) =>
+      _t('relativeDaysAgo').replaceAll('{n}', '$n');
+  String relativeYesterdayAt(String time) =>
+      _t('relativeYesterdayAt').replaceAll('{time}', time);
+  String relativeDateAt(String date, String time) => _t('relativeDateAt')
+      .replaceAll('{date}', date)
+      .replaceAll('{time}', time);
+  String get fleetStatsLastSyncNow => _t('fleetStatsLastSyncNow');
 
   String get fleetSectionDocuments => _t('fleetSectionDocuments');
   String get fleetDocInsuranceLabel => _t('fleetDocInsuranceLabel');
@@ -1248,6 +1291,7 @@ class AppLocalizations {
       'noVehicles': 'No vehicles',
       'noVehiclesRegistered': 'No vehicles registered.',
       'tryChangingFilters': 'Try changing the search or filter criteria.',
+      'noVehiclesInFilter': 'No vehicles in this filter',
       'loadingFleet': 'Loading fleet…',
       'searchHint': 'Search by name or plate…',
       'filterAll': 'All',
@@ -2049,6 +2093,28 @@ class AppLocalizations {
       'fleetCardDriverAssigned': 'Driver {name}',
       'fleetCardNoMaintenance': 'No maintenance',
       'fleetCardMaintenanceSnippet': 'Maintenance • {snippet}',
+      'fleetCardSummaryStoppedFor': 'Stopped {duration}',
+      'fleetCardSummaryIdleFor': 'Idle {duration}',
+      'fleetCardSummaryEngineOffFor': 'Engine off {duration}',
+      'fleetCardLastMovement': 'Last movement: {time}',
+      'fleetCardLastIgnition': 'Last ignition: {time}',
+      'fleetCardEngineOffSince': 'Engine off for {duration}',
+      'fleetCardLastPosition': 'Last position: {address}',
+      'fleetCardLastData': 'Last data: {time}',
+      'fleetCardAlertNoRecentData': 'No recent data',
+      'fleetCardAlertOfflineLong': 'Offline for {duration}',
+      'fleetCardAlertOfflineSince': 'Offline since {time}',
+      'fleetCardAlertStaleData': 'Stale data ({time})',
+      'fleetCardAlertLowBattery': 'Low battery ({voltage})',
+      'fleetCardAlertBatteryAttention': 'Check battery ({voltage})',
+      'fleetCardAlertLowFuel': 'Low fuel ({level})',
+      'relativeJustNow': 'Just now',
+      'relativeMinutesAgo': '{n} min ago',
+      'relativeHoursAgo': '{n} h ago',
+      'relativeDaysAgo': '{n} d ago',
+      'relativeYesterdayAt': 'Yesterday {time}',
+      'relativeDateAt': '{date} {time}',
+      'fleetStatsLastSyncNow': 'Last sync: now',
       'fleetSectionDocuments': 'Documents',
       'fleetDocInsuranceLabel': 'Insurance',
       'fleetDocInspectionLabel': 'Technical inspection',
@@ -2235,6 +2301,7 @@ class AppLocalizations {
       'noVehicles': 'لا توجد مركبات',
       'noVehiclesRegistered': 'لا توجد مركبات مسجلة.',
       'tryChangingFilters': 'جرّب تغيير معايير البحث أو الفلتر.',
+      'noVehiclesInFilter': 'لا توجد مركبات في هذا الفلتر',
       'loadingFleet': 'جار تحميل الأسطول…',
       'searchHint': 'البحث بالاسم أو رقم اللوحة…',
       'filterAll': 'الكل',
@@ -3030,6 +3097,28 @@ class AppLocalizations {
       'fleetCardDriverAssigned': '{name}',
       'fleetCardNoMaintenance': 'لا توجد صيانة',
       'fleetCardMaintenanceSnippet': 'الصيانة • {snippet}',
+      'fleetCardSummaryStoppedFor': 'متوقف منذ {duration}',
+      'fleetCardSummaryIdleFor': 'خامل منذ {duration}',
+      'fleetCardSummaryEngineOffFor': 'المحرك مطفأ منذ {duration}',
+      'fleetCardLastMovement': 'آخر حركة: {time}',
+      'fleetCardLastIgnition': 'آخر تشغيل: {time}',
+      'fleetCardEngineOffSince': 'المحرك مطفأ منذ {duration}',
+      'fleetCardLastPosition': 'آخر موقع: {address}',
+      'fleetCardLastData': 'آخر بيانات: {time}',
+      'fleetCardAlertNoRecentData': 'لا توجد بيانات حديثة',
+      'fleetCardAlertOfflineLong': 'غير متصل منذ {duration}',
+      'fleetCardAlertOfflineSince': 'غير متصل منذ {time}',
+      'fleetCardAlertStaleData': 'بيانات قديمة ({time})',
+      'fleetCardAlertLowBattery': 'بطارية منخفضة ({voltage})',
+      'fleetCardAlertBatteryAttention': 'تحقق من البطارية ({voltage})',
+      'fleetCardAlertLowFuel': 'وقود منخفض ({level})',
+      'relativeJustNow': 'الآن',
+      'relativeMinutesAgo': 'منذ {n} د',
+      'relativeHoursAgo': 'منذ {n} س',
+      'relativeDaysAgo': 'منذ {n} ي',
+      'relativeYesterdayAt': 'أمس {time}',
+      'relativeDateAt': '{date} {time}',
+      'fleetStatsLastSyncNow': 'آخر مزامنة: الآن',
       'fleetSectionDocuments': 'وثائق المركبات',
       'fleetDocInsuranceLabel': 'التأمين',
       'fleetDocInspectionLabel': 'الفحص التقني',
@@ -3219,6 +3308,7 @@ class AppLocalizations {
       'noVehiclesRegistered': 'Aucun véhicule enregistré.',
       'tryChangingFilters':
           'Essayez de modifier les critères de recherche ou de filtre.',
+      'noVehiclesInFilter': 'Aucun véhicule dans ce filtre',
       'loadingFleet': 'Chargement de la flotte…',
       'searchHint': 'Rechercher par nom ou plaque…',
       'filterAll': 'Tout',
@@ -4033,6 +4123,28 @@ class AppLocalizations {
       'fleetCardDriverAssigned': 'Conducteur {name}',
       'fleetCardNoMaintenance': 'Aucune maintenance',
       'fleetCardMaintenanceSnippet': 'Maintenance • {snippet}',
+      'fleetCardSummaryStoppedFor': 'Arrêtée depuis {duration}',
+      'fleetCardSummaryIdleFor': 'Inactif depuis {duration}',
+      'fleetCardSummaryEngineOffFor': 'Moteur éteint depuis {duration}',
+      'fleetCardLastMovement': 'Dernier mouvement : {time}',
+      'fleetCardLastIgnition': 'Dernier allumage : {time}',
+      'fleetCardEngineOffSince': 'Moteur éteint depuis {duration}',
+      'fleetCardLastPosition': 'Dernière position : {address}',
+      'fleetCardLastData': 'Dernière donnée : {time}',
+      'fleetCardAlertNoRecentData': 'Aucune donnée récente',
+      'fleetCardAlertOfflineLong': 'Hors ligne depuis {duration}',
+      'fleetCardAlertOfflineSince': 'Hors ligne depuis {time}',
+      'fleetCardAlertStaleData': 'Données obsolètes ({time})',
+      'fleetCardAlertLowBattery': 'Batterie faible ({voltage})',
+      'fleetCardAlertBatteryAttention': 'Vérifier la batterie ({voltage})',
+      'fleetCardAlertLowFuel': 'Carburant bas ({level})',
+      'relativeJustNow': 'À l\'instant',
+      'relativeMinutesAgo': 'il y a {n} min',
+      'relativeHoursAgo': 'il y a {n} h',
+      'relativeDaysAgo': 'il y a {n} j',
+      'relativeYesterdayAt': 'hier {time}',
+      'relativeDateAt': '{date} {time}',
+      'fleetStatsLastSyncNow': 'Dernière mise à jour : maintenant',
       'fleetSectionDocuments': 'Documents',
       'fleetDocInsuranceLabel': 'Assurance',
       'fleetDocInspectionLabel': 'Visite technique',
@@ -4224,6 +4336,7 @@ class AppLocalizations {
       'noVehiclesRegistered': 'Sin vehículos registrados.',
       'tryChangingFilters':
           'Prueba a cambiar los criterios de búsqueda o filtro.',
+      'noVehiclesInFilter': 'Ningún vehículo en este filtro',
       'loadingFleet': 'Cargando flota…',
       'searchHint': 'Buscar por nombre o matrícula…',
       'filterAll': 'Todo',
@@ -5034,6 +5147,28 @@ class AppLocalizations {
       'fleetCardDriverAssigned': 'Conductor {name}',
       'fleetCardNoMaintenance': 'Sin mantenimiento',
       'fleetCardMaintenanceSnippet': 'Mantenimiento • {snippet}',
+      'fleetCardSummaryStoppedFor': 'Detenido {duration}',
+      'fleetCardSummaryIdleFor': 'Inactivo {duration}',
+      'fleetCardSummaryEngineOffFor': 'Motor apagado {duration}',
+      'fleetCardLastMovement': 'Último movimiento: {time}',
+      'fleetCardLastIgnition': 'Último encendido: {time}',
+      'fleetCardEngineOffSince': 'Motor apagado desde {duration}',
+      'fleetCardLastPosition': 'Última posición: {address}',
+      'fleetCardLastData': 'Últimos datos: {time}',
+      'fleetCardAlertNoRecentData': 'Sin datos recientes',
+      'fleetCardAlertOfflineLong': 'Sin conexión {duration}',
+      'fleetCardAlertOfflineSince': 'Sin conexión desde {time}',
+      'fleetCardAlertStaleData': 'Datos antiguos ({time})',
+      'fleetCardAlertLowBattery': 'Batería baja ({voltage})',
+      'fleetCardAlertBatteryAttention': 'Revisar batería ({voltage})',
+      'fleetCardAlertLowFuel': 'Combustible bajo ({level})',
+      'relativeJustNow': 'Ahora',
+      'relativeMinutesAgo': 'hace {n} min',
+      'relativeHoursAgo': 'hace {n} h',
+      'relativeDaysAgo': 'hace {n} d',
+      'relativeYesterdayAt': 'ayer {time}',
+      'relativeDateAt': '{date} {time}',
+      'fleetStatsLastSyncNow': 'Última sincronización: ahora',
       'fleetSectionDocuments': 'Documentos',
       'fleetDocInsuranceLabel': 'Seguro',
       'fleetDocInspectionLabel': 'Inspección técnica',

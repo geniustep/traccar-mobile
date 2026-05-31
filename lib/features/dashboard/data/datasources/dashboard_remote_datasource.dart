@@ -1,38 +1,27 @@
-import '../../../../core/api/traccar_endpoints.dart';
-import '../../../../core/network/traccar_client.dart';
-import '../../../../core/utils/request_coalescer.dart';
+import '../../../../core/fleet/fleet_base_data_gate.dart';
+import '../../../reports/data/fleet_reports_request_gate.dart';
 import '../models/dashboard_summary_model.dart';
 import '../models/insight_model.dart';
 
 class DashboardRemoteDataSource {
-  DashboardRemoteDataSource(this._client);
+  DashboardRemoteDataSource(this._fleetReports, this._baseData);
 
-  final TraccarClient _client;
+  final FleetReportsRequestGate _fleetReports;
+  final FleetBaseDataGate _baseData;
 
-  final RequestCoalescer _coalescer = RequestCoalescer();
+  void resetCoalescer() => _fleetReports.resetCache();
 
-  /// Invalidate cached data when a full manual refresh is requested.
-  void resetCoalescer() => _coalescer.invalidateAll();
-
-  /// Computes dashboard summary from Traccar data (no dedicated endpoint exists).
-  ///
-  /// Makes parallel calls with coalesced /devices and /positions to prevent
-  /// duplicates when [getInsights] is also running in the same refresh cycle.
   Future<DashboardSummaryModel> getSummary({DateTime? refreshNow}) async {
     final now = refreshNow ?? DateTime.now().toUtc();
     final todayStart = DateTime.utc(now.year, now.month, now.day);
-    final toIso = now.toIso8601String();
-    final fromIso = todayStart.toIso8601String();
 
-    // 1. Devices + positions in parallel (both coalesced)
     final baseResults = await Future.wait([
-      _getDevicesCoalesced(),
-      _getPositionsCoalesced(),
+      _getDevices(),
+      _getPositions(),
     ]);
     final devices = baseResults[0];
     final positions = baseResults[1];
 
-    // 2. Reports only when there are devices
     List<Map<String, dynamic>> trips = [];
     List<Map<String, dynamic>> events = [];
 
@@ -42,26 +31,19 @@ class DashboardRemoteDataSource {
           .whereType<int>()
           .toList();
 
-      final tripsKey = 'reports_trips|$fromIso|$toIso';
-      final eventsKey = 'reports_events|$fromIso|$toIso';
-
       final reportResults = await Future.wait([
-        _coalescer.coalesce(tripsKey, () => _fetchRaw(
-          TraccarEndpoints.reportTrips,
-          params: {
-            'from': fromIso,
-            'to': toIso,
-            'deviceId': deviceIds,
-          },
-        )),
-        _coalescer.coalesce(eventsKey, () => _fetchRaw(
-          TraccarEndpoints.reportEvents,
-          params: {
-            'from': fromIso,
-            'to': toIso,
-            'deviceId': deviceIds,
-          },
-        )),
+        _fleetReports.fetchTripsRaw(
+          deviceIds: deviceIds,
+          fromUtc: todayStart,
+          toUtc: now,
+          trigger: 'dashboard_summary',
+        ),
+        _fleetReports.fetchEvents(
+          deviceIds: deviceIds,
+          fromUtc: todayStart,
+          toUtc: now,
+          trigger: 'dashboard_summary',
+        ),
       ]);
       trips = reportResults[0];
       events = reportResults[1];
@@ -75,15 +57,11 @@ class DashboardRemoteDataSource {
     );
   }
 
-  /// Traccar has no insights endpoint.
-  /// Derive insights from today's events (most frequent alert types).
   Future<List<InsightModel>> getInsights({DateTime? refreshNow}) async {
     final now = refreshNow ?? DateTime.now().toUtc();
     final todayStart = DateTime.utc(now.year, now.month, now.day);
-    final toIso = now.toIso8601String();
-    final fromIso = todayStart.toIso8601String();
 
-    final devices = await _getDevicesCoalesced();
+    final devices = await _getDevices();
     if (devices.isEmpty) return [];
 
     final deviceIds = devices
@@ -95,17 +73,13 @@ class DashboardRemoteDataSource {
         if (d['id'] is int) (d['id'] as int): d['name'] as String? ?? '',
     };
 
-    final eventsKey = 'reports_events|$fromIso|$toIso';
-    final events = await _coalescer.coalesce(eventsKey, () => _fetchRaw(
-      TraccarEndpoints.reportEvents,
-      params: {
-        'from': fromIso,
-        'to': toIso,
-        'deviceId': deviceIds,
-      },
-    ));
+    final events = await _fleetReports.fetchEvents(
+      deviceIds: deviceIds,
+      fromUtc: todayStart,
+      toUtc: now,
+      trigger: 'dashboard_insights',
+    );
 
-    // Group by type and create one insight per type
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (final e in events) {
       final t = e['type'] as String? ?? 'unknown';
@@ -131,36 +105,10 @@ class DashboardRemoteDataSource {
     }).toList();
   }
 
-  // ── Private ─────────────────────────────────────────────────────────────────
+  Future<List<Map<String, dynamic>>> _getDevices() => _baseData.fetchDevices();
 
-  /// Coalesced /devices fetch — multiple callers in the same refresh cycle
-  /// share a single HTTP call.
-  Future<List<Map<String, dynamic>>> _getDevicesCoalesced() {
-    return _coalescer.coalesce(
-      'devices',
-      () => _fetchRaw(TraccarEndpoints.devices),
-    );
-  }
-
-  /// Coalesced /positions fetch — prevents duplicate requests when
-  /// summary + other providers request positions simultaneously.
-  Future<List<Map<String, dynamic>>> _getPositionsCoalesced() {
-    return _coalescer.coalesce(
-      'positions',
-      () => _fetchRaw(TraccarEndpoints.positions),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchRaw(
-    String path, {
-    Map<String, dynamic>? params,
-  }) async =>
-      (await _client.get<List<Map<String, dynamic>>>(
-        path,
-        query: params,
-        fromJson: (j) =>
-            (j as List).whereType<Map<String, dynamic>>().toList(),
-      )).getOrThrow();
+  Future<List<Map<String, dynamic>>> _getPositions() =>
+      _baseData.fetchPositions();
 
   static String _insightTitle(String type) {
     const map = {

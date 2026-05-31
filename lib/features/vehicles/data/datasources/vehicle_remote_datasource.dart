@@ -1,19 +1,21 @@
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/fleet/fleet_base_data_gate.dart';
 import '../../../../core/network/traccar_client.dart';
 import '../../../../core/api/traccar_endpoints.dart';
 import 'vehicle_device_gateway.dart';
 import '../models/vehicle_model.dart';
 
 class VehicleRemoteDataSource implements VehicleDeviceGateway {
-  const VehicleRemoteDataSource(this._client);
+  const VehicleRemoteDataSource(this._client, this._baseData);
 
   final TraccarClient _client;
+  final FleetBaseDataGate _baseData;
 
   /// Fetches all devices and merges with their latest positions.
   Future<List<VehicleModel>> getVehicles() async {
     final results = await Future.wait<List<Map<String, dynamic>>>([
-      _fetchDevices(),
-      _fetchPositions(),
+      _baseData.fetchDevices(),
+      _baseData.fetchPositions(),
     ]);
 
     final devices = results[0];
@@ -86,19 +88,4 @@ class VehicleRemoteDataSource implements VehicleDeviceGateway {
         .getOrThrow();
   }
 
-  // ── Private helpers ──────────────────────────────────────────────────────
-
-  Future<List<Map<String, dynamic>>> _fetchDevices() async =>
-      (await _client.get<List<Map<String, dynamic>>>(
-        TraccarEndpoints.devices,
-        fromJson: (j) =>
-            (j as List).whereType<Map<String, dynamic>>().toList(),
-      )).getOrThrow();
-
-  Future<List<Map<String, dynamic>>> _fetchPositions() async =>
-      (await _client.get<List<Map<String, dynamic>>>(
-        TraccarEndpoints.positions,
-        fromJson: (j) =>
-            (j as List).whereType<Map<String, dynamic>>().toList(),
-      )).getOrThrow();
 }
