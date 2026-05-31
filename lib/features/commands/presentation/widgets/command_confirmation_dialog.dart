@@ -229,12 +229,12 @@ class _HighRiskDialogState extends State<_HighRiskDialog> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: color, width: 1),
+                        borderSide: const BorderSide(color: color, width: 1),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide:
-                            BorderSide(color: AppColors.border, width: 0.5),
+                            const BorderSide(color: AppColors.border, width: 0.5),
                       ),
                     ),
                   ),

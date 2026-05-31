@@ -5,10 +5,15 @@ import '../models/traccar_device.dart';
 import '../models/traccar_event.dart';
 import '../logging/app_logger.dart';
 import '../models/traccar_position.dart';
+import '../../features/map/core/map_audit_logger.dart';
 import 'live_position_update_gate.dart';
 import 'socket_event_parser.dart';
 import 'socket_state.dart';
 import 'traccar_socket_service.dart';
+
+/// Last time any device position was accepted into [livePositionsProvider].
+final lastLivePositionReceivedAtProvider =
+    StateProvider<DateTime?>((ref) => null);
 
 // ── Service provider ──────────────────────────────────────────────────────────
 
@@ -37,17 +42,28 @@ final livePositionsProvider =
     StateNotifierProvider<LivePositionsNotifier, Map<int, TraccarPosition>>(
   (ref) {
     final svc = ref.watch(traccarSocketServiceProvider);
-    return LivePositionsNotifier(svc);
+    return LivePositionsNotifier(
+      svc,
+      onPositionAccepted: () {
+        ref.read(lastLivePositionReceivedAtProvider.notifier).state =
+            DateTime.now();
+      },
+    );
   },
 );
 
 class LivePositionsNotifier
     extends StateNotifier<Map<int, TraccarPosition>> {
-  LivePositionsNotifier(TraccarSocketService svc) : super({}) {
+  LivePositionsNotifier(
+    TraccarSocketService svc, {
+    void Function()? onPositionAccepted,
+  })  : _onPositionAccepted = onPositionAccepted,
+        super({}) {
     _sub = svc.messageStream.listen((msg) {
       if (!msg.hasPositions) return;
 
       var next = Map<int, TraccarPosition>.from(state);
+      var acceptedAny = false;
       for (final pos in msg.positions) {
         final current = next[pos.deviceId];
         if (!LivePositionUpdateGate.shouldAcceptLiveUpdate(
@@ -62,11 +78,18 @@ class LivePositionsNotifier
           );
           continue;
         }
+        MapAuditLogger.websocketPosition(pos);
         next[pos.deviceId] = pos;
+        acceptedAny = true;
       }
-      state = next;
+      if (acceptedAny) {
+        _onPositionAccepted?.call();
+        state = next;
+      }
     });
   }
+
+  final void Function()? _onPositionAccepted;
 
   late final StreamSubscription<SocketMessage> _sub;
 

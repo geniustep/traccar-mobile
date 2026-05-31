@@ -86,10 +86,10 @@ class VehicleMarkerFactory {
     const double cy = circleR + 2;
 
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, w, totalH));
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, w, totalH));
 
     canvas.drawCircle(
-      Offset(cx, cy + 3),
+      const Offset(cx, cy + 3),
       circleR,
       Paint()
         ..color = Colors.black.withValues(alpha: 0.3)
@@ -107,7 +107,7 @@ class VehicleMarkerFactory {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    canvas.drawCircle(Offset(cx, cy), circleR, Paint()..color = bodyColor);
+    canvas.drawCircle(const Offset(cx, cy), circleR, Paint()..color = bodyColor);
 
     canvas.drawPath(
       Path()
@@ -119,7 +119,7 @@ class VehicleMarkerFactory {
     );
 
     canvas.drawCircle(
-      Offset(cx, cy),
+      const Offset(cx, cy),
       circleR - 0.5,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.28)
@@ -287,9 +287,9 @@ class VehicleMarkerFactory {
 
     const size = 112.0;
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, size, size));
-    final cx = size / 2;
-    final cy = size / 2;
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
+    const cx = size / 2;
+    const cy = size / 2;
     const r = 38.0;
 
     canvas.drawCircle(

@@ -32,7 +32,7 @@ double _haversineMeters(
   double lat2,
   double lon2,
 ) {
-  final rLat = math.pi / 180;
+  const rLat = math.pi / 180;
   final phi1 = lat1 * rLat;
   final phi2 = lat2 * rLat;
   final dphi = (lat2 - lat1) * rLat;
@@ -295,23 +295,23 @@ Future<int> _run() async {
         111320.0 * math.cos(centerLat * math.pi / 180.0);
 
     // نقطتان خارج — بعيدتان عن المركز (> 450 م)
-    final o1Lat = centerLat + 850 / mPerDegLat;
-    final o1Lon = centerLon;
-    final o2Lat = centerLat - 820 / mPerDegLat;
-    final o2Lon = centerLon;
+    const o1Lat = centerLat + 850 / mPerDegLat;
+    const o1Lon = centerLon;
+    const o2Lat = centerLat - 820 / mPerDegLat;
+    const o2Lon = centerLon;
     // ثلاث نقاط داخل — بين 80 و 220 م من المركز
-    final i1Lat = centerLat + 120 / mPerDegLat;
-    final i1Lon = centerLon;
-    final i2Lat = centerLat + 100 / mPerDegLat;
+    const i1Lat = centerLat + 120 / mPerDegLat;
+    const i1Lon = centerLon;
+    const i2Lat = centerLat + 100 / mPerDegLat;
     final i2Lon = centerLon + 150 / mPerDegLon;
-    final i3Lat = centerLat - 90 / mPerDegLat;
+    const i3Lat = centerLat - 90 / mPerDegLat;
     final i3Lon = centerLon + 130 / mPerDegLon;
     // ثلاث نقاط خارج أخرى
-    final o3Lat = centerLat + 920 / mPerDegLat;
+    const o3Lat = centerLat + 920 / mPerDegLat;
     final o3Lon = centerLon + 280 / mPerDegLon;
-    final o4Lat = centerLat - 900 / mPerDegLat;
+    const o4Lat = centerLat - 900 / mPerDegLat;
     final o4Lon = centerLon - 260 / mPerDegLon;
-    final o5Lat = centerLat + 880 / mPerDegLat;
+    const o5Lat = centerLat + 880 / mPerDegLat;
     final o5Lon = centerLon - 300 / mPerDegLon;
 
     final motionSteps = <_MotionStep>[

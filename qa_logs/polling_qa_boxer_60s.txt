@@ -1,0 +1,18 @@
+﻿05-31 14:42:48.918 11368 11368 I flutter : [Navigation] Entered: /vehicles
+05-31 14:42:53.232 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:42:53.000Z
+05-31 14:43:05.216 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:05.000Z
+05-31 14:43:06.751 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=9 fixTime=2026-05-31T14:43:02.000Z
+05-31 14:43:08.612 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=9 fixTime=2026-05-31T14:43:06.000Z
+05-31 14:43:11.210 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:11.000Z
+05-31 14:43:12.878 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=9 fixTime=2026-05-31T14:43:12.000Z
+05-31 14:43:15.458 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:15.000Z
+05-31 14:43:23.083 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=9 fixTime=2026-05-31T14:43:22.000Z
+05-31 14:43:23.230 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:23.000Z
+05-31 14:43:33.181 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=9 fixTime=2026-05-31T14:43:33.000Z
+05-31 14:43:34.193 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:34.000Z
+05-31 14:43:39.170 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:39.000Z
+05-31 14:43:43.853 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=9 fixTime=2026-05-31T14:43:43.000Z
+05-31 14:43:44.233 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:44.000Z
+05-31 14:43:49.269 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:49.000Z
+05-31 14:43:53.212 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:53.000Z
+05-31 14:43:55.134 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:43:54.000Z

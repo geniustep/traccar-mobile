@@ -158,6 +158,7 @@ class _VehiclesScreenState extends ConsumerState<VehiclesScreen> {
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: 10),
                   itemBuilder: (context, i) => VehicleCard(
+                    key: Key('vehicle_card_${vehicles[i].id}'),
                     vehicle: vehicles[i],
                     fleetBrief: fleetBriefMap[vehicles[i].id],
                     onTap: () =>

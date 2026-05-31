@@ -160,7 +160,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
                           borderRadius: BorderRadius.circular(12)),
                       isDense: true,
                     ),
-                    value: _filterVehicleKey,
+                    initialValue: _filterVehicleKey,
                     items: [
                       DropdownMenuItem(
                         value: 'all',

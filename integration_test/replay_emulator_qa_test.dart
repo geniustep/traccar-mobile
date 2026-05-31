@@ -298,7 +298,7 @@ void main() {
             fixTime: t0.add(Duration(minutes: i)),
             ignition: true,
           );
-      final mk = (int n) => List.generate(
+      List<MultiVehicleReplayTrack> mk(int n) => List.generate(
             n,
             (i) => track(
               '$i',

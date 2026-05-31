@@ -1,0 +1,2 @@
+﻿05-31 12:50:40.308  6839  6839 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T12:50:40.000Z
+05-31 12:51:10.247  6839  6839 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T12:51:10.000Z

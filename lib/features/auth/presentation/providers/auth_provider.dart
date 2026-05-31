@@ -55,7 +55,9 @@ class AuthState {
 // ── Notifier ──────────────────────────────────────────────────────────────────
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repository) : super(const AuthState()) {
+  /// Start in loading so hot restart / cold start do not briefly look logged-out
+  /// (avoids FCM reset and /login redirect before secure-storage rehydrate).
+  AuthNotifier(this._repository) : super(const AuthState(isLoading: true)) {
     _init();
   }
 

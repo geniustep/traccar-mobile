@@ -86,7 +86,7 @@ void main() {
     });
 
     test('user only', () async {
-      final u = UserEntity(
+      const u = UserEntity(
         id: '1',
         name: 'U',
         email: 'u@u.com',
@@ -106,7 +106,7 @@ void main() {
         RouteIntelligenceLocalPreferenceKeys.overspeedThresholdKmh: 40,
       });
       final prefs = await SharedPreferences.getInstance();
-      final u = UserEntity(
+      const u = UserEntity(
         id: '2',
         name: 'U2',
         email: 'u2@u.com',
@@ -151,7 +151,7 @@ void main() {
     });
 
     test('invalid user attributes do not throw', () async {
-      final u = UserEntity(
+      const u = UserEntity(
         id: '3',
         name: 'Bad',
         email: 'bad@bad.com',
@@ -170,7 +170,7 @@ void main() {
     });
 
     test('resolution thresholds match legacy global provider', () async {
-      final u = UserEntity(
+      const u = UserEntity(
         id: '4',
         name: 'U',
         email: 'u@u.com',
@@ -367,7 +367,7 @@ void main() {
       'user.attributes apply when device and group sparse',
       () async {
         final v = vehicle(id: '4', deviceAttributes: const {});
-        final u = UserEntity(
+        const u = UserEntity(
           id: '99',
           name: 'U',
           email: 'u@example.com',
@@ -407,7 +407,7 @@ void main() {
             RouteIntelligenceAttributeKeys.overspeedThresholdKmh: 80,
           },
         );
-        final u = UserEntity(
+        const u = UserEntity(
           id: '1',
           name: 'U',
           email: 'u@example.com',
@@ -451,7 +451,7 @@ void main() {
       'local prefs weakest vs user on same vehicle',
       () async {
         final v = vehicle(id: '6', deviceAttributes: const {});
-        final u = UserEntity(
+        const u = UserEntity(
           id: '2',
           name: 'U2',
           email: 'u2@example.com',
@@ -493,7 +493,7 @@ void main() {
             RouteIntelligenceAttributeKeys.detectIgnition: false,
           },
         );
-        final u = UserEntity(
+        const u = UserEntity(
           id: 'u-r1',
           name: 'U',
           email: 'u@example.com',

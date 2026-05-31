@@ -185,7 +185,7 @@ class RoutePolylineBuilder {
     String? selectedEventKey,
   }) {
     if (analysis == null) {
-      return RouteIntelligenceMarkerBundle(markers: {}, itemByMarkerId: {});
+      return const RouteIntelligenceMarkerBundle(markers: {}, itemByMarkerId: {});
     }
 
     final markers = <Marker>{};

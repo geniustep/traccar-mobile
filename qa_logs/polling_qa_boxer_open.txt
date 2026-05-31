@@ -1,0 +1,2 @@
+﻿05-31 14:42:48.918 11368 11368 I flutter : [Navigation] Entered: /vehicles
+05-31 14:42:53.232 11368 11368 I flutter : [WebSocket] [WebSocket] position received deviceId=11 fixTime=2026-05-31T14:42:53.000Z

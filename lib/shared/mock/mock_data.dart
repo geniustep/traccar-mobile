@@ -256,7 +256,7 @@ class MockData {
         ),
       ];
 
-  static AnalyticsData get analytics => AnalyticsData(
+  static AnalyticsData get analytics => const AnalyticsData(
         weeklyDistanceMeters: 187300,
         totalIdleSeconds: 18540,
         overspeedCount: 8,
@@ -266,10 +266,10 @@ class MockData {
         topAlertCategory: 'Overspeed',
         weeklyTripCount: 64,
         fleetEfficiencyScore: 78.4,
-        dailyDistances: const [
+        dailyDistances: [
           22400, 31200, 18600, 28400, 35100, 27800, 23800
         ],
-        dailyLabels: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        dailyLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       );
 
   static List<AppNotification> get notifications => [

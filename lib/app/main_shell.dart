@@ -91,6 +91,7 @@ class MainShell extends ConsumerWidget {
             }
 
             return NavigationDestination(
+              key: Key('nav_dest_${_paths[i].replaceAll('/', '')}'),
               icon: icon,
               selectedIcon: Icon(_activeIcons[i]),
               label: labels[i],

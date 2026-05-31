@@ -1,4 +1,5 @@
 /// سجل صيانة ممتدَّ بخصائص جانبية حسب احتياجات العميل.
+library;
 
 import '../../../../core/constants/elmo_fleet_attribute_keys.dart';
 import '../../../fleet_domain/fleet_condition_logic.dart';

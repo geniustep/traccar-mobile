@@ -506,7 +506,7 @@ class _RouteEventTimelineState extends State<RouteEventTimeline> {
                 ),
                 label: Text(
                   _expanded ? l10n.routeEventsSeeLess : l10n.routeEventsSeeMore,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accent,

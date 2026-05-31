@@ -1,0 +1,73 @@
+﻿05-31 11:42:55.250 10683 10683 I flutter : [FCM] Message received: type=alarm alertId=48728
+05-31 11:42:55.252 10683 10683 I flutter : [FCM] [FCM] Foreground message: type=alarm alertId=48728
+05-31 11:42:55.253 10683 10683 I flutter : [FCM] [FCM] Triggering alerts refresh source=fcm_foreground
+05-31 11:42:55.253 10683 10683 I flutter : [Alerts] Refresh from FCM started (alertId=48728)
+05-31 11:42:55.260 10683 10683 I flutter : [Alerts] [Alerts] FCM refresh coalesced ÔÇö single load cycle
+05-31 11:42:55.261 10683 10683 I flutter : [Alerts] Fetch started (filter=all offset=0 vehicleId=all)
+05-31 11:42:55.395 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0 ÔÇö started
+05-31 11:42:55.437 10683 10683 I flutter : [API] GET /alerts/unread-count ÔÇö started
+05-31 11:42:55.632 10683 10683 I flutter : [API] GET /alerts/unread-count ÔÇö status=200 durationMs=196 
+05-31 11:42:55.642 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0 ÔÇö status=200 durationMs=247 
+05-31 11:42:55.644 10683 10683 I flutter : [Alerts] Fetch success: total=50 unread=8434 vehicleFilter=none
+05-31 11:42:55.644 10683 10683 I flutter : [Alerts] Refresh from FCM success: unread=8434 durationMs=390
+05-31 11:43:51.352 10683 10683 I flutter : [Navigation] Entered: /vehicles
+05-31 11:43:54.434 10683 10683 I flutter : [Navigation] Vehicle details opened: vehicleId=11 source=vehicle_detail_screen
+05-31 11:43:54.544 10683 10683 I flutter : [API] GET /devices/11 ÔÇö started
+05-31 11:43:54.562 10683 10683 I flutter : [API] GET /positions?deviceId=11 ÔÇö started
+05-31 11:43:54.709 10683 10683 I flutter : [API] GET /devices/11 ÔÇö status=200 durationMs=170 
+05-31 11:43:54.713 10683 10683 I flutter : [API] GET /positions?deviceId=11 ÔÇö status=200 durationMs=151 
+05-31 11:43:54.719 10683 10683 I flutter : [Navigation] Vehicle details loaded: vehicleId=11
+05-31 11:43:54.729 10683 10683 I flutter : [Reports] scheduled type=summary deviceIds=[11] from=2026-05-31T00:00:00.000Z to=2026-05-31T11:43:00.000Z trigger=vehicle_detail_today normalizedKey=reports_summary|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:54.730 10683 10683 I flutter : [Reports] new request normalizedKey=reports_summary|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:54.730 10683 10683 I flutter : [Reports] request start type=summary deviceIds=[11] from=2026-05-31T00:00:00.000Z to=2026-05-31T11:43:00.000Z trigger=vehicle_detail_today normalizedKey=reports_summary|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:54.734 10683 10683 I flutter : [LiveSync] Ignored stale position for live merge: vehicleId=11 fixTime=2026-05-31T11:43:53.000Z lastFixTime=2026-05-31T11:43:54.000Z
+05-31 11:43:55.002 10683 10683 I flutter : [API] GET /reports/trips?deviceId=11&from=2026-05-01T11:43:54.726805Z&to=2026-05-31T11:43:54.726805Z ÔÇö started
+05-31 11:43:55.025 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0&deviceId=11 ÔÇö started
+05-31 11:43:55.070 10683 10683 I flutter : [API] GET /reports/summary?deviceId=11&from=2026-05-31T00:00:00.000Z&to=2026-05-31T11:43:00.000Z ÔÇö started
+05-31 11:43:55.110 10683 10683 I flutter : [API] GET /groups ÔÇö started
+05-31 11:43:55.131 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0&deviceId=11 ÔÇö status=200 durationMs=106 
+05-31 11:43:55.139 10683 10683 I flutter : [LiveSync] Ignored stale position for live merge: vehicleId=11 fixTime=2026-05-31T11:43:53.000Z lastFixTime=2026-05-31T11:43:54.000Z
+05-31 11:43:55.177 10683 10683 I flutter : [API] GET /devices/11 ÔÇö started
+05-31 11:43:55.193 10683 10683 I flutter : [API] GET /positions?deviceId=11 ÔÇö started
+05-31 11:43:55.280 10683 10683 I flutter : [API] GET /devices/11 ÔÇö status=200 durationMs=103 
+05-31 11:43:55.340 10683 10683 I flutter : [API] GET /groups ÔÇö status=200 durationMs=230 
+05-31 11:43:55.406 10683 10683 I flutter : [API] GET /positions?deviceId=11 ÔÇö status=200 durationMs=213 
+05-31 11:43:55.431 10683 10683 I flutter : [API] GET /reports/summary?deviceId=11&from=2026-05-31T00:00:00.000Z&to=2026-05-31T11:43:00.000Z ÔÇö status=200 durationMs=360 
+05-31 11:43:55.432 10683 10683 I flutter : [Reports] request ok type=summary deviceIds=[11] durationMs=701 trigger=vehicle_detail_today normalizedKey=reports_summary|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:55.435 10683 10683 I flutter : [Reports] scheduled type=stops deviceIds=[11] from=2026-05-31T00:00:00.000Z to=2026-05-31T11:43:00.000Z trigger=vehicle_detail_today normalizedKey=reports_stops|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:55.436 10683 10683 I flutter : [Reports] new request normalizedKey=reports_stops|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:55.437 10683 10683 I flutter : [Reports] request start type=stops deviceIds=[11] from=2026-05-31T00:00:00.000Z to=2026-05-31T11:43:00.000Z trigger=vehicle_detail_today normalizedKey=reports_stops|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:55.507 10683 10683 I flutter : [API] GET /reports/stops?deviceId=11&from=2026-05-31T00:00:00.000Z&to=2026-05-31T11:43:00.000Z ÔÇö started
+05-31 11:43:56.457 10683 10683 I flutter : [Navigation] VehicleDetail: Track tapped vehicleId=11
+05-31 11:43:56.465 10683 10683 I flutter : [Map] VehicleTrackingScreen opened: vehicleId=11
+05-31 11:43:56.499 10683 10683 I flutter : [LiveSync] Ignored stale position for live merge: vehicleId=11 fixTime=2026-05-31T11:43:53.000Z lastFixTime=2026-05-31T11:43:54.000Z
+05-31 11:43:56.560 10683 10683 I flutter : [Map] Live status changed to live for vehicleId=11
+05-31 11:43:57.052 10683 10683 I flutter : [API] GET /reports/stops?deviceId=11&from=2026-05-31T00:00:00.000Z&to=2026-05-31T11:43:00.000Z ÔÇö status=200 durationMs=1539 [MEDIUM]
+05-31 11:43:57.055 10683 10683 I flutter : [Reports] request ok type=stops deviceIds=[11] durationMs=1615 trigger=vehicle_detail_today normalizedKey=reports_stops|11|2026-05-31T00:00:00.000Z|2026-05-31T11:43:00.000Z
+05-31 11:43:57.121 10683 10683 I flutter : [API] GET /reports/route?deviceId=11&from=2026-05-31T00:00:00.000Z&to=2026-05-31T11:43:56.465410Z ÔÇö started
+05-31 11:43:57.212 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0&deviceId=11 ÔÇö started
+05-31 11:44:06.486 10683 10683 I flutter : [Map] First live position for vehicleId=11: 35.18014,-6.09799 speed=70.00002548
+05-31 11:44:24.925 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0&deviceId=11 ÔÇö status=200 durationMs=27714 [CRITICAL SLOW]
+05-31 11:44:24.925 10683 10683 I flutter : [Performance] GET /alerts/?limit=50&offset=0&deviceId=11 ÔÇö 27714ms ÔÇö [CRITICAL SLOW]
+05-31 11:44:24.944 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:44:42.736 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:44:42.801 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:44:56.737 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:44:56.767 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:45:05.551 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:45:05.602 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:45:06.605 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:45:07.701 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:45:07.735 10683 10683 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 11:45:10.422 10683 10683 I flutter : [FCM] Message received: type=alarm alertId=48732
+05-31 11:45:10.423 10683 10683 I flutter : [FCM] [FCM] Foreground message: type=alarm alertId=48732
+05-31 11:45:10.423 10683 10683 I flutter : [FCM] [FCM] Triggering alerts refresh source=fcm_foreground
+05-31 11:45:10.423 10683 10683 I flutter : [Alerts] Refresh from FCM started (alertId=48732)
+05-31 11:45:10.429 10683 10683 I flutter : [Alerts] [Alerts] FCM refresh coalesced ÔÇö single load cycle
+05-31 11:45:10.430 10683 10683 I flutter : [Alerts] Fetch started (filter=all offset=0 vehicleId=all)
+05-31 11:45:10.529 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0 ÔÇö started
+05-31 11:45:10.549 10683 10683 I flutter : [API] GET /alerts/unread-count ÔÇö started
+05-31 11:45:10.837 10683 10683 I flutter : [API] GET /alerts/unread-count ÔÇö status=200 durationMs=289 
+05-31 11:45:10.875 10683 10683 I flutter : [API] GET /alerts/?limit=50&offset=0 ÔÇö status=200 durationMs=350 
+05-31 11:45:10.879 10683 10683 I flutter : [Alerts] Fetch success: total=50 unread=8435 vehicleFilter=none
+05-31 11:45:10.881 10683 10683 I flutter : [Alerts] Refresh from FCM success: unread=8435 durationMs=457

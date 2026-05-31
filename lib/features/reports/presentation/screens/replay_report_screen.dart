@@ -21,6 +21,7 @@ import '../../../map/core/route_event_analyzer.dart';
 import '../../../map/core/route_event_models.dart';
 import '../../../map/core/route_event_timeline_models.dart';
 import '../../../map/core/route_intelligence_thresholds.dart';
+import '../../../map/core/map_audit_logger.dart';
 import '../../../map/core/route_polyline_builder.dart';
 import '../../core/replay_motion_helper.dart';
 import '../../core/replay_route_gap.dart';
@@ -129,6 +130,10 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen>
   @override
   void initState() {
     super.initState();
+    MapAuditLogger.screenOpened(
+      'ReplayReport',
+      extra: 'vehicleId=${widget.params.vehicleId}',
+    );
     _loadIcons();
     // If route data is already cached, initialise on the first frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -142,6 +147,11 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen>
 
   @override
   void dispose() {
+    MapAuditLogger.screenDisposed(
+      'ReplayReport',
+      timers: 'marker_glide',
+      subscriptions: 'replay_controller',
+    );
     _cancelMarkerGlide();
     _mapController?.dispose();
     super.dispose();
@@ -385,7 +395,7 @@ class _ReplayReportScreenState extends ConsumerState<ReplayReportScreen>
     }
 
     _cancelMarkerGlide();
-    _markerGlideFrom = pts[fromIndex!];
+    _markerGlideFrom = pts[fromIndex];
     _markerGlideTo = toPt;
     _markerGlideController = AnimationController(
       vsync: this,
@@ -1274,7 +1284,7 @@ class _ReplayCurrentPointBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.schedule_rounded, size: 15, color: AppColors.accent),
+          const Icon(Icons.schedule_rounded, size: 15, color: AppColors.accent),
           const SizedBox(width: 8),
           Expanded(
             child: RichText(
@@ -1357,13 +1367,13 @@ class _ReplayEventsSummaryRow extends StatelessWidget {
               ),
               Text(
                 seeAllLabel,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accent,
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
                 color: AppColors.accent,
@@ -1399,7 +1409,7 @@ class _ReplaySpeedControl extends ConsumerWidget {
               child: Row(
                 children: [
                   if (s == current)
-                    Icon(Icons.check_rounded,
+                    const Icon(Icons.check_rounded,
                         size: 16, color: AppColors.accent)
                   else
                     const SizedBox(width: 16),
@@ -1432,7 +1442,7 @@ class _ReplaySpeedControl extends ConsumerWidget {
           children: [
             Text(
               current.label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: AppColors.accent,

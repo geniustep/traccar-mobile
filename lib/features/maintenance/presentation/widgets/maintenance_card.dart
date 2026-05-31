@@ -53,7 +53,7 @@ class MaintenanceCard extends StatelessWidget {
     );
 
     final due =
-        '${record.dueDate != null ? record.dueDate.toString().split(' ').first : '—'}';
+        record.dueDate != null ? record.dueDate.toString().split(' ').first : '—';
     final odo = record.dueOdometerKm != null
         ? '${record.dueOdometerKm!.toStringAsFixed(0)} km'
         : '—';
@@ -63,7 +63,7 @@ class MaintenanceCard extends StatelessWidget {
       color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: AppColors.divider),
+        side: const BorderSide(color: AppColors.divider),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),

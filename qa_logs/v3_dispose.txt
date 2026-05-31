@@ -1,0 +1,296 @@
+﻿05-31 12:39:45.422  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:39:45.437  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46439,-6.03456 newLatLng=35.46439,-6.03456
+05-31 12:39:45.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46439 lon=-6.03456 speed=12.0 fixTime=2026-05-31T12:39:40.000Z source=liveVehicleProvider
+05-31 12:39:45.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:40.000Z now=2026-05-31T12:39:45.438218Z delaySeconds=5.4
+05-31 12:39:47.622  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:39:47.655  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46439,-6.03456 newLatLng=35.46463,-6.03471
+05-31 12:39:47.655  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46463 lon=-6.03471 speed=21.0 fixTime=2026-05-31T12:39:46.000Z source=liveVehicleProvider
+05-31 12:39:47.655  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:46.000Z now=2026-05-31T12:39:47.655726Z delaySeconds=1.7
+05-31 12:39:47.660  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:39:49.721  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46463,-6.03471 newLatLng=35.46479,-6.03482
+05-31 12:39:49.721  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:39:49.721  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:39:49.721690Z delaySeconds=0.7
+05-31 12:39:49.725  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:39:50.417  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:39:50.421  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:39:50.421  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:39:50.422  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:39:50.422351Z delaySeconds=1.4
+05-31 12:39:55.419  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:39:55.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:39:55.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:39:55.439  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:39:55.438948Z delaySeconds=6.4
+05-31 12:40:00.415  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:00.421  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:40:00.422  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:40:00.423  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:40:00.423257Z delaySeconds=11.4
+05-31 12:40:01.321  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:40:01.321  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:40:01.321  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:40:01.321718Z delaySeconds=12.3
+05-31 12:40:01.325  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:02.705  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:02.740  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:40:02.740  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:40:02.740  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:40:02.740455Z delaySeconds=13.7
+05-31 12:40:02.744  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:03.643  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:05.290  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:05.413  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:05.420  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:40:05.421  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:40:05.421  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:40:05.421022Z delaySeconds=16.4
+05-31 12:40:06.939  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:40:06.940  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:40:06.941  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:40:06.940706Z delaySeconds=17.9
+05-31 12:40:06.945  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:10.417  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:10.421  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46479,-6.03482
+05-31 12:40:10.421  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46479 lon=-6.03482 speed=22.0 fixTime=2026-05-31T12:39:49.000Z source=liveVehicleProvider
+05-31 12:40:10.421  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:39:49.000Z now=2026-05-31T12:40:10.421459Z delaySeconds=21.4
+05-31 12:40:10.702  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:10.751  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46479,-6.03482 newLatLng=35.46561,-6.03542
+05-31 12:40:10.752  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46561 lon=-6.03542 speed=21.0 fixTime=2026-05-31T12:40:10.000Z source=liveVehicleProvider
+05-31 12:40:10.752  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:10.000Z now=2026-05-31T12:40:10.752072Z delaySeconds=0.8
+05-31 12:40:10.755  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:15.414  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:15.420  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46561,-6.03542 newLatLng=35.46561,-6.03542
+05-31 12:40:15.421  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46561 lon=-6.03542 speed=21.0 fixTime=2026-05-31T12:40:10.000Z source=liveVehicleProvider
+05-31 12:40:15.421  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:10.000Z now=2026-05-31T12:40:15.421126Z delaySeconds=5.4
+05-31 12:40:17.421  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46561,-6.03542 newLatLng=35.46561,-6.03542
+05-31 12:40:17.421  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46561 lon=-6.03542 speed=21.0 fixTime=2026-05-31T12:40:10.000Z source=liveVehicleProvider
+05-31 12:40:17.421  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:10.000Z now=2026-05-31T12:40:17.421378Z delaySeconds=7.4
+05-31 12:40:17.424  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:20.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:20.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46561,-6.03542 newLatLng=35.46561,-6.03542
+05-31 12:40:20.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46561 lon=-6.03542 speed=21.0 fixTime=2026-05-31T12:40:10.000Z source=liveVehicleProvider
+05-31 12:40:20.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:10.000Z now=2026-05-31T12:40:20.438575Z delaySeconds=10.4
+05-31 12:40:25.415  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:25.422  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46561,-6.03542 newLatLng=35.46561,-6.03542
+05-31 12:40:25.423  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46561 lon=-6.03542 speed=21.0 fixTime=2026-05-31T12:40:10.000Z source=liveVehicleProvider
+05-31 12:40:25.423  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:10.000Z now=2026-05-31T12:40:25.423697Z delaySeconds=15.4
+05-31 12:40:27.762  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:27.787  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46561,-6.03542 newLatLng=35.46561,-6.03542
+05-31 12:40:27.787  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46561 lon=-6.03542 speed=21.0 fixTime=2026-05-31T12:40:10.000Z source=liveVehicleProvider
+05-31 12:40:27.787  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:10.000Z now=2026-05-31T12:40:27.787883Z delaySeconds=17.8
+05-31 12:40:27.792  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:28.689  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46561,-6.03542 newLatLng=35.46637,-6.03584
+05-31 12:40:28.689  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46637 lon=-6.03584 speed=16.0 fixTime=2026-05-31T12:40:28.000Z source=liveVehicleProvider
+05-31 12:40:28.689  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:28.000Z now=2026-05-31T12:40:28.689430Z delaySeconds=0.7
+05-31 12:40:28.693  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:30.422  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:30.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46637,-6.03584 newLatLng=35.46637,-6.03584
+05-31 12:40:30.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46637 lon=-6.03584 speed=16.0 fixTime=2026-05-31T12:40:28.000Z source=liveVehicleProvider
+05-31 12:40:30.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:28.000Z now=2026-05-31T12:40:30.438470Z delaySeconds=2.4
+05-31 12:40:30.855  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:30.872  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46637,-6.03584 newLatLng=35.46645,-6.03585
+05-31 12:40:30.872  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46645 lon=-6.03585 speed=16.0 fixTime=2026-05-31T12:40:30.000Z source=liveVehicleProvider
+05-31 12:40:30.872  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:30.000Z now=2026-05-31T12:40:30.872266Z delaySeconds=0.9
+05-31 12:40:30.876  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:32.611  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:32.621  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46645,-6.03585 newLatLng=35.46652,-6.03589
+05-31 12:40:32.621  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46652 lon=-6.03589 speed=15.0 fixTime=2026-05-31T12:40:32.000Z source=liveVehicleProvider
+05-31 12:40:32.621  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:32.000Z now=2026-05-31T12:40:32.621758Z delaySeconds=0.6
+05-31 12:40:32.628  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:35.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:35.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46652,-6.03589 newLatLng=35.46652,-6.03589
+05-31 12:40:35.439  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46652 lon=-6.03589 speed=15.0 fixTime=2026-05-31T12:40:32.000Z source=liveVehicleProvider
+05-31 12:40:35.439  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:32.000Z now=2026-05-31T12:40:35.439174Z delaySeconds=3.4
+05-31 12:40:37.472  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46652,-6.03589 newLatLng=35.46652,-6.03589
+05-31 12:40:37.473  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46652 lon=-6.03589 speed=15.0 fixTime=2026-05-31T12:40:32.000Z source=liveVehicleProvider
+05-31 12:40:37.473  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:32.000Z now=2026-05-31T12:40:37.473287Z delaySeconds=5.5
+05-31 12:40:37.479  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:40.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:40.439  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46652,-6.03589 newLatLng=35.46652,-6.03589
+05-31 12:40:40.439  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46652 lon=-6.03589 speed=15.0 fixTime=2026-05-31T12:40:32.000Z source=liveVehicleProvider
+05-31 12:40:40.439  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:32.000Z now=2026-05-31T12:40:40.439358Z delaySeconds=8.4
+05-31 12:40:40.923  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:40.956  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46652,-6.03589 newLatLng=35.46687,-6.03614
+05-31 12:40:40.958  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46687 lon=-6.03614 speed=21.0 fixTime=2026-05-31T12:40:40.000Z source=liveVehicleProvider
+05-31 12:40:40.961  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:40.000Z now=2026-05-31T12:40:40.960889Z delaySeconds=1.0
+05-31 12:40:40.967  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:41.641  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:41.655  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46687,-6.03614 newLatLng=35.46687,-6.03614
+05-31 12:40:41.655  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46687 lon=-6.03614 speed=21.0 fixTime=2026-05-31T12:40:40.000Z source=liveVehicleProvider
+05-31 12:40:41.655  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:40.000Z now=2026-05-31T12:40:41.655684Z delaySeconds=1.7
+05-31 12:40:41.662  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:42.540  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:42.557  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46687,-6.03614 newLatLng=35.46696,-6.03615
+05-31 12:40:42.557  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46696 lon=-6.03615 speed=15.0 fixTime=2026-05-31T12:40:42.000Z source=liveVehicleProvider
+05-31 12:40:42.557  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:42.000Z now=2026-05-31T12:40:42.557292Z delaySeconds=0.6
+05-31 12:40:42.561  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:43.925  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46696,-6.03615 newLatLng=35.46700,-6.03614
+05-31 12:40:43.925  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46700 lon=-6.03614 speed=16.0 fixTime=2026-05-31T12:40:43.000Z source=liveVehicleProvider
+05-31 12:40:43.925  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:43.000Z now=2026-05-31T12:40:43.925513Z delaySeconds=0.9
+05-31 12:40:43.929  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:44.505  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46700,-6.03614 newLatLng=35.46704,-6.03611
+05-31 12:40:44.505  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46704 lon=-6.03611 speed=19.0 fixTime=2026-05-31T12:40:44.000Z source=liveVehicleProvider
+05-31 12:40:44.505  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:44.000Z now=2026-05-31T12:40:44.505890Z delaySeconds=0.5
+05-31 12:40:44.511  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:45.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:45.437  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46704,-6.03611 newLatLng=35.46704,-6.03611
+05-31 12:40:45.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46704 lon=-6.03611 speed=19.0 fixTime=2026-05-31T12:40:44.000Z source=liveVehicleProvider
+05-31 12:40:45.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:44.000Z now=2026-05-31T12:40:45.438216Z delaySeconds=1.4
+05-31 12:40:47.722  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46704,-6.03611 newLatLng=35.46716,-6.03605
+05-31 12:40:47.722  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46716 lon=-6.03605 speed=15.0 fixTime=2026-05-31T12:40:47.000Z source=liveVehicleProvider
+05-31 12:40:47.723  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:47.000Z now=2026-05-31T12:40:47.722784Z delaySeconds=0.7
+05-31 12:40:47.727  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:48.505  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46716,-6.03605 newLatLng=35.46719,-6.03606
+05-31 12:40:48.505  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46719 lon=-6.03606 speed=13.0 fixTime=2026-05-31T12:40:48.000Z source=liveVehicleProvider
+05-31 12:40:48.505  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:48.000Z now=2026-05-31T12:40:48.505641Z delaySeconds=0.5
+05-31 12:40:48.509  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:49.391  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:49.405  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46719,-6.03606 newLatLng=35.46720,-6.03610
+05-31 12:40:49.405  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46720 lon=-6.03610 speed=11.0 fixTime=2026-05-31T12:40:49.000Z source=liveVehicleProvider
+05-31 12:40:49.405  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:49.000Z now=2026-05-31T12:40:49.405610Z delaySeconds=0.4
+05-31 12:40:49.411  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:50.421  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:50.437  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46720,-6.03610 newLatLng=35.46720,-6.03610
+05-31 12:40:50.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46720 lon=-6.03610 speed=11.0 fixTime=2026-05-31T12:40:49.000Z source=liveVehicleProvider
+05-31 12:40:50.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:49.000Z now=2026-05-31T12:40:50.438350Z delaySeconds=1.4
+05-31 12:40:50.843  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:50.871  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46720,-6.03610 newLatLng=35.46719,-6.03616
+05-31 12:40:50.871  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46719 lon=-6.03616 speed=13.0 fixTime=2026-05-31T12:40:50.000Z source=liveVehicleProvider
+05-31 12:40:50.871  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:50.000Z now=2026-05-31T12:40:50.871379Z delaySeconds=0.9
+05-31 12:40:50.876  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:51.844  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:51.871  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46719,-6.03616 newLatLng=35.46719,-6.03622
+05-31 12:40:51.872  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46719 lon=-6.03622 speed=18.0 fixTime=2026-05-31T12:40:51.000Z source=liveVehicleProvider
+05-31 12:40:51.872  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:51.000Z now=2026-05-31T12:40:51.872142Z delaySeconds=0.9
+05-31 12:40:51.876  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:55.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:40:55.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46719,-6.03622 newLatLng=35.46719,-6.03622
+05-31 12:40:55.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46719 lon=-6.03622 speed=18.0 fixTime=2026-05-31T12:40:51.000Z source=liveVehicleProvider
+05-31 12:40:55.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:51.000Z now=2026-05-31T12:40:55.438661Z delaySeconds=4.4
+05-31 12:40:57.725  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46719,-6.03622 newLatLng=35.46714,-6.03652
+05-31 12:40:57.726  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46714 lon=-6.03652 speed=8.0 fixTime=2026-05-31T12:40:57.000Z source=liveVehicleProvider
+05-31 12:40:57.726  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:57.000Z now=2026-05-31T12:40:57.726195Z delaySeconds=0.7
+05-31 12:40:57.729  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:57.772  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46714,-6.03652 newLatLng=35.46714,-6.03652
+05-31 12:40:57.773  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46714 lon=-6.03652 speed=8.0 fixTime=2026-05-31T12:40:57.000Z source=liveVehicleProvider
+05-31 12:40:57.773  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:57.000Z now=2026-05-31T12:40:57.773201Z delaySeconds=0.8
+05-31 12:40:57.778  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:59.594  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:40:59.621  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46714,-6.03652 newLatLng=35.46714,-6.03652
+05-31 12:40:59.621  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46714 lon=-6.03652 speed=8.0 fixTime=2026-05-31T12:40:57.000Z source=liveVehicleProvider
+05-31 12:40:59.621  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:57.000Z now=2026-05-31T12:40:59.621563Z delaySeconds=2.6
+05-31 12:40:59.627  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:00.418  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:00.422  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46714,-6.03652 newLatLng=35.46714,-6.03652
+05-31 12:41:00.422  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46714 lon=-6.03652 speed=8.0 fixTime=2026-05-31T12:40:57.000Z source=liveVehicleProvider
+05-31 12:41:00.422  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:57.000Z now=2026-05-31T12:41:00.422938Z delaySeconds=3.4
+05-31 12:41:03.855  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46714,-6.03652 newLatLng=35.46714,-6.03652
+05-31 12:41:03.856  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46714 lon=-6.03652 speed=8.0 fixTime=2026-05-31T12:40:57.000Z source=liveVehicleProvider
+05-31 12:41:03.856  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:57.000Z now=2026-05-31T12:41:03.856875Z delaySeconds=6.9
+05-31 12:41:03.861  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:05.421  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:05.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46714,-6.03652 newLatLng=35.46714,-6.03652
+05-31 12:41:05.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46714 lon=-6.03652 speed=8.0 fixTime=2026-05-31T12:40:57.000Z source=liveVehicleProvider
+05-31 12:41:05.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:40:57.000Z now=2026-05-31T12:41:05.438713Z delaySeconds=8.4
+05-31 12:41:06.722  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:06.755  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46714,-6.03652 newLatLng=35.46701,-6.03690
+05-31 12:41:06.756  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46701 lon=-6.03690 speed=24.0 fixTime=2026-05-31T12:41:06.000Z source=liveVehicleProvider
+05-31 12:41:06.756  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:06.000Z now=2026-05-31T12:41:06.756065Z delaySeconds=0.8
+05-31 12:41:06.760  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:10.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:10.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46701,-6.03690 newLatLng=35.46701,-6.03690
+05-31 12:41:10.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46701 lon=-6.03690 speed=24.0 fixTime=2026-05-31T12:41:06.000Z source=liveVehicleProvider
+05-31 12:41:10.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:06.000Z now=2026-05-31T12:41:10.438508Z delaySeconds=4.4
+05-31 12:41:10.738  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46701,-6.03690 newLatLng=35.46689,-6.03715
+05-31 12:41:10.738  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46689 lon=-6.03715 speed=23.0 fixTime=2026-05-31T12:41:10.000Z source=liveVehicleProvider
+05-31 12:41:10.738  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:10.000Z now=2026-05-31T12:41:10.738609Z delaySeconds=0.7
+05-31 12:41:10.741  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:13.554  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46689,-6.03715 newLatLng=35.46689,-6.03715
+05-31 12:41:13.554  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46689 lon=-6.03715 speed=23.0 fixTime=2026-05-31T12:41:10.000Z source=liveVehicleProvider
+05-31 12:41:13.554  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:10.000Z now=2026-05-31T12:41:13.554659Z delaySeconds=3.6
+05-31 12:41:13.559  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:13.909  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:13.931  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46689,-6.03715 newLatLng=35.46681,-6.03736
+05-31 12:41:13.931  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46681 lon=-6.03736 speed=20.0 fixTime=2026-05-31T12:41:13.000Z source=liveVehicleProvider
+05-31 12:41:13.931  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:13.000Z now=2026-05-31T12:41:13.931178Z delaySeconds=0.9
+05-31 12:41:13.936  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:14.643  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:14.671  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46681,-6.03736 newLatLng=35.46680,-6.03742
+05-31 12:41:14.671  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46680 lon=-6.03742 speed=19.0 fixTime=2026-05-31T12:41:14.000Z source=liveVehicleProvider
+05-31 12:41:14.671  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:14.000Z now=2026-05-31T12:41:14.671576Z delaySeconds=0.7
+05-31 12:41:14.676  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:15.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:15.437  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46680,-6.03742 newLatLng=35.46680,-6.03742
+05-31 12:41:15.437  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46680 lon=-6.03742 speed=19.0 fixTime=2026-05-31T12:41:14.000Z source=liveVehicleProvider
+05-31 12:41:15.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:14.000Z now=2026-05-31T12:41:15.438008Z delaySeconds=1.4
+05-31 12:41:16.756  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:16.788  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46680,-6.03742 newLatLng=35.46681,-6.03747
+05-31 12:41:16.788  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46681 lon=-6.03747 speed=16.0 fixTime=2026-05-31T12:41:15.000Z source=liveVehicleProvider
+05-31 12:41:16.788  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:15.000Z now=2026-05-31T12:41:16.788723Z delaySeconds=1.8
+05-31 12:41:16.794  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:17.521  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46681,-6.03747 newLatLng=35.46684,-6.03750
+05-31 12:41:17.521  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46684 lon=-6.03750 speed=10.0 fixTime=2026-05-31T12:41:16.000Z source=liveVehicleProvider
+05-31 12:41:17.522  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:16.000Z now=2026-05-31T12:41:17.521942Z delaySeconds=1.5
+05-31 12:41:17.525  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:20.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:20.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46684,-6.03750 newLatLng=35.46684,-6.03750
+05-31 12:41:20.439  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46684 lon=-6.03750 speed=10.0 fixTime=2026-05-31T12:41:16.000Z source=liveVehicleProvider
+05-31 12:41:20.439  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:16.000Z now=2026-05-31T12:41:20.439084Z delaySeconds=4.4
+05-31 12:41:23.257  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:23.271  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46684,-6.03750 newLatLng=35.46684,-6.03750
+05-31 12:41:23.271  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46684 lon=-6.03750 speed=10.0 fixTime=2026-05-31T12:41:16.000Z source=liveVehicleProvider
+05-31 12:41:23.272  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:16.000Z now=2026-05-31T12:41:23.272233Z delaySeconds=7.3
+05-31 12:41:23.277  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:25.419  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:25.437  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46684,-6.03750 newLatLng=35.46684,-6.03750
+05-31 12:41:25.437  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46684 lon=-6.03750 speed=10.0 fixTime=2026-05-31T12:41:16.000Z source=liveVehicleProvider
+05-31 12:41:25.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:16.000Z now=2026-05-31T12:41:25.437986Z delaySeconds=9.4
+05-31 12:41:27.490  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:27.721  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:27.738  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46684,-6.03750 newLatLng=35.46687,-6.03762
+05-31 12:41:27.738  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46687 lon=-6.03762 speed=10.0 fixTime=2026-05-31T12:41:27.000Z source=liveVehicleProvider
+05-31 12:41:27.738  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:27.000Z now=2026-05-31T12:41:27.738697Z delaySeconds=0.7
+05-31 12:41:27.747  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:28.638  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46687,-6.03762 newLatLng=35.46689,-6.03765
+05-31 12:41:28.638  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46689 lon=-6.03765 speed=9.0 fixTime=2026-05-31T12:41:28.000Z source=liveVehicleProvider
+05-31 12:41:28.639  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:28.000Z now=2026-05-31T12:41:28.639204Z delaySeconds=0.6
+05-31 12:41:28.643  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:29.504  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46689,-6.03765 newLatLng=35.46690,-6.03767
+05-31 12:41:29.505  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03767 speed=8.0 fixTime=2026-05-31T12:41:29.000Z source=liveVehicleProvider
+05-31 12:41:29.505  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:29.000Z now=2026-05-31T12:41:29.505538Z delaySeconds=0.5
+05-31 12:41:29.510  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:30.417  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:30.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03767 newLatLng=35.46690,-6.03767
+05-31 12:41:30.438  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03767 speed=8.0 fixTime=2026-05-31T12:41:29.000Z source=liveVehicleProvider
+05-31 12:41:30.438  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:29.000Z now=2026-05-31T12:41:30.438190Z delaySeconds=1.4
+05-31 12:41:33.993  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03767 newLatLng=35.46690,-6.03767
+05-31 12:41:33.993  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03767 speed=8.0 fixTime=2026-05-31T12:41:29.000Z source=liveVehicleProvider
+05-31 12:41:33.993  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:29.000Z now=2026-05-31T12:41:33.993853Z delaySeconds=5.0
+05-31 12:41:33.997  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:35.416  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:35.421  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03767 newLatLng=35.46690,-6.03767
+05-31 12:41:35.421  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03767 speed=8.0 fixTime=2026-05-31T12:41:29.000Z source=liveVehicleProvider
+05-31 12:41:35.421  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:29.000Z now=2026-05-31T12:41:35.421786Z delaySeconds=6.4
+05-31 12:41:40.421  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:40.438  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03767 newLatLng=35.46690,-6.03767
+05-31 12:41:40.439  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03767 speed=8.0 fixTime=2026-05-31T12:41:29.000Z source=liveVehicleProvider
+05-31 12:41:40.439  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:29.000Z now=2026-05-31T12:41:40.439135Z delaySeconds=11.4
+05-31 12:41:40.811  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03767 newLatLng=35.46690,-6.03768
+05-31 12:41:40.811  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03768 speed=0.0 fixTime=2026-05-31T12:41:40.000Z source=liveVehicleProvider
+05-31 12:41:40.811  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:40.000Z now=2026-05-31T12:41:40.811886Z delaySeconds=0.8
+05-31 12:41:40.814  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:45.420  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:45.439  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03768 newLatLng=35.46690,-6.03768
+05-31 12:41:45.439  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03768 speed=0.0 fixTime=2026-05-31T12:41:40.000Z source=liveVehicleProvider
+05-31 12:41:45.439  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:40.000Z now=2026-05-31T12:41:45.439707Z delaySeconds=5.4
+05-31 12:41:50.415  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking tick reason=socket_not_connected
+05-31 12:41:50.422  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03768 newLatLng=35.46690,-6.03768
+05-31 12:41:50.422  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03768 speed=0.0 fixTime=2026-05-31T12:41:40.000Z source=liveVehicleProvider
+05-31 12:41:50.423  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:40.000Z now=2026-05-31T12:41:50.423605Z delaySeconds=10.4
+05-31 12:41:53.532  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:53.644  4694  4694 I flutter : [Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.46690,-6.03768 newLatLng=35.46690,-6.03768
+05-31 12:41:53.644  4694  4694 I flutter : [Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.46690 lon=-6.03768 speed=0.0 fixTime=2026-05-31T12:41:40.000Z source=liveVehicleProvider
+05-31 12:41:53.644  4694  4694 I flutter : [Map] [LiveDelay] deviceId=11 fixTime=2026-05-31T12:41:40.000Z now=2026-05-31T12:41:53.644474Z delaySeconds=13.6
+05-31 12:41:53.651  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:54.007  4694  4694 I flutter : [Map] [Polling] screen=VehicleTracking stopped
+05-31 12:41:54.008  4694  4694 I flutter : [Map] [Dispose] screen=VehicleTracking subscriptions=live_vehicle_route_listeners timers=polling_fallback
+05-31 12:41:55.726  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:55.739  4694  4694 I flutter : [Dashboard] Vehicle daily summary loaded: vehicleId=11 stops=11 alertsToday=2
+05-31 12:41:58.029  4694  4694 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=2 incoming=2026-05-14T13:43:30.000Z current=2026-05-14T13:43:31.000Z
+05-31 12:41:58.371  4694  4694 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=2 incoming=2026-05-14T13:43:30.000Z current=2026-05-14T13:43:31.000Z
+05-31 12:41:58.537  4694  4694 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=2 incoming=2026-05-14T13:43:30.000Z current=2026-05-14T13:43:31.000Z
+05-31 12:41:58.554  4694  4694 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=2 incoming=2026-05-14T13:43:30.000Z current=2026-05-14T13:43:31.000Z
+05-31 12:41:58.709  4694  4694 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=2 incoming=2026-05-14T13:43:30.000Z current=2026-05-14T13:43:31.000Z

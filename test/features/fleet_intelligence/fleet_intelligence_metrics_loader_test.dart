@@ -31,7 +31,7 @@ VehicleEntity _v(
 }
 
 void main() {
-  final th = RouteIntelligenceThresholds.defaults;
+  const th = RouteIntelligenceThresholds.defaults;
   final t0 = DateTime(2026, 5, 10);
   final t1 = DateTime(2026, 5, 10, 23, 59);
 

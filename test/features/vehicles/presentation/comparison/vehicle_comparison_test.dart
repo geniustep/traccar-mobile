@@ -79,7 +79,7 @@ void main() {
         stopDurationSeconds: 300,
         lastUpdate: t2,
       ),
-      VehicleComparisonItem(
+      const VehicleComparisonItem(
         vehicleId: '3',
         name: 'Charlie',
         distanceKm: 5,

@@ -24,7 +24,7 @@ void main() {
     });
 
     test('fixes NaN exit using default then clamps exit >= enter', () {
-      final n = RouteIntelligenceThresholds(
+      final n = const RouteIntelligenceThresholds(
         stopSpeedEnterKmh: 10,
         stopSpeedExitKmh: double.nan,
       ).normalized();
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('raises exit above enter when exit is lower', () {
-      final n = RouteIntelligenceThresholds(
+      final n = const RouteIntelligenceThresholds(
         stopSpeedEnterKmh: 8,
         stopSpeedExitKmh: 2,
       ).normalized();
@@ -43,7 +43,7 @@ void main() {
     });
 
     test('fixes zero minStopDuration via fallback', () {
-      final n = RouteIntelligenceThresholds(
+      final n = const RouteIntelligenceThresholds(
         minStopDuration: Duration.zero,
       ).normalized();
       expect(n.minStopDuration,
@@ -51,8 +51,8 @@ void main() {
     });
 
     test('fixes negative minStopDuration via fallback', () {
-      final n = RouteIntelligenceThresholds(
-        minStopDuration: const Duration(seconds: -1),
+      final n = const RouteIntelligenceThresholds(
+        minStopDuration: Duration(seconds: -1),
       ).normalized();
       expect(n.minStopDuration,
           RouteIntelligenceThresholds.defaults.minStopDuration);
@@ -60,12 +60,12 @@ void main() {
 
     test('fixes non-positive overspeed via fallback', () {
       expect(
-        RouteIntelligenceThresholds(overspeedThresholdKmh: 0).normalized()
+        const RouteIntelligenceThresholds(overspeedThresholdKmh: 0).normalized()
             .overspeedThresholdKmh,
         RouteIntelligenceThresholds.defaults.overspeedThresholdKmh,
       );
       expect(
-        RouteIntelligenceThresholds(overspeedThresholdKmh: -50).normalized()
+        const RouteIntelligenceThresholds(overspeedThresholdKmh: -50).normalized()
             .overspeedThresholdKmh,
         RouteIntelligenceThresholds.defaults.overspeedThresholdKmh,
       );
@@ -73,13 +73,13 @@ void main() {
 
     test('fixes non-finite overspeed via fallback', () {
       expect(
-        RouteIntelligenceThresholds(overspeedThresholdKmh: double.nan)
+        const RouteIntelligenceThresholds(overspeedThresholdKmh: double.nan)
             .normalized()
             .overspeedThresholdKmh,
         RouteIntelligenceThresholds.defaults.overspeedThresholdKmh,
       );
       expect(
-        RouteIntelligenceThresholds(overspeedThresholdKmh: double.infinity)
+        const RouteIntelligenceThresholds(overspeedThresholdKmh: double.infinity)
             .normalized()
             .overspeedThresholdKmh,
         RouteIntelligenceThresholds.defaults.overspeedThresholdKmh,
@@ -87,7 +87,7 @@ void main() {
     });
 
     test('preserves detect flags unchanged', () {
-      final n = RouteIntelligenceThresholds(
+      final n = const RouteIntelligenceThresholds(
         stopSpeedEnterKmh: -1,
         detectStops: false,
         detectOverspeed: false,
@@ -138,7 +138,7 @@ void main() {
 
     /// Design: [cacheKey] uses [normalized()] internally.
     test('reflects normalization (invalid enter)', () {
-      final bad = RouteIntelligenceThresholds(
+      const bad = RouteIntelligenceThresholds(
         stopSpeedEnterKmh: double.nan,
         stopSpeedExitKmh: 5,
       );

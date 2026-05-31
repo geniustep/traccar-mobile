@@ -121,7 +121,7 @@ final liveVehicleProvider =
     final livePos = ref.watch(livePositionsProvider)[deviceId];
     if (livePos == null) return vehicle;
 
-    return VehicleLiveMerger.mergeSocket(vehicle, livePos);
+    return VehicleLiveMerger.mergeIfPresent(vehicle, {deviceId: livePos});
   });
 });
 

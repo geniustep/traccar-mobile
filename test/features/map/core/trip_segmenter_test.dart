@@ -73,7 +73,7 @@ void main() {
           ),
         for (var j = 0; j < 12; j++)
           testRoutePoint(
-            LatLng(36.81, 10.13),
+            const LatLng(36.81, 10.13),
             0,
             t0.add(Duration(minutes: 5 + j)),
           ),
@@ -210,7 +210,7 @@ void main() {
         maxPointGapDuration: const Duration(days: 1),
       );
 
-      final th = RouteIntelligenceThresholds(
+      const th = RouteIntelligenceThresholds(
         minStopDuration: const Duration(minutes: 4),
         overspeedThresholdKmh: 85,
         stopSpeedEnterKmh: 3,
@@ -235,7 +235,7 @@ void main() {
 }
 
 /// أخف عتبات للاختبارات (أقصر مدّة توقف في التحليل).
-final testRi = RouteIntelligenceThresholds(
+const testRi = RouteIntelligenceThresholds(
   minStopDuration: const Duration(seconds: 30),
   overspeedThresholdKmh: 80,
 );

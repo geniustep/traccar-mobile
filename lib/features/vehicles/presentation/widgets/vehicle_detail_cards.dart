@@ -332,6 +332,7 @@ class VdLocationCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
+              key: const Key('vehicle_detail_view_on_map_btn'),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
                     color: AppColors.accent.withValues(alpha: 0.4)),

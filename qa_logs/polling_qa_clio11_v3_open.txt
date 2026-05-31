@@ -1,0 +1,11 @@
+﻿05-31 14:49:38.069 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:38.596 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:38.843 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:39.359 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:39.391 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:39.393 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:40.906 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:40.972 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:40.973 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:43.787 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z
+05-31 14:49:43.789 12948 12948 I flutter : [LiveSync] [MapAudit] screen=VehicleLiveMerger stale ignored deviceId=11 incoming=2026-05-31T14:49:37.000Z current=2026-05-31T14:49:38.000Z

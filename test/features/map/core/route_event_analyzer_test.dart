@@ -41,7 +41,7 @@ void main() {
     });
 
     test('leaves stop when speed strictly above stopSpeedExitKmh', () {
-      final th = const RouteIntelligenceThresholds(
+      const th = RouteIntelligenceThresholds(
         stopSpeedEnterKmh: 3,
         stopSpeedExitKmh: 5,
         minStopDuration: Duration(minutes: 1),
@@ -58,7 +58,7 @@ void main() {
     });
 
     test('hysteresis: speed between enter and exit does not break stop', () {
-      final th = const RouteIntelligenceThresholds(
+      const th = RouteIntelligenceThresholds(
         stopSpeedEnterKmh: 3,
         stopSpeedExitKmh: 5,
         minStopDuration: Duration(minutes: 2),

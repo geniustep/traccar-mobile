@@ -4,7 +4,6 @@ import 'package:elmogps/features/fleet/presentation/fleet_vehicle_brief_provider
 import 'package:elmogps/features/vehicles/domain/entities/vehicle.dart';
 import 'package:elmogps/features/vehicles/presentation/widgets/vehicle_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 

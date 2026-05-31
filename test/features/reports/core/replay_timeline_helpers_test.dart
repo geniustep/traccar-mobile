@@ -192,7 +192,7 @@ void main() {
         );
 
     test('replayShouldDeprioritizeAlerts when alerts dominate', () {
-      final counts = RouteEventTimelineFilterCounts(
+      const counts = RouteEventTimelineFilterCounts(
         all: 20,
         stops: 1,
         overspeed: 0,
@@ -203,7 +203,7 @@ void main() {
       expect(replayShouldDeprioritizeAlerts(counts), isTrue);
       expect(
         replayShouldDeprioritizeAlerts(
-          RouteEventTimelineFilterCounts(
+          const RouteEventTimelineFilterCounts(
             all: 5,
             stops: 2,
             overspeed: 1,

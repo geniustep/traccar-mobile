@@ -21,6 +21,7 @@ import 'multi_vehicle_replay_route_args.dart';
 import 'multi_vehicle_replay_state.dart';
 import 'multi_vehicle_replay_ui.dart';
 import 'multi_vehicle_replay_widgets.dart';
+import '../../../map/core/map_audit_logger.dart';
 
 /// Opens multi-vehicle replay when [vehicleIds] count is 2–5.
 void openMultiVehicleReplay(
@@ -72,6 +73,10 @@ class _MultiVehicleReplayScreenState
   @override
   void initState() {
     super.initState();
+    MapAuditLogger.screenOpened(
+      'MultiVehicleReplay',
+      extra: 'count=${widget.vehicleIds.length}',
+    );
     _selectedDate = widget.initialDate ?? DateTime.now();
     _selectedDate = MultiVehicleReplayFormatters.startOfDay(_selectedDate);
     _playback = ref.read(multiVehicleReplayControllerProvider.notifier);
@@ -261,6 +266,10 @@ class _MultiVehicleReplayScreenState
 
   @override
   void dispose() {
+    MapAuditLogger.screenDisposed(
+      'MultiVehicleReplay',
+      timers: 'playback',
+    );
     // Do not call [pause] here — updating provider state during unmount breaks tests.
     _playback.stopTimerOnly();
     super.dispose();

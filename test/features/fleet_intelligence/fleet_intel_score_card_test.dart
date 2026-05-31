@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('FleetIntelScoreCard — unscorable shows not rated not 0',
       (tester) async {
-    final m = FleetIntelligenceMetrics(
+    const m = FleetIntelligenceMetrics(
       totalVehicles: 1,
       activeVehicles: 0,
       inactiveVehicles: 1,

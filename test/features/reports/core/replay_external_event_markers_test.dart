@@ -1,5 +1,4 @@
 import 'package:elmogps/core/l10n/app_localizations.dart';
-import 'package:elmogps/features/map/core/route_event_timeline_models.dart';
 import 'package:elmogps/features/map/data/datasources/route_datasource.dart';
 import 'package:elmogps/features/reports/core/replay_external_event.dart';
 import 'package:elmogps/features/reports/core/replay_external_event_mapper.dart';

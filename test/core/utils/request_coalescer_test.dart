@@ -179,8 +179,8 @@ void main() {
 
     test('reports/events with same from/to key are coalesced', () async {
       var callCount = 0;
-      final from = '2026-05-13T00:00:00.000Z';
-      final to = '2026-05-13T12:00:00.000Z';
+      const from = '2026-05-13T00:00:00.000Z';
+      const to = '2026-05-13T12:00:00.000Z';
       final key = 'reports_events|1,2|$from|$to';
 
       final completer = Completer<List<String>>();
@@ -206,9 +206,9 @@ void main() {
 
     test('reports key with different sub-second to still coalesces', () async {
       var callCount = 0;
-      final keyA =
+      const keyA =
           'reports_events|9,11|2026-05-16T00:00:00.000Z|2026-05-16T12:35:43.951400Z';
-      final keyB =
+      const keyB =
           'reports_events|9,11|2026-05-16T00:00:00.000Z|2026-05-16T12:35:44.771480Z';
 
       final completer = Completer<List<String>>();

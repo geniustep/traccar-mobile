@@ -220,7 +220,7 @@ class _MaintenanceEditorScreenState
                   decoration: InputDecoration(
                     labelText: l10n.maintenanceFilterVehicle,
                   ),
-                  value:
+                  initialValue:
                       vv.any((x) => x.id == _vehicleKey) ? _vehicleKey : null,
                   items: vv
                       .map(
@@ -256,7 +256,7 @@ class _MaintenanceEditorScreenState
             DropdownButtonFormField<String>(
               decoration:
                   InputDecoration(labelText: l10n.maintenanceTypeLabelField),
-              value: ElmoMaintenanceTypeCode.allOrdered.contains(_typeCode)
+              initialValue: ElmoMaintenanceTypeCode.allOrdered.contains(_typeCode)
                   ? _typeCode
                   : ElmoMaintenanceTypeCode.other,
               items: ElmoMaintenanceTypeCode.allOrdered

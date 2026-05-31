@@ -66,7 +66,7 @@ class RouteIntelligenceThresholdsPreview extends StatelessWidget {
                   ? AppTextStyles.headlineSmall
                   : AppTextStyles.headlineMedium,
             ),
-            SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               l10n.routeIntelPreviewReadOnlyHint,
               style: AppTextStyles.labelSmall.copyWith(
@@ -74,7 +74,7 @@ class RouteIntelligenceThresholdsPreview extends StatelessWidget {
               ),
             ),
             if (vehicleName != null && vehicleName!.trim().isNotEmpty) ...[
-              SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 vehicleName!.trim(),
                 style: AppTextStyles.bodySmall.copyWith(

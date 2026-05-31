@@ -85,7 +85,7 @@ abstract final class FleetListCardIntel {
       if (line.startsWith(p)) return line.substring(p.length).trim();
     }
     final assigned = l10n.fleetCardDriverAssigned('{name}');
-    final marker = '{name}';
+    const marker = '{name}';
     final idx = assigned.indexOf(marker);
     if (idx >= 0) {
       final prefix = assigned.substring(0, idx);

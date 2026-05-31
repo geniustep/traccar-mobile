@@ -246,7 +246,7 @@ void main() {
           RouteIntelligenceAttributeKeys.overspeedThresholdKmh: 75,
         },
       );
-      final group = const {
+      const group = {
         RouteIntelligenceAttributeKeys.overspeedThresholdKmh: 90,
         RouteIntelligenceAttributeKeys.minStopDurationMinutes: 5,
       };

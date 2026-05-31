@@ -177,6 +177,7 @@ class _VehicleDetailBody extends ConsumerWidget {
               },
             ),
             IconButton(
+              key: const Key('vehicle_detail_track_btn'),
               icon: const Icon(Icons.gps_fixed_rounded,
                   color: AppColors.accent),
               tooltip: l10n.trackVehicle,

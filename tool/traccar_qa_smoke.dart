@@ -3,6 +3,8 @@
 ///
 /// dart run tool/traccar_qa_smoke.dart [baseUrl]
 /// Example: dart run tool/traccar_qa_smoke.dart https://demo4.traccar.org/api
+library;
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';

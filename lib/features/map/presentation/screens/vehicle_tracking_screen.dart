@@ -26,7 +26,10 @@ import '../../../vehicles/domain/entities/vehicle.dart';
 import '../../../vehicles/presentation/widgets/report_entry_sheet.dart';
 import '../../../vehicles/presentation/widgets/replay_entry_sheet.dart';
 import '../../../reports/presentation/providers/reports_providers.dart';
+import '../../core/live_route_extension.dart';
+import '../../core/map_audit_logger.dart';
 import '../../core/map_camera_follow_controller.dart';
+import '../../core/map_live_polling_fallback.dart';
 import '../../core/map_zoom_policy.dart';
 import '../../core/route_event_analyzer.dart';
 import '../../core/route_event_models.dart';
@@ -71,7 +74,8 @@ class _VehicleTrackingScreenState
     extends ConsumerState<VehicleTrackingScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   GoogleMapController? _controller;
-  Timer? _liveTimer;
+  late final MapLivePollingFallback _livePolling;
+  LatLng? _lastLoggedMarkerPos;
 
   double _cameraZoom = MapConfig.defaultZoom;
 
@@ -111,9 +115,9 @@ class _VehicleTrackingScreenState
       DailyVehicleBehaviorScoreCalculator.calculateDailyVehicleBehaviorScore(
     trips: const [],
   );
-  static const _refreshInterval = Duration(seconds: 10);
-
   bool _didLogFirstPosition = false;
+
+  final _liveRouteExt = LiveRouteExtension(screen: 'VehicleTracking');
 
   // ── M4: connection-aware tracking status ──────────────────────────────────
   _TrackingLiveStatus? _lastLoggedStatus;
@@ -136,11 +140,18 @@ class _VehicleTrackingScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    AppLogger.map('VehicleTrackingScreen opened: vehicleId=${widget.vehicleId}');
+    MapAuditLogger.screenOpened(
+      'VehicleTracking',
+      extra: 'vehicleId=${widget.vehicleId}',
+    );
     final now = DateTime.now();
     _from = DateTime(now.year, now.month, now.day); // today midnight
     _to   = now;
-    _startLiveTimer();
+    _livePolling = MapLivePollingFallback(
+      screen: 'VehicleTracking',
+      onPoll: () => ref.invalidate(liveVehicleProvider(widget.vehicleId)),
+    );
+    _livePolling.start(ref);
     _followCamera.followEnabled = true;
     _markerMotion = AnimationController(
       vsync: this,
@@ -151,7 +162,12 @@ class _VehicleTrackingScreenState
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _liveTimer?.cancel();
+    _livePolling.stop();
+    MapAuditLogger.screenDisposed(
+      'VehicleTracking',
+      timers: 'polling_fallback',
+      subscriptions: 'live_vehicle_route_listeners',
+    );
     _markerMotion?.dispose();
     _controller?.dispose();
     _sheetController.dispose();
@@ -164,28 +180,20 @@ class _VehicleTrackingScreenState
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      _liveTimer?.cancel();
-      _liveTimer = null;
+      _livePolling.stop();
       AppLogger.map(
-        'VehicleTracking: lifecycle paused, timer stopped '
+        'VehicleTracking: lifecycle paused, polling stopped '
         'for vehicleId=${widget.vehicleId}',
       );
     } else if (state == AppLifecycleState.resumed) {
-      _startLiveTimer();
+      _livePolling.start(ref);
       ref.invalidate(liveVehicleProvider(widget.vehicleId));
       ref.invalidate(routeDetailProvider(_routeQuery));
       AppLogger.map(
-        'VehicleTracking: lifecycle resumed, timer restarted '
+        'VehicleTracking: lifecycle resumed, polling restarted '
         'for vehicleId=${widget.vehicleId}',
       );
     }
-  }
-
-  void _startLiveTimer() {
-    _liveTimer?.cancel();
-    _liveTimer = Timer.periodic(_refreshInterval, (_) {
-      ref.invalidate(liveVehicleProvider(widget.vehicleId));
-    });
   }
 
   // ── M2: smooth marker interpolation tick ──────────────────────────────────
@@ -245,6 +253,11 @@ class _VehicleTrackingScreenState
       RouteQuery(vehicleId: widget.vehicleId, from: _from, to: _to);
 
   bool get _isToday => _routeQuery.isToday;
+
+  bool get _allowsLiveRouteExtension => LiveRouteExtension.allowsLiveExtension(
+        rangeFrom: _from,
+        rangeTo: _to,
+      );
 
   // ── Camera ─────────────────────────────────────────────────────────────────
 
@@ -518,6 +531,10 @@ class _VehicleTrackingScreenState
       if (_to.isBefore(_from)) _to = _from.add(const Duration(hours: 1));
       _pendingRouteFit = true;
     });
+    _liveRouteExt.resetLiveExtension(
+      deviceId: widget.vehicleId,
+      reason: 'time_range_changed',
+    );
     AppLogger.map(
       'Date range changed for vehicleId=${widget.vehicleId}: '
       'from=$_from to=$_to',
@@ -533,6 +550,10 @@ class _VehicleTrackingScreenState
       if (_from.isAfter(_to)) _from = _to.subtract(const Duration(hours: 1));
       _pendingRouteFit = true;
     });
+    _liveRouteExt.resetLiveExtension(
+      deviceId: widget.vehicleId,
+      reason: 'time_range_changed',
+    );
     AppLogger.map(
       'Date range changed for vehicleId=${widget.vehicleId}: '
       'from=$_from to=$_to',
@@ -561,6 +582,16 @@ class _VehicleTrackingScreenState
     final riThresholds =
         ref.watch(routeIntelligenceThresholdsForVehicleProvider(widget.vehicleId));
 
+    if (routeAsync.hasValue) {
+      _liveRouteExt.loadHistorical(
+        deviceId: widget.vehicleId,
+        points: routePoints,
+        rangeFrom: _from,
+        rangeTo: _to,
+      );
+    }
+    final routePtsForMap = _liveRouteExt.combinedPoints;
+
     _syncRouteIntel(routePoints, riThresholds);
     _syncTripSegments(routePoints, riThresholds);
 
@@ -571,17 +602,43 @@ class _VehicleTrackingScreenState
           final hasPos = v.latitude != 0 || v.longitude != 0;
           if (!_didLogFirstPosition && hasPos) {
             _didLogFirstPosition = true;
-            AppLogger.map(
-              'First live position for vehicleId=${widget.vehicleId}: '
-              '${v.latitude.toStringAsFixed(5)},${v.longitude.toStringAsFixed(5)} '
-              'speed=${v.speed}',
-            );
           }
           if (!hasPos && prev?.valueOrNull != null) {
             AppLogger.map('No valid position for vehicleId=${widget.vehicleId}');
           }
-          if (hasPos) _applyLivePosition(v);
+          if (hasPos) {
+            final nextPos = LatLng(v.latitude, v.longitude);
+            MapAuditLogger.markerUpdate(
+              screen: 'VehicleTracking',
+              deviceId: widget.vehicleId,
+              oldLatLng: _lastLoggedMarkerPos,
+              newLatLng: nextPos,
+            );
+            _lastLoggedMarkerPos = nextPos;
+            MapAuditLogger.livePosition(
+              screen: 'VehicleTracking',
+              deviceId: widget.vehicleId,
+              lat: v.latitude,
+              lon: v.longitude,
+              speed: v.speed,
+              fixTime: v.lastUpdate,
+              source: 'liveVehicleProvider',
+            );
+            _applyLivePosition(v);
+            if (_allowsLiveRouteExtension &&
+                _liveRouteExt.tryAppendFromVehicle(
+                  vehicle: v,
+                  liveModeEnabled: true,
+                )) {
+              setState(() {});
+            }
+          }
           if (!_followCamera.canApplyLiveCamera || !hasPos) return;
+          MapAuditLogger.followMode(
+            screen: 'VehicleTracking',
+            enabled: _followCamera.followEnabled,
+            cameraAnimated: true,
+          );
           _moveTo(LatLng(v.latitude, v.longitude));
         },
         error: (e, _) {
@@ -598,17 +655,28 @@ class _VehicleTrackingScreenState
     ref.listen(routeDetailProvider(_routeQuery), (_, next) {
       next.whenOrNull(
         data: (pts) {
-          AppLogger.map(
-            'Route loaded for vehicleId=${widget.vehicleId}: '
-            '${pts.length} points',
+          _liveRouteExt.loadHistorical(
+            deviceId: widget.vehicleId,
+            points: pts,
+            rangeFrom: _from,
+            rangeTo: _to,
           );
+          if (vehicle != null &&
+              _allowsLiveRouteExtension &&
+              (vehicle.latitude != 0 || vehicle.longitude != 0)) {
+            _liveRouteExt.tryAppendFromVehicle(
+              vehicle: vehicle,
+              liveModeEnabled: true,
+            );
+          }
           if (_pendingRouteFit && pts.isNotEmpty) {
             _pendingRouteFit = false;
             final cur = vehicle != null && vehicle.latitude != 0
                 ? LatLng(vehicle.latitude, vehicle.longitude)
                 : null;
             WidgetsBinding.instance.addPostFrameCallback(
-                (_) => _fitRoutePoints(pts, cur));
+              (_) => _fitRoutePoints(_liveRouteExt.combinedPoints, cur),
+            );
           }
         },
         error: (e, _) {
@@ -626,9 +694,9 @@ class _VehicleTrackingScreenState
 
     final zoomPolicy = MapZoomPolicy.at(_cameraZoom);
 
-    // Decimated points for rendering
+    // Decimated points for rendering (historical + live extension)
     final drawPts = RoutePointDecimator.decimateForMap(
-      routePoints,
+      routePtsForMap,
       maxPoints: zoomPolicy.maxVisibleRoutePointsForDecimation(),
     );
 
@@ -767,6 +835,7 @@ class _VehicleTrackingScreenState
             child: Column(
               children: [
                 _ControlBtn(
+                  key: const Key('tracking_follow_btn'),
                   icon: _followCamera.followEnabled
                       ? Icons.gps_fixed_rounded
                       : Icons.gps_not_fixed_rounded,
@@ -797,7 +866,7 @@ class _VehicleTrackingScreenState
                     final cur = vehicle != null && vehicle.latitude != 0
                         ? LatLng(vehicle.latitude, vehicle.longitude)
                         : null;
-                    _fitRoutePoints(routePoints, cur);
+                    _fitRoutePoints(routePtsForMap, cur);
                     setState(() {
                       _followCamera.followEnabled = false;
                     });
@@ -828,6 +897,10 @@ class _VehicleTrackingScreenState
                   icon: Icons.refresh_rounded,
                   onTap: () {
                     AppLogger.map('Refresh tapped for vehicleId=${widget.vehicleId}');
+                    _liveRouteExt.resetLiveExtension(
+                      deviceId: widget.vehicleId,
+                      reason: 'manual_refresh',
+                    );
                     ref.invalidate(liveVehicleProvider(widget.vehicleId));
                     ref.invalidate(routeDetailProvider(_routeQuery));
                   },
@@ -1906,6 +1979,7 @@ class _StatTile extends StatelessWidget {
 
 class _ControlBtn extends StatelessWidget {
   const _ControlBtn({
+    super.key,
     required this.icon,
     required this.onTap,
     this.label,

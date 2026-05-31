@@ -173,7 +173,7 @@ void main() {
     final items = [stop(), os()];
     final filtered =
         routeEventTimelineItemsFiltered(items, RouteEventTimelineFilter.stops);
-    final hiddenKey = 'o1';
+    const hiddenKey = 'o1';
     expect(filtered.any((e) => e.selectionKey == hiddenKey), false);
     expect(
       routeEventTimelineItemMatchesFilter(os(), RouteEventTimelineFilter.stops),

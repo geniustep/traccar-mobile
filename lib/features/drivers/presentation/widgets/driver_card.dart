@@ -50,7 +50,7 @@ class DriverCard extends StatelessWidget {
       color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: AppColors.divider),
+        side: const BorderSide(color: AppColors.divider),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),

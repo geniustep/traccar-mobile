@@ -12,7 +12,7 @@ import 'route_point_fixtures.dart';
 
 void main() {
   test('mergeStopAddressesFromRoutePoints fills stop from points in window', () {
-    final pos = const LatLng(10.0, 20.0);
+    const pos = LatLng(10.0, 20.0);
     final t0 = utc(2025, 6, 1, 8);
     final points = <RoutePoint>[
       testRoutePoint(pos, 2, t0),
@@ -46,7 +46,7 @@ void main() {
   });
 
   test('prefetchStopAddressesSequential respects maxGeocode', () async {
-    final pos = const LatLng(1.0, 2.0);
+    const pos = LatLng(1.0, 2.0);
     final t = utc(2025, 1, 1, 0);
     final stops = [
       for (var i = 0; i < 25; i++)

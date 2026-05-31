@@ -20,7 +20,10 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/geofence_area_codec.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/vehicle_category_utils.dart';
+import '../../core/live_route_extension.dart';
+import '../../core/map_audit_logger.dart';
 import '../../core/map_camera_follow_controller.dart';
+import '../../core/map_live_polling_fallback.dart';
 import '../../core/map_zoom_policy.dart';
 import '../../core/route_polyline_builder.dart';
 import '../../core/vehicle_marker_factory.dart';
@@ -32,6 +35,7 @@ import '../../../geofences/domain/entities/geofence.dart';
 import '../../../geofences/presentation/providers/geofences_providers.dart';
 import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../../vehicles/domain/entities/vehicle.dart';
+import '../../../vehicles/presentation/providers/vehicles_provider.dart';
 import '../../../vehicles/presentation/widgets/replay_entry_sheet.dart';
 import '../../../vehicles/presentation/widgets/report_entry_sheet.dart';
 import '../../core/map_camera_focus.dart';
@@ -55,7 +59,8 @@ class LiveMapScreen extends ConsumerStatefulWidget {
 class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
     with TickerProviderStateMixin {
   GoogleMapController? _mapController;
-  Timer? _refreshTimer;
+  late final MapLivePollingFallback _livePolling;
+  final Map<String, LatLng> _lastLoggedMarkerPos = {};
 
   /// Zoom tracked between camera-idle updates — clustering recomputes on idle only.
   double _cameraZoom = MapConfig.defaultZoom;
@@ -66,6 +71,8 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
 
   int? _lastLoggedMarkerCount;
   String? _lastRoutePointsLogKey;
+
+  final Map<String, LiveRouteExtension> _liveRouteByVehicle = {};
 
   final _followCamera = MapCameraFollowController(
     MapCameraFollowMode.fleetSelectedVehicle,
@@ -89,10 +96,12 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
   @override
   void initState() {
     super.initState();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 20),
-      (_) => ref.invalidate(mapVehiclesProvider),
+    MapAuditLogger.screenOpened('LiveMap');
+    _livePolling = MapLivePollingFallback(
+      screen: 'LiveMap',
+      onPoll: () => ref.invalidate(vehiclesListProvider),
     );
+    _livePolling.start(ref);
     _selMotionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 280),
@@ -107,6 +116,19 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
 
     ref.listenManual(mapVehiclesProvider, (prev, next) {
       if (!next.hasValue) return;
+      final selectedId = ref.read(selectedMapVehicleProvider);
+      if (selectedId != null) {
+        for (final v in next.requireValue) {
+          if (v.id == selectedId) {
+            MapAuditLogger.logVehicleIfMoved(
+              screen: 'LiveMap',
+              v: v,
+              lastByDevice: _lastLoggedMarkerPos,
+            );
+            break;
+          }
+        }
+      }
       if (ref.read(pendingMapCameraFocusProvider) == null) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _tryConsumePendingMapFocus();
@@ -134,7 +156,12 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    _livePolling.stop();
+    MapAuditLogger.screenDisposed(
+      'LiveMap',
+      timers: 'polling_fallback',
+      subscriptions: 'pending_focus_listeners',
+    );
     _selMotionController?.dispose();
     _mapController?.dispose();
     super.dispose();
@@ -186,6 +213,11 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
   void _maybeCameraFollow(VehicleEntity v) {
     if (!_followCamera.canApplyLiveCamera || _mapController == null) return;
     if (_followCamera.consumeFollowThrottle()) return;
+    MapAuditLogger.followMode(
+      screen: 'LiveMap',
+      enabled: _followCamera.followEnabled,
+      cameraAnimated: true,
+    );
     _followCamera.beginProgrammaticMove();
     _mapController!.animateCamera(CameraUpdate.newLatLng(_smoothSel)).then((_) {
       _followCamera.endProgrammaticMoveSoon();
@@ -976,27 +1008,41 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
                       if (showRouteOverlay &&
                           routeSid != null &&
                           selectedVehicle != null) {
+                        final routeQuery = RouteQuery.today(routeSid);
+                        final ext = _liveRouteByVehicle.putIfAbsent(
+                          routeSid,
+                          () => LiveRouteExtension(screen: 'LiveMap'),
+                        );
                         ref
-                            .watch(
-                              routeDetailProvider(
-                                RouteQuery.today(routeSid),
-                              ),
-                            )
+                            .watch(routeDetailProvider(routeQuery))
                             .whenOrNull(
                               data: (pts) {
+                                ext.loadHistorical(
+                                  deviceId: routeSid,
+                                  points: pts,
+                                  rangeFrom: routeQuery.from,
+                                  rangeTo: routeQuery.to,
+                                );
+                                ext.tryAppendFromVehicle(
+                                  vehicle: selectedVehicle!,
+                                  liveModeEnabled: true,
+                                );
+                                final combined = ext.combinedPoints;
                                 if (kDebugMode) {
-                                  final key = '${routeSid}_${pts.length}';
+                                  final key =
+                                      '${routeSid}_${combined.length}_${ext.liveAppendCount}';
                                   if (_lastRoutePointsLogKey != key) {
                                     _lastRoutePointsLogKey = key;
                                     AppLogger.map(
-                                      'Route points loaded: count=${pts.length}',
+                                      'Route points for map: historical=${pts.length} '
+                                      'combined=${combined.length} liveAppend=${ext.liveAppendCount}',
                                     );
                                   }
                                 }
                                 polylines.addAll(
                                   RoutePolylineBuilder.buildTodayPreview(
                                     vehicleId: routeSid,
-                                    pts: pts,
+                                    pts: combined,
                                     color: AppColors.accent
                                         .withValues(alpha: 0.85),
                                   ),
@@ -1175,7 +1221,7 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen>
                             loading: () => l10n.mapFilterActiveLabel,
                             error: (_, __) => l10n.mapFilterActiveLabel,
                           ),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.accent,
@@ -1997,6 +2043,7 @@ class _VehicleBottomSheetCard extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
+                key: const Key('map_live_follow_btn'),
                 style: FilledButton.styleFrom(
                   backgroundColor:
                       isLiveFollowing ? AppColors.emerald : AppColors.accent,

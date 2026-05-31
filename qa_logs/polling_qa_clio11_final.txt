@@ -1,0 +1,62 @@
+﻿[Map] [MarkerUpdate] screen=LiveMap deviceId=11 oldLatLng=null newLatLng=35.71428,-5.89290
+[Map] [MarkerUpdate] screen=LiveMap deviceId=11 oldLatLng=35.71428,-5.89290 newLatLng=35.71314,-5.89181
+[Navigation] VehicleDetail: Track tapped vehicleId=11
+[Map] [MapAudit] screen=VehicleTracking opened vehicleId=11
+[Map] [Polling] screen=VehicleTracking started
+[Map] [RoutePolyline] screen=VehicleTracking deviceId=11 loaded points=3935 from=2026-05-31T00:00:00.000 to=2026-05-31T14:57:18.660323
+[Map] [LiveRouteAppend] screen=VehicleTracking deviceId=11 ignored reason=stale_or_duplicate
+[Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=null newLatLng=35.71269,-5.89138
+[Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.71269 lon=-5.89138 speed=9.0 fixTime=2026-05-31T14:57:23.000Z source=liveVehicleProvider
+[Map] [LiveRouteAppend] screen=VehicleTracking deviceId=11 lat=35.71269 lon=-5.89138 fixTime=2026-05-31T14:57:23.000Z totalPoints=3936
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=1.1
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=1.1
+[Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.71269,-5.89138 newLatLng=35.71269,-5.89138
+[Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.71269 lon=-5.89138 speed=9.0 fixTime=2026-05-31T14:57:23.000Z source=liveVehicleProvider
+[Map] [LiveRouteAppend] screen=VehicleTracking deviceId=11 ignored reason=stale_or_duplicate
+[Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.71269,-5.89138 newLatLng=35.71269,-5.89138
+[Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.71269 lon=-5.89138 speed=9.0 fixTime=2026-05-31T14:57:23.000Z source=liveVehicleProvider
+[Map] [LiveRouteAppend] screen=VehicleTracking deviceId=11 ignored reason=stale_or_duplicate
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=3.9
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=3.9
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=1.8
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=1.8
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=0.9
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=0.9
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=0.8
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=0.8
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=5.8
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=5.8
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=0.1
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=0.1
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=5.1
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=5.1
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=10.1
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=10.1
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=15.1
+[Map] [Polling] screen=VehicleTracking tick reason=live_silent socketConnected=true lastLivePositionAgeSeconds=15.1
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=3.1
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=3.1
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=8.1
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=8.1
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=0.5
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=0.5
+[Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.71269,-5.89138 newLatLng=35.71158,-5.89030
+[Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.71158 lon=-5.89030 speed=7.0 fixTime=2026-05-31T14:58:23.000Z source=liveVehicleProvider
+[Map] [LiveRouteAppend] screen=VehicleTracking deviceId=11 lat=35.71158 lon=-5.89030 fixTime=2026-05-31T14:58:23.000Z totalPoints=3937
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=5.5
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=5.5
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=2.9
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=2.9
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=1.5
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=1.5
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=1.5
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=1.5
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=2.4
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=2.4
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=0.3
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=0.3
+[Map] [MarkerUpdate] screen=VehicleTracking deviceId=11 oldLatLng=35.71158,-5.89030 newLatLng=35.71141,-5.88974
+[Map] [LivePosition] screen=VehicleTracking deviceId=11 lat=35.71141 lon=-5.88974 speed=0.0 fixTime=2026-05-31T14:58:53.000Z source=liveVehicleProvider
+[Map] [LiveRouteAppend] screen=VehicleTracking deviceId=11 lat=35.71141 lon=-5.88974 fixTime=2026-05-31T14:58:53.000Z totalPoints=3938
+[Map] [Polling] screen=VehicleTracking state socketConnected=true lastLivePositionAgeSeconds=5.6
+[Map] [Polling] screen=VehicleTracking skipped reason=recent_live_position socketConnected=true lastLivePositionAgeSeconds=5.6

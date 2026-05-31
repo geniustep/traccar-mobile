@@ -84,7 +84,7 @@ void main() {
 
   group('routeIntelResolutionHasDeviceOverride', () {
     test('true when any source is device', () {
-      final r = RouteIntelligenceThresholdResolution(
+      const r = RouteIntelligenceThresholdResolution(
         thresholds: RouteIntelligenceThresholds.defaults,
         sources: RouteIntelligenceThresholdSources(
           stopSpeedEnterKmhSource: RouteIntelligenceThresholdSource.device,
@@ -100,7 +100,7 @@ void main() {
     });
 
     test('false when no device source', () {
-      final r = RouteIntelligenceThresholdResolution(
+      const r = RouteIntelligenceThresholdResolution(
         thresholds: RouteIntelligenceThresholds.defaults,
         sources: RouteIntelligenceThresholdSources.allDefaults,
       );

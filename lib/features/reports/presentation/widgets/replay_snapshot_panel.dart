@@ -62,8 +62,8 @@ class _ReplaySnapshotPanelState extends State<ReplaySnapshotPanel> {
                   ),
                 ),
                 if (s.afterDataGap)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 6),
                     child: Icon(
                       Icons.signal_cellular_connected_no_internet_0_bar_rounded,
                       size: 14,
@@ -72,7 +72,7 @@ class _ReplaySnapshotPanelState extends State<ReplaySnapshotPanel> {
                   ),
                 if (s.hasExpandableDetails) ...[
                   const SizedBox(width: 4),
-                  Icon(
+                  const Icon(
                     Icons.expand_more_rounded,
                     size: 18,
                     color: AppColors.accent,
@@ -251,7 +251,7 @@ class _ReplaySnapshotPanelState extends State<ReplaySnapshotPanel> {
                 const SizedBox(height: 2),
                 Text(
                   l10n.replaySnapshotDetails,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: AppColors.accent,

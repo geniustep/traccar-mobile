@@ -1,5 +1,5 @@
-import '../../../core/logging/app_logger.dart';
 import '../../../core/models/traccar_position.dart';
+import 'map_audit_logger.dart';
 import '../../vehicles/domain/entities/vehicle.dart';
 import 'traccar_units.dart';
 import 'vehicle_status_resolver.dart';
@@ -60,10 +60,11 @@ class VehicleLiveMerger {
 
     final lastFix = vehicle.lastUpdate;
     if (lastFix != null && live.fixTime.isBefore(lastFix)) {
-      AppLogger.liveSyncStale(
-        'Ignored stale position for live merge: vehicleId=$deviceId '
-        'fixTime=${live.fixTime.toUtc().toIso8601String()} '
-        'lastFixTime=${lastFix.toUtc().toIso8601String()}',
+      MapAuditLogger.staleIgnored(
+        screen: 'VehicleLiveMerger',
+        deviceId: '$deviceId',
+        incomingFix: live.fixTime,
+        currentFix: lastFix,
       );
       return vehicle;
     }

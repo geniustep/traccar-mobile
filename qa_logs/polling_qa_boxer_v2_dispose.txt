@@ -1,0 +1,2 @@
+﻿05-31 14:44:37.965 12400 12400 I flutter : [Navigation] Entered: /vehicles
+05-31 14:45:16.776 12400 12400 I flutter : [Alerts] Fetch started (filter=all offset=0 vehicleId=all)

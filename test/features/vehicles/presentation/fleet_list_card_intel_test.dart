@@ -87,7 +87,7 @@ void main() {
 
     test('no maintenance banner when lines empty', () {
       final v = _vehicle(lastUpdate: DateTime.now());
-      final brief = FleetVehicleBrief(
+      const brief = FleetVehicleBrief(
         driverLine: '',
         maintenanceLine: '',
         hasMaintenanceOverdue: false,
@@ -108,7 +108,7 @@ void main() {
 
     test('maintenance overdue produces banner', () {
       final v = _vehicle(lastUpdate: DateTime.now());
-      final brief = FleetVehicleBrief(
+      const brief = FleetVehicleBrief(
         driverLine: '',
         maintenanceLine: 'Vidange — 5000 km',
         hasMaintenanceOverdue: true,

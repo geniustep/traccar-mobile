@@ -3,7 +3,6 @@ import 'package:elmogps/features/alerts/domain/entities/alert.dart';
 import 'package:elmogps/features/map/core/route_event_timeline_models.dart';
 import 'package:elmogps/features/map/data/datasources/route_datasource.dart';
 import 'package:elmogps/features/reports/core/replay_event_deduplication.dart';
-import 'package:elmogps/features/reports/core/replay_external_event.dart';
 import 'package:elmogps/features/reports/core/replay_external_event_mapper.dart';
 import 'package:elmogps/features/reports/domain/entities/event_report.dart';
 import 'package:flutter/material.dart';

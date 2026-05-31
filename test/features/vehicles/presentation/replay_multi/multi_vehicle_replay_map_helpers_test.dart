@@ -42,12 +42,12 @@ void main() {
     test('positionsForFit ignores vehicles without map points', () {
       final tracks = [
         _track('A', [_pt(t0)]),
-        MultiVehicleReplayTrack(
+        const MultiVehicleReplayTrack(
           vehicleId: 'B',
           name: 'B',
           colorIndex: 1,
-          allPoints: const [],
-          mapPoints: const [],
+          allPoints: [],
+          mapPoints: [],
         ),
       ];
       final positions = MultiVehicleReplayMapHelpers.positionsForFit(

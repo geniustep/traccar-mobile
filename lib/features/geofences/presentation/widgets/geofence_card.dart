@@ -72,7 +72,7 @@ class GeofenceCard extends StatelessWidget {
                   if (hasAlerts)
                     Row(
                       children: [
-                        Icon(Icons.notifications_active_outlined,
+                        const Icon(Icons.notifications_active_outlined,
                             size: 14, color: AppColors.accent),
                         const SizedBox(width: 4),
                         Text(l10n.geofenceAlertStatusOn,

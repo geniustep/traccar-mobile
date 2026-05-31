@@ -25,6 +25,7 @@ import '../../../map/presentation/widgets/route_event_details_sheet.dart';
 import '../../../map/presentation/widgets/route_event_timeline.dart';
 import '../../../map/presentation/providers/route_intelligence_thresholds_provider.dart';
 import '../../../map/presentation/providers/route_stop_address_providers.dart';
+import '../../../map/core/map_audit_logger.dart';
 import '../providers/reports_providers.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,7 +130,17 @@ class _RouteReportMapScreenState
   }
 
   @override
+  void initState() {
+    super.initState();
+    MapAuditLogger.screenOpened(
+      'RouteReportMap',
+      extra: 'vehicleId=${widget.params.vehicleId}',
+    );
+  }
+
+  @override
   void dispose() {
+    MapAuditLogger.screenDisposed('RouteReportMap', timers: 'none');
     _mapController?.dispose();
     super.dispose();
   }
