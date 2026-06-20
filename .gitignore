@@ -46,3 +46,6 @@ app.*.map.json
 
 # Local SDK paths (machine-specific)
 /android/local.properties
+
+# Local QA artifacts (not for version control)
+/qa_screenshots/
